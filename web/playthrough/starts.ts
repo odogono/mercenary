@@ -31,7 +31,7 @@ export const startFrom = async (
   page: Page,
   start: BuiltStart
 ): Promise<Setup> => {
-  await page.addInitScript(() => localStorage.clear());
+  // A fresh browser context starts with empty storage, so this first load is a New Game.
   await page.goto('/damocles');
   await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready', {
     timeout: 60_000
@@ -98,10 +98,13 @@ export const startFrom = async (
     new DamoclesSession(content, decoded);
     return encoded;
   }, start);
+  // One init script, so nothing else can run between clearing and seeding (Playwright does not
+  // order several). It seeds once: the page's own Session Resume writes must stand after that.
   await page.addInitScript(
     ({ encoded, key }) => {
       if (sessionStorage.getItem('playthrough-start') === null) {
         sessionStorage.setItem('playthrough-start', '1');
+        localStorage.clear();
         localStorage.setItem(key, encoded);
       }
     },
@@ -111,6 +114,17 @@ export const startFrom = async (
   await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready', {
     timeout: 60_000
   });
+  // A refused record would boot a New Game that also reaches ready; the start must be where it
+  // was built.
+  const restored = await page.locator('#frame').evaluate(node => ({
+    x: Number(node.dataset['x']),
+    z: Number(node.dataset['z'])
+  }));
+  if (Math.hypot(restored.x - start.at.x, restored.z - start.at.z) > 50) {
+    throw new Error(
+      `the built start did not restore: the session stands at ${Math.round(restored.x)}, ${Math.round(restored.z)}`
+    );
+  }
   return {
     assumes: start.assumes,
     how: 'a built Session Resume record: a fresh session’s snapshot with the assumptions applied'
@@ -123,7 +137,8 @@ export const MOORBY_START = {
   assumes: [
     'on foot beside EAGLE NINE S E at the Moorby School of Flying (end of Chapter 1)',
     'KEY - EAGLE 9SE carried, its pickup trigger spent',
-    'the first offer accepted (script flag bit 0) and the State Office triggers spent'
+    'the first offer accepted (script flag bit 0) and the State Office triggers spent',
+    'unlike a played Chapter 1: the impact clock and session time are a New Game’s, not about five minutes on; KEY- V.I.P. LIMO and the DAMOCLES FILE are not carried; the accepted reward is a fresh session’s, not the 20 million the haggle reaches'
   ],
   carried: ['object-slot-181'],
   cell: { x: 9, z: 9 },

@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 
+import { instance as catalogueInstance } from './catalogue.ts';
 import { entrance, planRoute, type RegionBox } from './planner.ts';
 
 /// Steering a Damocles session by the player's own controls, from what the page publishes.
@@ -35,16 +36,8 @@ export const structureOrigin = async (
   page: Page,
   instance: string
 ): Promise<Point> => {
-  const catalogue = (await (
-    await page.request.get('/payload/damocles/catalogue.json')
-  ).json()) as {
-    readonly instances: readonly {
-      readonly id: string;
-      readonly location: { readonly position: readonly number[] } | null;
-    }[];
-  };
-  const position = catalogue.instances.find(item => item.id === instance)
-    ?.location?.position;
+  const position = (await catalogueInstance(page, instance))?.location
+    ?.position;
   if (position === undefined) {
     throw new SteeringError(`no recovered location for ${instance}`);
   }
@@ -262,15 +255,7 @@ export const floorRegions = async (
   instance: string,
   floor: number
 ): Promise<readonly RegionBox[]> => {
-  const catalogue = (await (
-    await page.request.get('/payload/damocles/catalogue.json')
-  ).json()) as {
-    readonly instances: readonly {
-      readonly id: string;
-      readonly model: string;
-    }[];
-  };
-  const own = catalogue.instances.find(item => item.id === instance)?.model;
+  const own = (await catalogueInstance(page, instance))?.model;
   if (own === undefined) {
     throw new SteeringError(`no instance ${instance}`);
   }

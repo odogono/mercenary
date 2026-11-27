@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { instance } from './catalogue.ts';
 import { Chapter } from './ledger.ts';
 import { CHAPTER_2 as STEP } from './route.ts';
 import {
+  at,
   attribute,
   expectAt,
   inventoryHead,
@@ -40,17 +42,8 @@ const SEAMLESS = { crossSeam: false } as const;
 
 /// A resident's recovered placement inside its parent, structure-local.
 const placement = async (page: Page, slot: number): Promise<Point> => {
-  const catalogue = (await (
-    await page.request.get('/payload/damocles/catalogue.json')
-  ).json()) as {
-    readonly instances: readonly {
-      readonly id: string;
-      readonly placement: { readonly position: readonly number[] } | null;
-    }[];
-  };
-  const position = catalogue.instances.find(
-    item => item.id === `object-slot-${slot}`
-  )?.placement?.position;
+  const position = (await instance(page, `object-slot-${slot}`))?.placement
+    ?.position;
   if (position === undefined) {
     throw new Error(`object-slot-${slot} has no recovered placement`);
   }
@@ -62,12 +55,19 @@ const centreBox = (page: Page) =>
 
 /// Open the carried head on the centre box, step its switch to ON, and drop it. The switch bits
 /// `$7872` must change, or the trigger was not armed.
-const switchOn = async (page: Page): Promise<void> => {
-  const before = await attribute(page, 'switches');
+/// The four detonators' bits of `$7872`: a switch row's index halved is its bit
+/// (`headCommands.ts`, `SWITCH_ROWS`, `switchBit`).
+const TRIGGER_BITS = { 1: 0x08, 2: 0x10, 3: 0x20, 4: 0x40 } as const;
+
+/// Open the head on the centre box, check it is the named NOVA TRIGGER, and switch it on: its own
+/// bit of `$7872` must be set.
+const switchOn = async (page: Page, trigger: 1 | 2 | 3 | 4): Promise<void> => {
   await page.keyboard.press('Enter');
-  await expect(centreBox(page)).toHaveAttribute('data-panel', /NOVA TRIGGER/, {
-    timeout: 10_000
-  });
+  await expect(centreBox(page)).toHaveAttribute(
+    'data-panel',
+    `NOVA TRIGGER ${trigger}`,
+    { timeout: 10_000 }
+  );
   // The centre box ignores the Head Commands while it is still opening.
   await expect(page.locator('#frame')).toHaveAttribute(
     'data-centre-box-steps',
@@ -81,10 +81,13 @@ const switchOn = async (page: Page): Promise<void> => {
     async () => (await centreBox(page).getAttribute('data-item')) === 'ON',
     'switch it on'
   );
-  await expect(page.locator('#frame')).not.toHaveAttribute(
-    'data-switches',
-    before
-  );
+  await expect
+    .poll(
+      async () =>
+        Number.parseInt(await attribute(page, 'switches'), 16) &
+        TRIGGER_BITS[trigger]
+    )
+    .toBe(TRIGGER_BITS[trigger]);
   await page.keyboard.press('Enter');
 };
 
@@ -168,7 +171,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
         300
       );
       await takeUntilHead(page, 'CUPBOARD');
-      await switchOn(page);
+      await switchOn(page, 2);
       await dropHere(page, chapter, SORTING_OFFICE, 'CUPBOARD');
     });
 
@@ -194,13 +197,21 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
         'the transporter',
         40
       );
+      await expect
+        .poll(async () => (await at(page, areas)).body, {
+          message: 'walking into the transporter left the player on ERIS',
+          timeout: 15_000
+        })
+        .not.toBe('ERIS');
       await expectAt(page, areas, STEP.transporter.target);
     });
 
     await chapter.step(STEP.washbasin, async () => {
-      // The harness's own gap: no run has reached Metis to find the secret door and the table.
+      // The harness's own gap: the next hop means walking out of the arrival cube and back in by
+      // its far face, inside a building (docs/research/damocles-arrival-routes.md), and no run has
+      // reached Metis to find the secret door and the table.
       throw new SteeringError(
-        'not yet scripted: no run has reached Metis to scout this step'
+        'not yet scripted: the further hops round the ring and the Metis steps'
       );
     });
   } finally {

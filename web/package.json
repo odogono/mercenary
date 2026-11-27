@@ -66,7 +66,8 @@
       "tools/dion-tourcraft-compare.ts",
       "tools/serve-site.ts",
       "e2e-site/*.e2e.ts",
-      "playthrough/*.playthrough.ts"
+      "playthrough/*.playthrough.ts",
+      "playthrough/global-setup.ts"
     ],
     "include": [
       "files",

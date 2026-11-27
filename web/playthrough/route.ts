@@ -125,16 +125,17 @@ export const CHAPTER_2 = {
   transporter: {
     cite: { section: 'step 4', solution: 'stf20' },
     id: '2.4',
-    proves: 'a transporter carries the player to METIS MOONBASE 00-06',
-    says: 'Walk into the transporters by their arrowed sides until you come out at the Metis moon base, 00.06.',
-    target: { body: METIS, cell: '00-06', island: METIS_MOONBASE }
+    proves:
+      'walking into the basement transporter carries the player to its first hop, GAEA at CHALDEA METROPOLIS 08-08 (docs/research/damocles-arrival-routes.md, "Driven live")',
+    says: 'Walk into the transporters by their arrowed sides until you come out at the Metis moon base, 00.06. This step proves the first hop only.',
+    target: { body: 'GAEA', cell: '08-08', island: 'CHALDEA METROPOLIS' }
   },
   washbasin: {
     cite: { section: 'step 4', solution: 'stf20' },
     id: '2.5',
     proves:
-      'the WASHBASIN is NOVA TRIGGER 4, switches ON, and is dropped switched on',
-    says: 'Take the transporter, go outside, drop the Eagle and fly to 05.06; take the Eagle again, go in, walk to the table to open a secret door, go through, drop the transporter and take NOVA TRIGGER 4 (the washbasin); turn it on and drop it.',
+      'the ring reaches METIS MOONBASE 00-06, and the WASHBASIN is NOVA TRIGGER 4, switches ON, and is dropped switched on',
+    says: 'Ride on round the ring to Metis 00.06. Take the transporter, go outside, drop the Eagle and fly to 05.06; take the Eagle again, go in, walk to the table to open a secret door, go through, drop the transporter and take NOVA TRIGGER 4 (the washbasin); turn it on and drop it.',
     target: { body: METIS, cell: '05-06', island: METIS_MOONBASE }
   }
 } as const satisfies Record<string, SolutionStep>;

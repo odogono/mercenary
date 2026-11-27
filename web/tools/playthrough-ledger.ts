@@ -25,6 +25,10 @@ const NOTE = join(
 
 const cell = (text: string): string => text.replaceAll('|', String.raw`\|`);
 
+/// A run's messages quote what the Damocles Display showed. That text stays in the local chapter
+/// JSON; the tracked note keeps only that something was quoted.
+const redacted = (text: string): string => text.replaceAll(/"[^"]*"/g, '"…"');
+
 const where = (step: StepRecord): string => {
   const target = step.target;
   if (target === null) {
@@ -87,12 +91,12 @@ const chapterSection = (ledger: ChapterLedger): string => {
   for (const step of gaps) {
     for (const note of step.notes) {
       lines.push(
-        `- **${step.id}, noted (did not stop the step).** ${cell(note)}`
+        `- **${step.id}, noted (did not stop the step).** ${cell(redacted(note))}`
       );
     }
     if (step.gap !== null) {
       lines.push(
-        `- **${step.id}, ${step.gap.class}.** ${cell(step.gap.detail.split('\n')[0]!.replace(/[\s.]*$/, '.'))} The step had to prove that ${step.proves}.`
+        `- **${step.id}, ${step.gap.class}.** ${cell(redacted(step.gap.detail.split('\n')[0]!).replace(/[\s.]*$/, '.'))} The step had to prove that ${step.proves}.`
       );
     }
   }

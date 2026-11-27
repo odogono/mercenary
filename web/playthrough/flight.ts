@@ -201,6 +201,14 @@ export const flyTo = async (
       `${outcome.error}${outcome.at === undefined ? '' : ` at ${Math.round(outcome.at.x)}, ${Math.round(outcome.at.y)}, ${Math.round(outcome.at.z)}`}`
     );
   }
+  // A touchdown anywhere is a landing, so one short of the point is the steering's failure, not
+  // an arrival: what is checked next would be checked in the wrong place.
+  const tolerance = (options.radius ?? 2000) + 6000;
+  if (outcome.landed.off > tolerance) {
+    throw new SteeringError(
+      `touched down ${Math.round(outcome.landed.off)} short of ${name}, beyond the ${tolerance} the landing allows`
+    );
+  }
 };
 
 /// Climb off the ground aboard: throttle up and raise the nose until airborne.

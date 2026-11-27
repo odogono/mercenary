@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
+import { catalogue } from './catalogue.ts';
 import type { Target } from './ledger.ts';
 
 /// Reading and pressing, in the player's terms. Nothing here writes play.
@@ -145,19 +146,13 @@ export const at = async (
 /// names against `data-island`.
 export const islandAreas = async (
   page: Page
-): Promise<ReadonlyMap<string, string>> => {
-  const catalogue = (await (
-    await page.request.get('/payload/damocles/catalogue.json')
-  ).json()) as {
-    readonly islands: readonly {
-      readonly areaName: string | null;
-      readonly id: string;
-    }[];
-  };
-  return new Map(
-    catalogue.islands.map(island => [island.id, island.areaName ?? ''])
+): Promise<ReadonlyMap<string, string>> =>
+  new Map(
+    (await catalogue(page)).islands.map(island => [
+      island.id,
+      island.areaName ?? ''
+    ])
   );
-};
 
 /// Assert the player stands where the step's target says: the panel's Body name, the island's
 /// area, the Cell Readout and the Floor.

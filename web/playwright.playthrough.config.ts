@@ -9,6 +9,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   // A failed step stops its own Playthrough Chapter, never the run.
   fullyParallel: false,
+  globalSetup: './playthrough/global-setup.ts',
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'playthrough-report' }]
