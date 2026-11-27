@@ -8,6 +8,78 @@
       }
     ],
     "id": "structure-014aec",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 10,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 46,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 252,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 252,
+            "regionSelector": 19
+          }
+        ]
+      },
+      {
+        "group": 7,
+        "pairs": [
+          {
+            "insertionKey": 3,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 6
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "linkedInstances": [],
     "name": "Structure 76",
@@ -6274,7 +6346,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

@@ -8,6 +8,272 @@
       }
     ],
     "id": "structure-013e2e-at-m1xm1-detail-59",
+    "insertionGroups": [
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 50,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 4,
+        "pairs": [
+          {
+            "insertionKey": 8,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 5,
+        "pairs": [
+          {
+            "insertionKey": 8,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 59,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 8,
+        "pairs": [
+          {
+            "insertionKey": 60,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 37,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 9,
+        "pairs": [
+          {
+            "insertionKey": 60,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 32,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 32,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 10,
+        "pairs": [
+          {
+            "insertionKey": 61,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 32,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 32,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 29,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 11,
+        "pairs": [
+          {
+            "insertionKey": 2,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 12,
+        "pairs": [
+          {
+            "insertionKey": 2,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 11
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "linkedInstances": [],
     "name": "Structure 67 \u00b7 Floor frame -1\u00d7-1",
@@ -6968,7 +7234,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

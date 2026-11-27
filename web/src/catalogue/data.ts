@@ -309,6 +309,8 @@ export interface Model {
     readonly phases: Readonly<Record<string, number>>;
   };
   readonly id: string;
+  /** A structure record's Insertion Groups; see ModelSummary. Absent on other kinds. */
+  readonly insertionGroups?: readonly InsertionGroup[] | null;
   /**
    * The record's `$8001` orientation command: how the draw path turns every instance of
    * this model, and the per-model angle bias it adds to the instance's own byte.
@@ -693,15 +695,6 @@ export interface Instance {
     readonly levelSelector: number;
     readonly structureGroupSelector: number;
   } | null;
-  readonly associationGroups:
-    | readonly {
-        readonly group: number;
-        readonly pairs: readonly {
-          readonly insertionKey: number;
-          readonly regionSelector: number;
-        }[];
-      }[]
-    | null;
   /**
    * What the board gate ($054302-$05434F) answers for this resident slot, or null on every
    * instance that is not one. `boardable` is the gate's two table facts: the slot is under
@@ -903,8 +896,31 @@ export interface CoverageTable {
 }
 /// What the shared Catalogue document says about a Model without carrying it: enough to list,
 /// filter and account for every Model before any Model file is read (ADR 0048).
+/// One numbered entry in a structure's association list: the regions a resident whose Insertion
+/// Group it is is drawn in, in authored order. A region may be named twice ($05A3DE inserts once
+/// per matching pair).
+export interface InsertionGroup {
+  readonly group: number;
+  readonly pairs: readonly {
+    readonly insertionKey: number;
+    readonly regionSelector: number;
+  }[];
+}
 export interface ModelSummary {
+  /**
+   * The structure each Floor binds, from the Model's Floor table. Above Floor 0 a Drop is
+   * admitted by that structure's Insertion Groups, not the building's ($7B0E, #355).
+   */
+  readonly floorStructures?: readonly {
+    readonly level: number;
+    readonly structureId: string;
+  }[];
   readonly id: string;
+  /**
+   * A structure's Insertion Groups: a Drop inside it is refused unless one is numbered for the
+   * current region. Empty when the recovered list is empty; null when no root was recovered.
+   */
+  readonly insertionGroups?: readonly InsertionGroup[] | null;
   readonly kind: Kind;
   readonly name: string;
   readonly recordClass: RecordClass;
@@ -982,7 +998,7 @@ export interface Catalogue {
   readonly modelIndex: readonly ModelSummary[];
   readonly places: readonly Place[];
   readonly roadNetworks: readonly RoadNetwork[];
-  readonly schemaVersion: 17;
+  readonly schemaVersion: 18;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -1806,6 +1822,35 @@ const structureSelection = (value: unknown): StructureSelection => {
   };
 };
 
+const insertionGroups = (value: unknown): readonly InsertionGroup[] | null => {
+  if (value === null) {
+    return null;
+  }
+  const selectors = new Set<number>();
+  return list(value).map(item => {
+    const group = object(item);
+    const selector = byte(group['group']);
+    if (selector === 0 || selectors.has(selector)) {
+      fail('invalid or duplicate insertion group selector');
+    }
+    selectors.add(selector);
+    const pairs = list(group['pairs']).map(entry => {
+      const pair = object(entry);
+      const regionSelector = byte(pair['regionSelector']);
+      if (regionSelector === 0) {
+        fail('invalid insertion group region selector');
+      }
+      return { insertionKey: byte(pair['insertionKey']), regionSelector };
+    });
+    return { group: selector, pairs };
+  });
+};
+
+const sameInsertionGroups = (
+  left: readonly InsertionGroup[] | null | undefined,
+  right: readonly InsertionGroup[] | null | undefined
+): boolean => JSON.stringify(left) === JSON.stringify(right);
+
 const modelRecord = (item: unknown): Model => {
   const m = object(item);
   const variants = list(m['variants']).map(value => {
@@ -1930,6 +1975,9 @@ const modelRecord = (item: unknown): Model => {
     ...(m['cellNumber'] === undefined
       ? {}
       : { cellNumber: cellNumber(m['cellNumber']) }),
+    ...(m['insertionGroups'] === undefined
+      ? {}
+      : { insertionGroups: insertionGroups(m['insertionGroups']) }),
     ...(m['storeyHeight'] === undefined
       ? {}
       : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
@@ -2314,7 +2362,7 @@ const craft = (value: unknown): Craft => {
 
 export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 17) {
+  if (r['schemaVersion'] !== 18) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -2335,12 +2383,26 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const modelIndex = list(r['modelIndex']).map((item): ModelSummary => {
     const m = object(item);
     return {
+      ...(m['floorStructures'] === undefined
+        ? {}
+        : {
+            floorStructures: list(m['floorStructures']).map(value => {
+              const floor = object(value);
+              return {
+                level: byte(floor['level']),
+                structureId: string(floor['structureId'])
+              };
+            })
+          }),
       id: string(m['id']),
       kind: choice(m['kind'], KINDS),
       name: string(m['name']),
       recordClass: choice(m['recordClass'], RECORD_CLASSES),
       slots: list(m['slots']).map(integer),
       status: choice(m['status'], ['decoded', 'partial', 'unresolved']),
+      ...(m['insertionGroups'] === undefined
+        ? {}
+        : { insertionGroups: insertionGroups(m['insertionGroups']) }),
       ...(m['storeyHeight'] === undefined
         ? {}
         : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
@@ -2355,6 +2417,11 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     };
   });
   const modelIds = unique(modelIndex);
+  for (const entry of modelIndex) {
+    for (const floor of entry.floorStructures ?? []) {
+      reference(modelIds, floor.structureId, 'floor structure');
+    }
+  }
   const summaries = new Map(modelIndex.map(entry => [entry.id, entry]));
   const bodies = list(r['bodies']).map(item => {
     const b = object(item);
@@ -2510,35 +2577,6 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     const i = object(item);
     const model = string(i['model']);
     reference(modelIds, model, 'model');
-    let associationGroups: Instance['associationGroups'] = null;
-    if (
-      i['associationGroups'] !== null &&
-      i['associationGroups'] !== undefined
-    ) {
-      const selectors = new Set<number>();
-      associationGroups = list(i['associationGroups']).map(value => {
-        const group = object(value);
-        const selector = byte(group['group']);
-        if (selector === 0 || selectors.has(selector)) {
-          fail('invalid or duplicate association group selector');
-        }
-        selectors.add(selector);
-        const regions = new Set<number>();
-        const pairs = list(group['pairs']).map(value => {
-          const pair = object(value);
-          const regionSelector = byte(pair['regionSelector']);
-          if (regionSelector === 0 || regions.has(regionSelector)) {
-            fail('invalid or duplicate association group region selector');
-          }
-          regions.add(regionSelector);
-          return {
-            insertionKey: byte(pair['insertionKey']),
-            regionSelector
-          };
-        });
-        return { group: selector, pairs };
-      });
-    }
     let location: Instance['location'] = null;
     if (i['location'] !== null) {
       const l = object(i['location']);
@@ -2654,7 +2692,6 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     }
     return {
       association,
-      associationGroups,
       boarding,
       handling,
       id: string(i['id']),
@@ -2933,7 +2970,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     modelIndex,
     places,
     roadNetworks,
-    schemaVersion: 17,
+    schemaVersion: 18,
     source,
     tables,
     textFrameGlyphs: textFrameGlyphs(r['textFrameGlyphs'] ?? {})
@@ -2986,6 +3023,9 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
     if (summary[field] !== model[field]) {
       fail(`model ${model.id} ${field} disagrees with the model index`);
     }
+  }
+  if (!sameInsertionGroups(summary.insertionGroups, model.insertionGroups)) {
+    fail(`model ${model.id} insertionGroups disagrees with the model index`);
   }
   if (
     summary.slots.length !== model.slots.length ||
@@ -3048,7 +3088,7 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
 /// Catalogue's own so a file left behind by another run is refused rather than drawn.
 export const parseModelFile = (value: unknown, document: Catalogue): Model => {
   const r = object(value);
-  if (r['schemaVersion'] !== 17) {
+  if (r['schemaVersion'] !== 18) {
     fail('unsupported model file schema version');
   }
   const src = object(r['source']);
@@ -3209,7 +3249,6 @@ const fieldInstance = (
   const field = island.field!;
   return {
     association: null,
-    associationGroups: null,
     boarding: null,
     handling: null,
     id: `${field.instancePrefix}-${kind}-${x}-${z}`,

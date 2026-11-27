@@ -142,7 +142,7 @@ field: a place is a cell in a workspace and the workspace is bound by a record, 
 deriving one from the other would bake in a one-to-one relation Lucan's twelve and
 Lachesis's ten disprove.
 
-Four model fields retain recovered native facts.
+Five model fields retain recovered native facts.
 `storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
 `$7B00` at `$054D86`; non-alias models do not claim a pitch. `levelBinding` is the
 floor table that follows it at `+6`, which `$054DBC` publishes in `$7C1E` and the lift
@@ -162,7 +162,15 @@ for the same entries. Each Body surface also publishes its `sky` pair and `rotat
 ([the day/night terminator](damocles-day-night-terminator.md)). `supportTop` is the
 drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
 gate refuses. It is not the renderer's mesh maximum: text and articulated forms
-must not change it. The signed opening-word comparison admits ordinary vertex
+must not change it. `insertionGroups` is a structure record's association list at the
+root `$05A2FA` publishes in `$7B0E`: each Insertion Group's ordered region/insertion-key
+pairs, a region repeated where the record repeats it. The direct Drop searches it for the
+current region's number at `$05453A` and refuses without one, so `[]` (a recovered, empty
+list) refuses every indoor Drop and `null` means no root was recovered (#1000). A Floor-scale
+derived model carries its source record's list. The model index adds `floorStructures`, each
+Floor's structure from `levelBinding`, because above Floor 0 `$7B0E` is that structure's root,
+and a Drop or Save is checked against it before any Model file is read.
+The signed opening-word comparison admits ordinary vertex
 streams; header commands are restricted to low bytes 6, 9 and `$0A`. The maximum
 starts at zero. `instanceOrientation` is the record's `$8001` command: the angle bias
 `$053548` adds to a placed instance's own angle byte, and the mode byte

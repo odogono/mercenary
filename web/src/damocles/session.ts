@@ -145,6 +145,7 @@ import {
 } from './poses.ts';
 import {
   admissiblePlacementClass,
+  admitsInsertionGroup,
   catalogueResidence,
   extentGap,
   insertionsInRegion,
@@ -4464,10 +4465,12 @@ export class DamoclesSession implements TitleSession<
     if (placed.kind === 'surface') {
       return placed;
     }
-    const parent = instanceById(this.content.catalogue, placed.parent);
     if (
-      !parent?.associationGroups?.some(
-        group => group.group === placed.insertionGroup
+      !admitsInsertionGroup(
+        this.content.catalogue,
+        placed.parent,
+        placed.level,
+        placed.insertionGroup
       ) ||
       !validStructureResidence(this.content.catalogue, placed)
     ) {

@@ -116,7 +116,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 17,
+  schemaVersion: 18,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -1084,7 +1084,9 @@ it('places slot 180 through its decoded structure association', async () => {
   const spaceport = data.instances.find(
     instance => instance.id === 'eris-surface-87'
   )!;
-  expect(spaceport.associationGroups).toEqual([
+  const insertionGroupsOf = (model: string) =>
+    data.modelIndex.find(entry => entry.id === model)?.insertionGroups;
+  expect(insertionGroupsOf(spaceport.model)).toEqual([
     {
       group: 1,
       pairs: [
@@ -1112,10 +1114,28 @@ it('places slot 180 through its decoded structure association', async () => {
       ]
     }
   ]);
+  // Every structure record publishes its own groups (#1000): POSTOFFICE SORTING's list
+  // has no group 3, and repeats region 14 in group 19.
+  const sorting = insertionGroupsOf('structure-01dab2')!;
+  expect(sorting.map(group => group.group)).toEqual([1, 2, 4, 5, 6, 7, 8, 19]);
   expect(
-    data.instances
-      .filter(instance => instance.id !== 'eris-surface-87')
-      .every(instance => instance.associationGroups === null)
+    sorting
+      .find(group => group.group === 19)!
+      .pairs.filter(pair => pair.regionSelector === 14)
+  ).toHaveLength(2);
+  const structures = data.modelIndex.filter(
+    entry => entry.kind === 'structure'
+  );
+  expect(structures.every(entry => entry.insertionGroups !== undefined)).toBe(
+    true
+  );
+  expect(
+    structures.filter(entry => entry.insertionGroups?.length === 0).length
+  ).toBeGreaterThan(0);
+  expect(
+    data.modelIndex
+      .filter(entry => entry.kind !== 'structure')
+      .every(entry => entry.insertionGroups === undefined)
   ).toBeTrue();
 });
 

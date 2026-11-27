@@ -2,6 +2,33 @@
   "model": {
     "evidence": [],
     "id": "structure-01a6d2",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 7,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 12,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 12,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 10
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "levelBinding": {
       "floors": [
@@ -2747,7 +2774,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

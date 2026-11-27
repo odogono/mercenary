@@ -2,6 +2,144 @@
   "model": {
     "evidence": [],
     "id": "structure-016c86",
+    "insertionGroups": [
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 6,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 6
+          }
+        ]
+      },
+      {
+        "group": 17,
+        "pairs": [
+          {
+            "insertionKey": 33,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 20
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 21
+          }
+        ]
+      },
+      {
+        "group": 18,
+        "pairs": [
+          {
+            "insertionKey": 29,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 34,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 34,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 20
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 21
+          }
+        ]
+      },
+      {
+        "group": 19,
+        "pairs": [
+          {
+            "insertionKey": 29,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 34,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 34,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 33,
+            "regionSelector": 20
+          },
+          {
+            "insertionKey": 35,
+            "regionSelector": 21
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "linkedInstances": [],
     "name": "Structure 87",
@@ -7210,7 +7348,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

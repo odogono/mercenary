@@ -2,6 +2,111 @@
   "model": {
     "evidence": [],
     "id": "structure-01a6f6",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 17,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 2,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 18,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 12
+          }
+        ]
+      },
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 19,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 6
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "levelBinding": {
       "floors": [
@@ -3031,7 +3136,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"
