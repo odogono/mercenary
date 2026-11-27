@@ -8,6 +8,441 @@
       }
     ],
     "id": "structure-01137c-at-2x2-detail-67",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 22,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 80,
+            "regionSelector": 16
+          }
+        ]
+      },
+      {
+        "group": 2,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 22,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 16
+          }
+        ]
+      },
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 22,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 10
+          }
+        ]
+      },
+      {
+        "group": 5,
+        "pairs": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 12,
+            "regionSelector": 10
+          }
+        ]
+      },
+      {
+        "group": 6,
+        "pairs": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 7
+          }
+        ]
+      },
+      {
+        "group": 7,
+        "pairs": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 12,
+            "regionSelector": 10
+          }
+        ]
+      },
+      {
+        "group": 10,
+        "pairs": [
+          {
+            "insertionKey": 19,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 9,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 17
+          }
+        ]
+      },
+      {
+        "group": 12,
+        "pairs": [
+          {
+            "insertionKey": 62,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 14
+          }
+        ]
+      },
+      {
+        "group": 13,
+        "pairs": [
+          {
+            "insertionKey": 62,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 14
+          }
+        ]
+      },
+      {
+        "group": 14,
+        "pairs": [
+          {
+            "insertionKey": 64,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 13
+          }
+        ]
+      },
+      {
+        "group": 16,
+        "pairs": [
+          {
+            "insertionKey": 64,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 81,
+            "regionSelector": 18
+          }
+        ]
+      },
+      {
+        "group": 17,
+        "pairs": [
+          {
+            "insertionKey": 64,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 64,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 18
+          }
+        ]
+      },
+      {
+        "group": 18,
+        "pairs": [
+          {
+            "insertionKey": 66,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 17
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "linkedInstances": [],
     "name": "Structure 39 \u00b7 Floor frame 2\u00d72",
@@ -10035,7 +10470,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

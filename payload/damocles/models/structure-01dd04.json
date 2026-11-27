@@ -2,6 +2,615 @@
   "model": {
     "evidence": [],
     "id": "structure-01dd04",
+    "insertionGroups": [
+      {
+        "group": 2,
+        "pairs": [
+          {
+            "insertionKey": 54,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 53,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 53,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 53,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 53,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 115,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 115,
+            "regionSelector": 20
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 21
+          },
+          {
+            "insertionKey": 116,
+            "regionSelector": 22
+          },
+          {
+            "insertionKey": 116,
+            "regionSelector": 23
+          },
+          {
+            "insertionKey": 116,
+            "regionSelector": 24
+          },
+          {
+            "insertionKey": 105,
+            "regionSelector": 33
+          },
+          {
+            "insertionKey": 105,
+            "regionSelector": 34
+          }
+        ]
+      },
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 54,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 53,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 40,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 30,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 54,
+            "regionSelector": 21
+          }
+        ]
+      },
+      {
+        "group": 5,
+        "pairs": [
+          {
+            "insertionKey": 58,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 58,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 40,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 30,
+            "regionSelector": 18
+          }
+        ]
+      },
+      {
+        "group": 7,
+        "pairs": [
+          {
+            "insertionKey": 54,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 58,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 40,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 30,
+            "regionSelector": 18
+          }
+        ]
+      },
+      {
+        "group": 9,
+        "pairs": [
+          {
+            "insertionKey": 54,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 58,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 40,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 30,
+            "regionSelector": 18
+          }
+        ]
+      },
+      {
+        "group": 11,
+        "pairs": [
+          {
+            "insertionKey": 14,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 97,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 26
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 27
+          },
+          {
+            "insertionKey": 97,
+            "regionSelector": 28
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 32
+          }
+        ]
+      },
+      {
+        "group": 12,
+        "pairs": [
+          {
+            "insertionKey": 14,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 99,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 99,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 99,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 99,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 99,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 26
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 27
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 28
+          },
+          {
+            "insertionKey": 97,
+            "regionSelector": 32
+          }
+        ]
+      },
+      {
+        "group": 13,
+        "pairs": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 111,
+            "regionSelector": 14
+          }
+        ]
+      },
+      {
+        "group": 14,
+        "pairs": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 110,
+            "regionSelector": 13
+          }
+        ]
+      },
+      {
+        "group": 15,
+        "pairs": [
+          {
+            "insertionKey": 60,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 16
+          }
+        ]
+      },
+      {
+        "group": 16,
+        "pairs": [
+          {
+            "insertionKey": 60,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 60,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 61,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 15
+          }
+        ]
+      },
+      {
+        "group": 17,
+        "pairs": [
+          {
+            "insertionKey": 96,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 96,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 96,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 94,
+            "regionSelector": 29
+          },
+          {
+            "insertionKey": 94,
+            "regionSelector": 30
+          },
+          {
+            "insertionKey": 94,
+            "regionSelector": 31
+          }
+        ]
+      },
+      {
+        "group": 18,
+        "pairs": [
+          {
+            "insertionKey": 31,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 31,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 94,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 95,
+            "regionSelector": 29
+          },
+          {
+            "insertionKey": 95,
+            "regionSelector": 30
+          },
+          {
+            "insertionKey": 95,
+            "regionSelector": 31
+          }
+        ]
+      },
+      {
+        "group": 31,
+        "pairs": [
+          {
+            "insertionKey": 95,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 95,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 20,
+            "regionSelector": 29
+          },
+          {
+            "insertionKey": 20,
+            "regionSelector": 30
+          }
+        ]
+      },
+      {
+        "group": 32,
+        "pairs": [
+          {
+            "insertionKey": 98,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 26
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 27
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 28
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "levelBinding": {
       "floors": [
@@ -13078,7 +13687,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

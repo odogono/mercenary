@@ -270,19 +270,8 @@ describe('the player stands on one Floor', () => {
     const session = inStateOffice();
     expect(session.changeFloor(1)).toEqual({ kind: 'moved' });
     const snapshot = session.captureResume();
-    const parent = catalogue.instances.find(item => item.id === STATE_OFFICE)!;
-    const dropContent: DamoclesContent = {
-      ...content,
-      catalogue: {
-        ...catalogue,
-        instances: catalogue.instances.map(item =>
-          item.id === STATE_OFFICE
-            ? { ...parent, associationGroups: [{ group: 1, pairs: [] }] }
-            : item
-        )
-      }
-    };
-    const dropping = new DamoclesSession(dropContent, {
+    // The State Office's record lists Insertion Group 1, so region 0 admits the Drop.
+    const dropping = new DamoclesSession(content, {
       ...snapshot,
       carried: ['object-slot-92'],
       residence: [

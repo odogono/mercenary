@@ -2,6 +2,7 @@ import {
   instanceById,
   modelSummaryById,
   type Catalogue,
+  type InsertionGroup,
   type Instance
 } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
@@ -156,6 +157,43 @@ const positionOf = (position: readonly [number, number, number]): Vector3 => ({
   z: position[2]
 });
 
+/// The Insertion Groups bound on Floor `level` of the structure `parentId` places: the groups of
+/// the structure its Floor table names for that Floor (`$7B0E` follows the Floor, #355), or of
+/// its own record where it has no table. Null when that root was not recovered or the Floor is
+/// not one it binds.
+export const structureInsertionGroups = (
+  catalogue: Catalogue,
+  parentId: string,
+  level: number
+): readonly InsertionGroup[] | null => {
+  const own = modelSummaryById(
+    catalogue,
+    instanceById(catalogue, parentId)?.model
+  );
+  const bound =
+    own?.floorStructures === undefined
+      ? level === 0
+        ? own
+        : undefined
+      : modelSummaryById(
+          catalogue,
+          own.floorStructures.find(floor => floor.level === level)?.structureId
+        );
+  return bound?.insertionGroups ?? null;
+};
+
+/// Whether Floor `level` of the structure `parentId` places lists Insertion Group `group`: a
+/// Drop there is refused otherwise (`$05453A`).
+export const admitsInsertionGroup = (
+  catalogue: Catalogue,
+  parentId: string,
+  level: number,
+  group: number
+): boolean =>
+  structureInsertionGroups(catalogue, parentId, level)?.some(
+    item => item.group === group
+  ) ?? false;
+
 /// How many times a structure resident is inserted in one region of its parent.
 ///
 /// A resident is exposed where its insertion group **numbers** the region — the implicit
@@ -166,14 +204,11 @@ const positionOf = (position: readonly [number, number, number]): Vector3 => ({
 /// The explicit pairs come from the **resident's own** `association.insertions`, which the
 /// extractor resolves from the parent's association-list root for every resident it places
 /// (docs/research/damocles-dion-vesta-structure-groups.md, "the association-list root is derived,
-/// not tabulated"). The parent's whole `associationGroups` table is published for Capital
-/// Spaceport alone, so consulting that instead left every other structure with the implicit pair
-/// only, and its residents placed and never drawn.
+/// not tabulated").
 ///
-/// A Drop writes its own insertion group. Where that differs from the resident's authored group
-/// the resident's pairs do not describe it, so only the parent's table can answer, and a parent
-/// without one falls back to the implicit pair. That is a real limit, not a default: nothing in
-/// the payload says which regions another group reaches.
+/// A Drop writes its own Insertion Group, parent and Floor. Unless all three are the resident's
+/// authored ones, its pairs do not describe it, so the Insertion Groups bound on that Floor of the
+/// parent answer, and a group the structure does not list falls back to the implicit pair.
 export const insertionsInRegion = (
   catalogue: Catalogue,
   instanceId: string,
@@ -185,14 +220,19 @@ export const insertionsInRegion = (
   }
   const instance = instanceById(catalogue, instanceId);
   const own = instance?.association;
-  const explicit =
-    own?.insertionGroupSelector === residence.insertionGroup
-      ? own.insertions
-      : catalogue.instances
-          .find(item => item.id === residence.parent)
-          ?.associationGroups?.find(
-            group => group.group === residence.insertionGroup
-          )?.pairs;
+  const authored =
+    own !== null &&
+    own !== undefined &&
+    instance?.placement?.parent === residence.parent &&
+    own.levelSelector === residence.level &&
+    own.insertionGroupSelector === residence.insertionGroup;
+  const explicit = authored
+    ? own.insertions
+    : structureInsertionGroups(
+        catalogue,
+        residence.parent,
+        residence.level
+      )?.find(group => group.group === residence.insertionGroup)?.pairs;
   return (
     (residence.insertionGroup === regionSelector ? 1 : 0) +
     (explicit?.filter(pair => pair.regionSelector === regionSelector).length ??
@@ -291,10 +331,12 @@ export const validStructureResidence = (
       instance.placement.position[1] === residence.position.y &&
       instance.placement.position[2] === residence.position.z
   );
-  const admittedGroup =
-    parent.associationGroups?.some(
-      group => group.group === residence.insertionGroup
-    ) ?? false;
+  const admittedGroup = admitsInsertionGroup(
+    catalogue,
+    residence.parent,
+    residence.level,
+    residence.insertionGroup
+  );
   // Direct structures do not publish an alias pitch ($054DE0). Level zero at
   // Y=0 satisfies every positive pitch; this admits no inferred height or elevation. A
   // recovered level-zero placement is admitted where it stands (a WALL PHONE hangs at Y=40),

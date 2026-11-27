@@ -38,6 +38,164 @@
       }
     ],
     "id": "structure-01ddbe",
+    "insertionGroups": [
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 5,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 28,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 28,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 11
+          }
+        ]
+      },
+      {
+        "group": 4,
+        "pairs": [
+          {
+            "insertionKey": 26,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 11
+          }
+        ]
+      },
+      {
+        "group": 5,
+        "pairs": [
+          {
+            "insertionKey": 26,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 18,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 18,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 11
+          }
+        ]
+      },
+      {
+        "group": 6,
+        "pairs": [
+          {
+            "insertionKey": 26,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 26,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 18,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 18,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 18,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 19,
+            "regionSelector": 11
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "levelBinding": {
       "floors": [
@@ -4164,7 +4322,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

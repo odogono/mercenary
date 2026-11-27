@@ -277,9 +277,10 @@ describe('Damocles Saves', () => {
         residence: [
           {
             instance: 'object-slot-183',
+            // The State Office's Floor 0 lists groups 1 and 7 only (#1000).
             residence: {
               body: 'body-11',
-              insertionGroup: 1,
+              insertionGroup: 3,
               kind: 'structure' as const,
               level: 0,
               parent: 'eris-surface-89',

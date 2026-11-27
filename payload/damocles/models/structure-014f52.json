@@ -2,6 +2,120 @@
   "model": {
     "evidence": [],
     "id": "structure-014f52",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 43,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 10
+          }
+        ]
+      },
+      {
+        "group": 7,
+        "pairs": [
+          {
+            "insertionKey": 3,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 6
+          }
+        ]
+      },
+      {
+        "group": 8,
+        "pairs": [
+          {
+            "insertionKey": 45,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 46,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 10
+          }
+        ]
+      },
+      {
+        "group": 9,
+        "pairs": [
+          {
+            "insertionKey": 51,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 10,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 45,
+            "regionSelector": 10
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "linkedInstances": [],
     "name": "Structure 78",
@@ -6040,7 +6154,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

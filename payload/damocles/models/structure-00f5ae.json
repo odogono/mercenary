@@ -2,6 +2,332 @@
   "model": {
     "evidence": [],
     "id": "structure-00f5ae",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 13,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 4,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 4,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 20
+          }
+        ]
+      },
+      {
+        "group": 2,
+        "pairs": [
+          {
+            "insertionKey": 13,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 1,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 4,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 20
+          }
+        ]
+      },
+      {
+        "group": 3,
+        "pairs": [
+          {
+            "insertionKey": 13,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 1,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 20
+          }
+        ]
+      },
+      {
+        "group": 4,
+        "pairs": [
+          {
+            "insertionKey": 13,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 14,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 4,
+            "regionSelector": 16
+          },
+          {
+            "insertionKey": 13,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 20
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "linkedInstances": [],
     "name": "Structure 8",
@@ -2809,7 +3135,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

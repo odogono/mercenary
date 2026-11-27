@@ -3621,6 +3621,8 @@ def bind_floor_structures(models: list[dict], by_address: dict, tables: list,
                     }],
                     'sceneColours': scene_colours,
                     'structureSelection': selection,
+                    # The same record at another scale: its association list is unchanged.
+                    'insertionGroups': source.get('insertionGroups'),
                 }
                 classify_record(derived, False)
                 by_address[identity] = derived
@@ -4887,6 +4889,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 if orientation is not None:
                     model['instanceOrientation'] = orientation
             elif kind == 'structure':
+                # Null until the record's association-list root is recovered below.
+                model['insertionGroups'] = None
                 storey_height = structure_storey_height(data, slot)
                 if storey_height is not None:
                     model['storeyHeight'] = storey_height
@@ -4938,6 +4942,14 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         # structure-group probe derives from; it is not a
                         # published catalogue fact, so it stays out of the payload.
                         structure_association_roots[identity] = selection.pop('associationRoot')
+                        # The record's own Insertion Groups: a Drop inside any placement of it
+                        # is refused unless one is numbered for the current region ($05453A).
+                        # An empty list is recovered too, and refuses every indoor Drop.
+                        model['insertionGroups'] = [
+                            {'group': group, 'pairs': pairs}
+                            for group, pairs in decode_structure_associations(
+                                data, structure_association_roots[identity]).items()
+                        ]
                         wall_text_gaps = selection.pop('wallTextGaps')
                         model['structureSelection'] = selection
                         gaps = [
@@ -5698,10 +5710,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         if insertions is None:
             raise ValueError('spaceport resident insertion group is missing')
         association['insertions'] = insertions
-        spaceport['associationGroups'] = [
-            {'group': group, 'pairs': pairs}
-            for group, pairs in groups.items()
-        ]
+        if by_address[spaceport['model']].get('insertionGroups') != [
+            {'group': group, 'pairs': pairs} for group, pairs in groups.items()
+        ]:
+            raise ValueError('spaceport insertion groups do not match the reviewed root $14AAC')
         spaceport_raw = [round(spaceport['location']['position'][axis] * 65536) for axis in (0, 1, 2)]
         key_position = resident_local_position(data, 183, tuple(spaceport_raw))
         key['placement'] = {'parent': spaceport['id'], 'position': key_position,
@@ -6259,7 +6271,6 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     resident_ids = {f'object-slot-{slot}' for slot in range(1, 256)}
     instance_ids = {instance['id'] for instance in instances}
     for instance in instances:
-        instance.setdefault('associationGroups', None)
         instance['boarding'] = None
         if instance['id'] in resident_ids:
             instance['boarding'] = resident_boarding(
@@ -6359,12 +6370,23 @@ def articulation_table(data: bytes) -> list[int]:
     return list(struct.unpack_from('>320h', data, TRIG_TABLE))
 
 
-SCHEMA_VERSION = 17
+SCHEMA_VERSION = 18
 MODEL_INDEX_FIELDS = ('id', 'kind', 'name', 'recordClass', 'slots', 'status')
 # The facts a game rule reads without drawing: a structure's storey pitch admits a structure
-# residence, and a support's top decides a Drop. Indexed where the Model records them, so a
-# Save can be validated before any Model file is read.
-MODEL_INDEX_RULE_FIELDS = ('storeyHeight', 'supportTop')
+# residence, a support's top decides a Drop, and a structure's Insertion Groups admit a Drop
+# inside it. Indexed where the Model records them, so a Save can be validated before any Model
+# file is read.
+MODEL_INDEX_RULE_FIELDS = ('insertionGroups', 'storeyHeight', 'supportTop')
+
+
+def floor_structures(model: dict) -> list[dict] | None:
+    """The structure each Floor binds, from the Model's Floor table: above Floor 0 the bound
+    structure's association list, not the building's, admits a Drop ($7B0E, #355)."""
+    binding = model.get('levelBinding')
+    if binding is None:
+        return None
+    return [{'level': floor['level'], 'structureId': floor['structureId']}
+            for floor in binding['floors']]
 
 
 def body_models(result: dict) -> dict[str, list[str]]:
@@ -6410,7 +6432,9 @@ def split_catalogue(result: dict) -> tuple[dict, dict[str, dict]]:
     document['bodies'] = [{**body, 'models': closure[body['id']]} for body in result['bodies']]
     document['modelIndex'] = [
         {**{field: model[field] for field in MODEL_INDEX_FIELDS},
-         **{field: model[field] for field in MODEL_INDEX_RULE_FIELDS if field in model}}
+         **{field: model[field] for field in MODEL_INDEX_RULE_FIELDS if field in model},
+         **({} if floor_structures(model) is None
+            else {'floorStructures': floor_structures(model)})}
         for model in result['models']]
     source = {'programSha256': result['source']['programSha256'], 'run': result['source']['run']}
     files = {model['id']: {'schemaVersion': SCHEMA_VERSION, 'source': source, 'model': model}

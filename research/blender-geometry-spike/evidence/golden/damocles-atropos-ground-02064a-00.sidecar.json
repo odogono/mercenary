@@ -41,7 +41,7 @@
         }
       ]
     },
-    "schemaVersion": 17,
+    "schemaVersion": 18,
     "source": {
       "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
       "run": "observe-first-world-20260818T101013Z-c5a32b7d"
@@ -51,7 +51,7 @@
   "source": {
     "document": "damocles/models/atropos-ground-02064a-00.json",
     "path": "$",
-    "sha256": "3aa3a3907f655ea39b81a679b04c67a9d9bc95a4ed7d1a4284096bb3f4a98c16"
+    "sha256": "7268049c4eab353a997faf59f703d75a5e83982921604af251204b709d6bca91"
   },
   "title": "damocles",
   "version": 2

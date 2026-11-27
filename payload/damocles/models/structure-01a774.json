@@ -2,6 +2,152 @@
   "model": {
     "evidence": [],
     "id": "structure-01a774",
+    "insertionGroups": [
+      {
+        "group": 1,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 17,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 14
+          }
+        ]
+      },
+      {
+        "group": 2,
+        "pairs": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 17,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 16,
+            "regionSelector": 13
+          }
+        ]
+      },
+      {
+        "group": 5,
+        "pairs": [
+          {
+            "insertionKey": 25,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 22,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 22,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 21,
+            "regionSelector": 14
+          }
+        ]
+      },
+      {
+        "group": 6,
+        "pairs": [
+          {
+            "insertionKey": 4,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 4,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 14
+          }
+        ]
+      }
+    ],
     "kind": "structure",
     "levelBinding": {
       "floors": [
@@ -4123,7 +4269,7 @@
       }
     ]
   },
-  "schemaVersion": 17,
+  "schemaVersion": 18,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

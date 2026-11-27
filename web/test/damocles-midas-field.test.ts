@@ -186,9 +186,9 @@ describe('the Midas uniform field', () => {
         crystal as Parameters<typeof validStructureResidence>[1]
       )
     ).toBe(true);
-    // A copy the Catalogue does not store resolves like any other structure Instance. It
-    // admits no Drop by itself, for the reason every structure without a published
-    // association table does: none is recovered, and structure 68 publishes no storey pitch.
+    // A copy the Catalogue does not store resolves like any other structure Instance, and
+    // admits the crystal's residence as the stored copy does: structure 68 publishes no storey
+    // pitch, so a level-0 residence at Y=0 stands on its record's Insertion Groups (#1000).
     const parent = instanceById(catalogue, `${PREFIX}-surface-358-3493`);
     expect(parent?.location?.body).toBe('body-2');
     expect(
@@ -196,6 +196,6 @@ describe('the Midas uniform field', () => {
         ...(crystal as Parameters<typeof validStructureResidence>[1]),
         parent: `${PREFIX}-surface-358-3493`
       })
-    ).toBe(false);
+    ).toBe(true);
   });
 });

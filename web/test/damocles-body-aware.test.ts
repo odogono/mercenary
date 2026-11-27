@@ -8,6 +8,7 @@ import {
   catalogueResidence,
   generateAcceptanceMatrix,
   insertionsInRegion,
+  structureInsertionGroups,
   structureStoreyHeight,
   validStructureResidence
 } from '../src/damocles/residence.ts';
@@ -325,15 +326,11 @@ describe('body-aware Object Residence', () => {
 });
 
 describe('a resident is exposed by its own insertion pairs', () => {
-  /// Before this rule, the port asked the **parent** for its association-group table. The
-  /// extractor publishes that table for Capital Spaceport alone, so every other structure fell
-  /// back to the implicit `(group, group)` pair and its residents were placed and never drawn.
-  /// The pairs were in the payload the whole time, on each resident.
-  test('the payload publishes the pairs per resident, not per parent', () => {
-    const withTable = catalogue.instances.filter(
-      item => item.associationGroups !== null
-    );
-    expect(withTable.map(item => item.id)).toEqual(['eris-surface-87']);
+  /// Before this rule, the port asked the **parent** for its Insertion Groups, which were then
+  /// published for Capital Spaceport alone, so every other structure fell back to the implicit
+  /// `(group, group)` pair and its residents were placed and never drawn. The pairs were in the
+  /// payload the whole time, on each resident.
+  test('the payload publishes the pairs per resident', () => {
     // Every placed structure resident carries its own group's pairs. Seven once kept the
     // implicit pair alone: they stand on upper Floors, and their pairs are in the association
     // list of the structure their Floor binds, not the ground structure's.
@@ -366,12 +363,12 @@ describe('a resident is exposed by its own insertion pairs', () => {
 
   test('the Capital Spaceport answer is unchanged by the switch of source', () => {
     const key = catalogueResidence(catalogue, 'object-slot-183')!;
-    const parent = catalogue.instances.find(
-      item => item.id === 'eris-surface-87'
-    )!;
-    const table = parent.associationGroups!.find(group => group.group === 12)!;
-    // The resident's own pairs and the parent's table agree, which is what lets one replace
-    // the other without changing the one structure that publishes both.
+    const table = structureInsertionGroups(
+      catalogue,
+      'eris-surface-87',
+      0
+    )!.find(group => group.group === 12)!;
+    // The resident's own pairs and the parent's Insertion Group agree, so either answers.
     expect(
       catalogue.instances
         .find(item => item.id === 'object-slot-183')!
