@@ -392,7 +392,8 @@ through the command FIFO after the machine is up, and the debugger's own `quit` 
 not return from a breakpoint script, so a case is finished when its last capture is
 complete. Cases cover default and expanded capacity, the equality that enforces it,
 every handling class, both ANTIGRAV overrides, the BRIEFCASE's expansion, overflow
-store and exact round trip, the shared refusal words and the drop's rank comparison.
+store and exact round trip, the shared refusal words, the drop's rank comparison, and a
+carried craft's drop (#1007).
 
 **These are instruction checkpoints, not ordinary routes.** The probe writes state the
 walk and the scene pass would otherwise produce, and none of the three special items
