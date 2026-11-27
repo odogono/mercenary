@@ -421,3 +421,136 @@ describe('a hop whose destination is still streaming in', () => {
     expect(session.snapshot.locationName).toBe('VOID');
   });
 });
+
+/// Carry Transporter slot 66 into `saved`, as an ANTIGRAV take leaves it.
+const carrying66 = (saved: DamoclesSaveSnapshot): DamoclesSaveSnapshot => ({
+  ...saved,
+  carried: ['object-slot-66', ...saved.carried],
+  residence: [
+    ...saved.residence.filter(item => item.instance !== 'object-slot-66'),
+    {
+      instance: 'object-slot-66',
+      residence: {
+        kind: 'carried',
+        placementClass: catalogue.instances.find(
+          item => item.id === 'object-slot-66'
+        )!.placementClass!
+      }
+    }
+  ]
+});
+
+/// Resume `saved` standing in slot 69's cube, or `dz` units north of it, facing `heading`.
+const standAt69 = (
+  saved: DamoclesSaveSnapshot,
+  dz = 0,
+  heading = SOUTH,
+  change: Partial<DamoclesSaveSnapshot> = {}
+): DamoclesSession =>
+  new DamoclesSession(content, {
+    ...saved,
+    ...change,
+    pose: {
+      ...saved.pose,
+      heading,
+      position: { x: SLOT_69.x, y: SLOT_69.y + 63, z: SLOT_69.z + dz }
+    }
+  });
+
+/// Walk forwards until a message shows or two seconds pass, then stop where the hop left it.
+const walkUntilMessage = (session: DamoclesSession): void => {
+  session.intent = { ...IDLE, walk: 1 };
+  for (
+    let frame = 0;
+    frame < 100 && session.snapshot.message === null;
+    frame += 1
+  ) {
+    session.advance(1 / 50);
+  }
+  session.intent = IDLE;
+};
+
+describe('a dropped Transporter (#1007)', () => {
+  test('carried, it is passed by the ring and its digit does nothing', () => {
+    const saved = carrying66(atSlot69Floor());
+    const digit = standAt69(saved);
+    expect(digit.transporterKey(2).kind).toBe('ignored');
+    expect(at(digit).body).toBe('body-11');
+
+    // Slots 68 and 67 gone and 66 carried: walking north steps down past all three to 65.
+    const ring = standAt69(saved, -100, NORTH, {
+      removedResidents: ['object-slot-67', 'object-slot-68']
+    });
+    walkUntilMessage(ring);
+    expect(ring.snapshot.message?.id).toBe('system-string-18');
+    // Passed exactly as if it were gone: both land at slot 65, on Eris too.
+    const gone = standAt69(atSlot69Floor(), -100, NORTH, {
+      removedResidents: ['object-slot-66', 'object-slot-67', 'object-slot-68']
+    });
+    walkUntilMessage(gone);
+    expect(ring.snapshot.pose.position).toEqual(gone.snapshot.pose.position);
+    expect(at(ring)).toEqual(at(gone));
+    expect(ring.snapshot.pose.position.z).not.toBe(SLOT_69.z);
+  });
+
+  test('dropped on a Floor, it lies there and both its digit and the ring reach it', () => {
+    const carrying = standAt69(carrying66(atSlot69Floor()), 300);
+    carrying.advance(1 / 50);
+    expect(carrying.inTransporter).toBe(false);
+    const dropped = carrying.snapshot.pose.position;
+    expect(carrying.drop()).toEqual({ kind: 'dropped' });
+    const residence = carrying.snapshot.residence.find(
+      item => item.instance === 'object-slot-66'
+    )?.residence;
+    expect(residence?.kind).toBe('structure');
+    const saved = carrying.captureResume();
+    // A hop stands the player at the resident's Y plus $3F: back where they dropped it.
+    const arrival = dropped;
+
+    const digit = standAt69(saved);
+    expect(digit.transporterKey(2).kind).toBe('hopped');
+    expect(at(digit)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+    expect(digit.snapshot.pose.position).toEqual(arrival);
+    expect(digit.inTransporter).toBe(true);
+
+    const ring = standAt69(saved, -100, NORTH, {
+      removedResidents: ['object-slot-67', 'object-slot-68']
+    });
+    walkUntilMessage(ring);
+    expect(ring.snapshot.message?.id).toBe('system-string-18');
+    expect(ring.snapshot.pose.position).toEqual(arrival);
+    expect(at(ring)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+  });
+
+  test('dropped on the surface, its digit reaches it there', () => {
+    const saved = carrying66(atSlot69Floor());
+    const outside = new DamoclesSession(content, {
+      ...saved,
+      pose: {
+        body: 'body-11',
+        heading: 0,
+        pitch: 0,
+        position: { x: 0, y: content.doc.eye.heightUnits, z: 0 }
+      },
+      structure: null
+    });
+    expect(outside.drop()).toEqual({ kind: 'dropped' });
+    expect(
+      outside.snapshot.residence.find(
+        item => item.instance === 'object-slot-66'
+      )?.residence
+    ).toEqual(
+      expect.objectContaining({
+        body: 'body-11',
+        kind: 'surface',
+        position: { x: 0, y: 0, z: 0 }
+      })
+    );
+
+    const digit = standAt69(outside.captureResume());
+    expect(digit.transporterKey(2).kind).toBe('hopped');
+    expect(digit.snapshot.pose.body).toBe('body-11');
+    expect(digit.snapshot.structure).toBeNull();
+    expect(digit.snapshot.pose.position).toEqual({ x: 0, y: 63, z: 0 });
+  });
+});
