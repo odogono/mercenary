@@ -101,12 +101,12 @@ code may act on it.
 
 > **The reachability half of this section is superseded.** The recount for
 > [#1002](https://github.com/odogono/mercenary/issues/1002) found that in the port
-> only Novagen Office's residents still need their key: Authors House and Vesta
-> Parliament each have an unkeyed door that opens on approach
+> Novagen Office and Vesta Parliament still need their keys, but Authors House does
+> not: an unkeyed side door opens on approach
 > ([what changed since #362](damocles-gamma-system-location-ledger.md#what-changed-since-362)).
 > The key letters below still match the bank. Whether the original game lets a
-> player in without the key, as the port does, is Unresolved; the list says it does
-> not.
+> player into Authors House without key A, as the port does, is Unresolved; the
+> list says it does not.
 
 The [coverage ledger](damocles-gamma-system-location-ledger.md#what-changed-since-362)
 found, as of #362, five level-0 placed residents unreachable because every path from their

@@ -581,8 +581,8 @@ Their mappings and responses were recovered by
 |  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | `dion-surface-de`                          |
 |   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | `vesta-surface-73`                         |
 
-Slot 183 is reachable, delivered under #297 / #300, and so, with every door
-shut, are the other five
+Slot 183 is reachable, delivered under #297 / #300, and so are the other five:
+four with no door key carried and KEY - EAGLE 9SE carrying door key slot 38
 ([#1002](https://github.com/odogono/mercenary/issues/1002); see [a recovered
 placement is not reachability](#a-recovered-placement-is-not-reachability)).
 Cell `$89` is STATE OFFICE; its two residents were placed once every
@@ -613,14 +613,14 @@ not evidence.
 
 Both ANTIGRAV instances select the same source model `object-03f384` and are
 distinct residents at distinct Eris cells; neither is a duplicate of the other.
-BRIEFCASE sits in Vesta cell `$64` — the same cell as the validated Vesta
-arrival pose .
+BRIEFCASE sits in Vesta cell `$64`, the same cell as the validated Vesta
+arrival pose.
 [#325](https://github.com/odogono/mercenary/issues/325) places it at
 parent-local `(337, 951, -210)` inside VESTA PARLIAMENT, on floor 3 of the
 structure's 317-unit storey pitch. All three special items are reachable on foot
-with every door shut
-([#1002](https://github.com/odogono/mercenary/issues/1002)): BRIEFCASE by lift
-to Floor 3, and both ANTIGRAVs by lift to Floor 10 of their islands' structures.
+([#1002](https://github.com/odogono/mercenary/issues/1002)): both ANTIGRAVs with
+no door key carried, by lift to Floor 10 of their islands' structures, and
+BRIEFCASE by lift to Floor 3 carrying door key slot 34.
 
 Nothing about capacity, refusal or reversible special-item effects is claimed
 here. All three carry the ordinary takeable handling byte `$04`; their special
@@ -631,44 +631,57 @@ behaviour is a separate question and belongs to the programme's later slices.
 This ledger already insists a roster entry is not a location. The browser
 verification for [#320](https://github.com/odogono/mercenary/issues/320) forces
 the next distinction: **a recovered parent and local placement are not
-reachability either.** In this note a resident is **reachable** when the port,
-standing somewhere a player can stand, draws it and admits it to the
-selection. This is port reachability. The Working Authority has not been asked
-the same question resident by resident, and nothing below claims it would
-agree.
+reachability either.** In this note a resident is **reachable** when a player,
+standing somewhere the port lets them stand, has it drawn and within selection
+range, the 512 units inside which the nearest drawn resident is selected. This is
+port reachability. The Working Authority has not been asked the same question
+resident by resident, and nothing below claims it would agree.
 
 Recounted on 2026-11-27 for
 [#1002](https://github.com/odogono/mercenary/issues/1002), over all 195
-placements, with upper Floors drawn (#484, #536):
+placements, with upper Floors drawn (#484, #536), from the surface:
 
-| Outcome                               | Count | Slots                                                       |
-| ------------------------------------- | ----: | ----------------------------------------------------------- |
-| Reachable with every door shut        |   184 | every other placed resident                                 |
-| Reachable carrying DOOR KEY A slot 31 |     2 | 64, 197 (`gaea-ur-city-surface-17`, HANTZENS NEW HOUSE)     |
-| Reachable carrying DOOR KEY A slot 33 |     5 | 102, 109, 111, 148, 220 (`dion-surface-b2`, NOVAGEN OFFICE) |
-| Reachable carrying DOOR KEY A slot 37 |     4 | 159–162, GOLD (`tolosa-surface-12`)                         |
-| Not reachable                         |     0 | —                                                           |
+| Outcome                   | Count | Slots and structure                                                          |
+| ------------------------- | ----: | ---------------------------------------------------------------------------- |
+| With no door key carried  |   173 | every other placed resident                                                  |
+| Carrying door key slot 31 |     3 | 64, 84, 197 (`gaea-ur-city-surface-17`, HANTZENS NEW HOUSE)                  |
+| Carrying door key slot 32 |     1 | 47 (`eris-surface-cf`)                                                       |
+| Carrying door key slot 33 |     5 | 102, 109, 111, 148, 220 (`dion-surface-b2`, NOVAGEN OFFICE)                  |
+| Carrying door key slot 34 |     8 | 68, 108, 153, 184, 202, 215, 225, 230 (`vesta-surface-64`, VESTA PARLIAMENT) |
+| Carrying door key slot 37 |     4 | 159–162, GOLD (`tolosa-surface-12`)                                          |
+| Carrying door key slot 38 |     1 | 181, KEY - EAGLE 9SE (`eris-surface-89`, STATE OFFICE)                       |
+| Not reachable             |     0 | —                                                                            |
 
-**Every placed resident is reachable**, all six pickup-trigger objects and all
-three special items among them, each with every door shut. No resident needs
-more than one key. Every key a reached structure's doors want — slots 30, 31,
-32, 33, 34, 37 and 38 — is itself reachable with nothing carried, so no key is
-locked behind its own door.
+**Every placed resident is reachable**, none with more than one key. Five of
+the six pickup-trigger objects need no key; KEY - EAGLE 9SE needs slot 38. Of
+the special items, both ANTIGRAVs need no key and BRIEFCASE needs slot 34.
+Every key a reached structure's doors want — slots 30, 31, 32, 33, 34, 37 and
+38 — is itself reachable with no key carried, so no key is locked behind its
+own door.
+
+**From the surface** means the player starts at a Floor 0 arrival Pose or by
+Atlas Travel, and reaches every upper Floor by lift. Seven of the admitted Poses
+stand on an upper Floor, six of them beside a Transporter. Starting from those
+as well changes one row: VESTA PARLIAMENT's eight residents need no key, because
+`vesta-transporter` stands inside the building past its keyed door. That is a
+Transporter route, which this count excludes (see below).
 
 ### The method
 
 `web/test/damocles-reachability.ts` builds a graph from the session's own
-rules, and `web/test/damocles-body-aware.test.ts` pins the counts above:
+rules, and `web/test/damocles-body-aware.test.ts` pins both counts:
 
-- **Surface travel is assumed, not walked.** The player is stood at every
-  admitted arrival Pose and, by Atlas Travel, in the cell of every resident's
-  parent. Atlas Travel stands in for the flight there. A cell centre the
-  Atlas refuses is retried a quarter-cell away; one parent,
-  `gaea-chaldea-metropolis-surface-65`, needed it.
+- **Surface travel is assumed, not walked.** The player is stood at every Floor
+  0 arrival Pose and, by Atlas Travel, in the cell of every resident's parent.
+  Atlas Travel stands in for the flight there; the 16×16 `goto` window of a
+  Pose would leave out the Eris islands, Dion North and East, Chaldea and every
+  copy of the Midas field. A cell centre the Atlas refuses is retried a
+  quarter-cell away; one parent, `gaea-chaldea-metropolis-surface-65`, needed it.
 - **A node is a region on a Floor**, plus one node for standing in the cell in
   no region. Regions connect where the clamp lets the eye leave its own box: at
   an edge another region's opposite edge lies on, into the first available
-  region past it.
+  region past it. The region boxes and the eye's clearance are the session's
+  own (`workspaceBounds`, `clearanceFor`).
 - **Selection applies only in the cell's central half.** Past it the region is
   cleared and the step stands unclamped; walking back in, the first available
   region at the point is selected. The graph uses that as an edge on Floor 0.
@@ -677,6 +690,9 @@ rules, and `web/test/damocles-body-aware.test.ts` pins the counts above:
   opens on approach.
 - **A lift links the Floors its Floor Table binds.** A ride arrives at the same
   X and Z with every door shut.
+- **A resident counts where it is in range.** Some reachable region on its
+  Floor must expose it, and a point of that region's inset box within the
+  central half must lie within 512 units of it.
 - **Keys are a fixed point.** Nothing is carried at first. Every door key that
   becomes reachable is carried, and the walk runs again until nothing changes.
   A keyed row names the keys without any one of which its residents are not
@@ -685,16 +701,20 @@ rules, and `web/test/damocles-body-aware.test.ts` pins the counts above:
   them ([departure routes](damocles-arrival-routes.md)), but the port does not
   implement them, so they make nothing reachable here.
 
-Every one of the 195 routes was walked once in a live session, turning,
-walking, waiting at doors and riding lifts as a player would, and every
-resident was drawn at its end. The suite walks fifteen of them: the six
-pickup-trigger objects, the three special items, door keys 30, 33 and 34, and
-one resident behind each key (64, 109 and 159). A key is taken from afar before
-such a walk, as the console's `get` does; where it is reached is the graph's
-claim.
+Every one of the 195 routes was walked once from the surface in a live session,
+turning, walking, waiting at doors and riding lifts as a player would, and at
+the end of each the resident was drawn within selection range. For 39 of them
+another resident stood nearer, so the selection took that one first: four GOLD
+stacked together, a BED beside a TABLE. The suite walks seventeen: the six
+pickup-trigger objects, the three special items, door keys 30, 33 and 34 —
+each of these twelve actually selected — and one resident behind keys 31, 32,
+33, 34 and 37. It also walks one upper-Floor resident of each structure an
+upper-Floor Pose stands in, by lift from the ground. A key is taken from afar
+before a keyed walk, as the console's `get` does; where it is reached is the
+graph's claim.
 
-**The cell centre is one position.** A `goto` sweep over every cell draws only
-slot 183 of the six pickup-trigger objects
+**The cell centre is one position.** A `goto` sweep over every cell of the
+Pose windows draws only slot 183 of the six pickup-trigger objects
 (`web/test/damocles-console.test.ts`). Reachability claims here are made
 against the graph and the walked sessions, never against cell centres.
 
@@ -703,32 +723,32 @@ against the graph and the walked sessions, never against cell centres.
 #362 measured 28 placed residents and found 9 reachable. Three things moved
 that count:
 
-| Then                                                                           | Now                                                          |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
-| 167 residents had no recovered placement, slots 151 and 181 among them         | All 195 are placed                                           |
-| Only level 0 was drawn, so CASH REGISTER (slot 94, Floor 1) could not be       | Upper Floors are drawn; slot 94 is reached by lift           |
-| Five level-0 residents were behind keyed entrances whose keys had no placement | Four of the five need no key at all, and the keys are placed |
+| Then                                                                           | Now                                                                         |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| 167 residents had no recovered placement, slots 151 and 181 among them         | All 195 are placed                                                          |
+| Only level 0 was drawn, so CASH REGISTER (slot 94, Floor 1) could not be       | Upper Floors are drawn; slot 94 is reached by lift                          |
+| Five level-0 residents were behind keyed entrances whose keys had no placement | The keys are placed and reachable, and three of the five need no key at all |
 
-The last row overturns a #362 finding. It found AUTHORS COMPUTER (slot 101),
-AUTHOR'S CHAIR (14) and AUTHORS DESK (234) in Authors House, and BENCH (215) in
-Vesta Parliament, reachable only through a region gated by an attachment, and
-counted every such region as shut. But only one of the five attachments on
-each building's ground Floor carries a key byte. In Authors House the side door at attachment slot `$3F0`
-has none, so it opens on approach, and from the region a cell-centre `goto`
-binds (selector 18) the walk passes through it into selector 8 and on to
-selector 11, which exposes AUTHORS COMPUTER. The walked session confirms it
-with no key carried.
+The last row overturns part of a #362 finding. It found AUTHORS COMPUTER (slot
+101), AUTHOR'S CHAIR (14) and AUTHORS DESK (234) in Authors House reachable only
+through a region gated by an attachment, and counted every such region as shut.
+But only one of the five attachments on Authors House's ground Floor carries a
+key byte. The side door at attachment slot `$3F0` has none, so it opens on
+approach, and from the region a cell-centre `goto` binds (selector 18) the walk
+passes through it into selector 8 and on to selector 11, which exposes AUTHORS
+COMPUTER. The walked session confirms it with no key carried.
 
 Whether the original game agrees is **Unresolved**. The
-[guide item list](damocles-guide-resident-list.md) marks both buildings "needs
-key", and the key letters it gives match the `$7AFB` base exactly. Either the
+[guide item list](damocles-guide-resident-list.md) marks Authors House "needs
+key A", and the letter it gives matches the `$7AFB` base exactly. Either the
 port is opening a door the original keeps shut, or the guide's note means the
 front door rather than the only way in. A live capture standing in Authors
 House selector 11 with nothing carried would settle it.
 
-Novagen Office, the fifth #362 case (slot 109, RUBBISH BIN), still needs its
-key, slot 33. Its ground Floor also has one keyed door among three, but there
-every route to its residents crosses the keyed one.
+The other two #362 cases stand. BENCH (slot 215) in Vesta Parliament still
+needs its key, slot 34, from the surface, and RUBBISH BIN (109) in Novagen
+Office still needs slot 33. Each building's ground Floor also has unkeyed doors,
+but there every route to its residents crosses the keyed one.
 
 ## Residents with no location evidence
 
@@ -807,19 +827,19 @@ permission to invent a standing position — agreeing with a live capture's cell
 does not make a guide name a recovered place. The seven residentless unposed
 bodies remain lower-priority coverage work.
 
-| Slice                                                       | Evidence sufficient?         | What it rests on                                                                                                                                                                        |
-| ----------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ordinary take and drop on the Eris surface                  | **Yes**                      | First-world Eris workspace, the validated Eris pose, 34-record surface census                                                                                                           |
-| Ordinary take and drop inside Capital Spaceport             | **Yes**                      | Slot 183 placement, region grammar, drop research (#312)                                                                                                                                |
-| Body switch to DION / GAEA / VESTA at a pose                | **Yes**, for the pose itself | `payload/damocles/arrival-poses.json`; each pose is one standing position only                                                                                                          |
-| Surface objects on DION / GAEA / VESTA                      | **Partly**                   | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved                                                                                                        |
-| Interior objects anywhere but the two Eris keys             | **Yes**, in the port         | All 195 interior residents placed and reachable, 11 of them with one door key (#1002); Authors House and Vesta Parliament's key requirement is Unresolved against the Working Authority |
-| Pickup-triggered responses beyond slot 183                  | **Yes**, in the port         | Responses recovered (#317) and implemented (#346); all five other objects placed and reachable with every door shut (#1002)                                                             |
-| Interior objects with a recovered placement on DION / VESTA | **Yes**, in the port         | All placed and reachable; Novagen Office's five residents need door key slot 33 (#1002)                                                                                                 |
-| Body switch to any of the other seventeen anchored bodies   | **Yes**, for the pose itself | `payload/damocles/arrival-poses.json`; each cell is engine-read and anchored to a recovered window (#172)                                                                               |
-| Body switch to MIDAS or DAMOCLES                            | **MIDAS only**               | MIDAS's pose is anchored to its field window (#172); DAMOCLES binds no workspace                                                                                                        |
-| Surface assemblies on the bodies #172 recovered             | **Partly**                   | Twenty-one live workspaces and their place names; every interior resident on them placed                                                                                                |
-| Any of the seven unposed bodies                             | **No**                       | No surface workspace, no arrival pose                                                                                                                                                   |
+| Slice                                                       | Evidence sufficient?         | What it rests on                                                                                                                                                   |
+| ----------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Ordinary take and drop on the Eris surface                  | **Yes**                      | First-world Eris workspace, the validated Eris pose, 34-record surface census                                                                                      |
+| Ordinary take and drop inside Capital Spaceport             | **Yes**                      | Slot 183 placement, region grammar, drop research (#312)                                                                                                           |
+| Body switch to DION / GAEA / VESTA at a pose                | **Yes**, for the pose itself | `payload/damocles/arrival-poses.json`; each pose is one standing position only                                                                                     |
+| Surface objects on DION / GAEA / VESTA                      | **Partly**                   | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved                                                                                   |
+| Interior objects anywhere but the two Eris keys             | **Yes**, in the port         | All 195 interior residents placed and reachable, 22 of them with one door key (#1002); Authors House's key requirement is Unresolved against the Working Authority |
+| Pickup-triggered responses beyond slot 183                  | **Yes**, in the port         | Responses recovered (#317) and implemented (#346); all five other objects placed and reachable, KEY - EAGLE 9SE with door key slot 38 (#1002)                      |
+| Interior objects with a recovered placement on DION / VESTA | **Yes**, in the port         | All placed and reachable; Novagen Office's five residents need door key slot 33 and Vesta Parliament's eight slot 34 (#1002)                                       |
+| Body switch to any of the other seventeen anchored bodies   | **Yes**, for the pose itself | `payload/damocles/arrival-poses.json`; each cell is engine-read and anchored to a recovered window (#172)                                                          |
+| Body switch to MIDAS or DAMOCLES                            | **MIDAS only**               | MIDAS's pose is anchored to its field window (#172); DAMOCLES binds no workspace                                                                                   |
+| Surface assemblies on the bodies #172 recovered             | **Partly**                   | Twenty-one live workspaces and their place names; every interior resident on them placed                                                                           |
+| Any of the seven unposed bodies                             | **No**                       | No surface workspace, no arrival pose                                                                                                                              |
 
 ### Bounded tasks this ledger identifies
 
@@ -828,7 +848,7 @@ Already owned, and this ledger supplies the target list rather than new scope:
 - **#252** — Eris structure selectors. _Superseded: #252 is closed, and all four
   objects below are placed ([interior residents in every captured
   workspace](damocles-interior-resident-placement.md)); all four are
-  reachable with every door shut (#1002)._ Cells `$89` (KEY - EAGLE 9SE, DAMOCLES
+  reachable, KEY - EAGLE 9SE carrying door key slot 38 (#1002)._ Cells `$89` (KEY - EAGLE 9SE, DAMOCLES
   FILE), `$77` and `$29` (both ANTIGRAV) are the ledger's highest-value Eris
   cells; all four objects are unreachable until those selectors decode.
 - **#172** — non-Eris surface structures and places. **Substantially delivered.**
@@ -852,8 +872,8 @@ Additional research under #313, required by the deliveries that use it:
    all three keys (slots 30, 33, 34) are now placed
    ([interior residents in every captured
    workspace](damocles-interior-resident-placement.md)) and the port draws upper
-   Floors (#484, #536); all three are reachable with nothing carried, and
-   #1002 found four of the five residents behind them need no key._ See [a recovered placement is not
+   Floors (#484, #536); all three are reachable with no key carried, and
+   #1002 found three of the five residents behind them need no key._ See [a recovered placement is not
    reachability](#a-recovered-placement-is-not-reachability).
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
@@ -902,12 +922,12 @@ Resolved since this ledger was first written:
 - All 195 interior-associated residents have a parent and a local placement
   (`location-ledger.py ledger`, recounted 2026-11-27 for #1001). No placement
   gap remains among residents that claim a body.
-- Every placed resident is reachable in the port: 184 with every door shut and
-  11 with one door key
+- Every placed resident is reachable in the port from the surface: 173 with no
+  door key carried and 22 with one door key
   ([#1002](https://github.com/odogono/mercenary/issues/1002)). Surface travel
   between cells is assumed rather than walked, and Transporters are not
-  counted. Whether Authors House and Vesta Parliament need their keys in the
-  original game, as the guide says, is Unresolved.
+  counted. Whether Authors House needs its key in the original game, as the
+  guide says, is Unresolved.
 - Workspace selection within a body is decoded, and both Gaea groups are now
   bound to a live workspace. Which structure a **level** selects is
   [recovered](damocles-level-structure-binding.md) and published as
@@ -922,23 +942,23 @@ Resolved since this ledger was first written:
 
 ## Provenance summary
 
-| Fact                                                                            | Evidence                                                                                                                                                                                                                                          |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Per-body resident counts and residence forms                                    | `payload/damocles/catalogue.json`; `location-ledger.py ledger`                                                                                                                                                                                    |
-| Residence-form decoding                                                         | [resident object associations](damocles-resident-objects.md)                                                                                                                                                                                      |
-| Twenty-seven on-foot arrival poses on twenty-three bodies                       | Twenty-seven Hatari memstates; `location-ledger.py poses`                                                                                                                                                                                         |
-| Eight bodies reached by steered craft flight                                    | Captured in play by the project owner, 2026-09-19; uninstrumented, so no flight log exists                                                                                                                                                        |
-| The eight new cells agree with the catalogue                                    | `$7B5C` at each pose against the statically decoded resident associations in `payload/damocles/catalogue.json`                                                                                                                                    |
-| Arrival cells                                                                   | The engine cell word `$7B5C`, cross-checked against the camera longwords on the seven poses whose body has a recovered origin                                                                                                                     |
-| The transporter ring and its eight bodies                                       | [departure routes](damocles-arrival-routes.md); catalogue slots 64–73                                                                                                                                                                             |
-| Board gate, its refusals and the per-craft key byte                             | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py`                                                                                                                                                                          |
-| Engine-read arrival cells agree with the workspace notes                        | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md)                                                                                  |
-| Gaea's two workspaces share an origin qualifier                                 | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)                                                                                                                                                                                      |
-| Gaea group `$0F` is CHALDEA METROPOLIS                                          | `gaea-transporter`; `$7A6C=$024AB4` and an `$ABDC` identical to the static decode ([workspace selection](damocles-workspace-selection.md))                                                                                                        |
-| The association list is bound per level                                         | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level                                                                                                       |
-| Six pickup-trigger slots                                                        | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table)                                                                                                                                                                 |
-| Slot 183 is the only pickup-trigger object a cell-centre `goto` draws           | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts`                                                                                                                                            |
-| All 195 placed residents are reachable, 11 with one door key                    | Region graph built from the session's clamp, door-key and lift rules over every admitted Pose and every parent's cell; all 195 routes walked once, fifteen pinned; `web/test/damocles-reachability.ts`, `web/test/damocles-body-aware.test.ts`    |
-| A resident's exposing regions are published per resident                        | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)) |
-| The guide's "needs key" cells match the keyed entrances' letters, 3 cells for 3 | Secondary source only: [guide item list](damocles-guide-resident-list.md); `guide-resident-list-check.py`                                                                                                                                         |
-| Slots 248–255 are a world binding                                               | [catalogue](damocles-catalogue.md)                                                                                                                                                                                                                |
+| Fact                                                                            | Evidence                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Per-body resident counts and residence forms                                    | `payload/damocles/catalogue.json`; `location-ledger.py ledger`                                                                                                                                                                                                           |
+| Residence-form decoding                                                         | [resident object associations](damocles-resident-objects.md)                                                                                                                                                                                                             |
+| Twenty-seven on-foot arrival poses on twenty-three bodies                       | Twenty-seven Hatari memstates; `location-ledger.py poses`                                                                                                                                                                                                                |
+| Eight bodies reached by steered craft flight                                    | Captured in play by the project owner, 2026-09-19; uninstrumented, so no flight log exists                                                                                                                                                                               |
+| The eight new cells agree with the catalogue                                    | `$7B5C` at each pose against the statically decoded resident associations in `payload/damocles/catalogue.json`                                                                                                                                                           |
+| Arrival cells                                                                   | The engine cell word `$7B5C`, cross-checked against the camera longwords on the seven poses whose body has a recovered origin                                                                                                                                            |
+| The transporter ring and its eight bodies                                       | [departure routes](damocles-arrival-routes.md); catalogue slots 64–73                                                                                                                                                                                                    |
+| Board gate, its refusals and the per-craft key byte                             | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py`                                                                                                                                                                                                 |
+| Engine-read arrival cells agree with the workspace notes                        | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md)                                                                                                         |
+| Gaea's two workspaces share an origin qualifier                                 | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)                                                                                                                                                                                                             |
+| Gaea group `$0F` is CHALDEA METROPOLIS                                          | `gaea-transporter`; `$7A6C=$024AB4` and an `$ABDC` identical to the static decode ([workspace selection](damocles-workspace-selection.md))                                                                                                                               |
+| The association list is bound per level                                         | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level                                                                                                                              |
+| Six pickup-trigger slots                                                        | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table)                                                                                                                                                                                        |
+| Slot 183 is the only pickup-trigger object a cell-centre `goto` draws           | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts`                                                                                                                                                                   |
+| All 195 placed residents are reachable, 22 with one door key                    | Region graph built from the session's clamp, door-key, lift and selection-range rules over every Floor 0 arrival Pose and every parent's cell; all 195 routes walked once, seventeen pinned; `web/test/damocles-reachability.ts`, `web/test/damocles-body-aware.test.ts` |
+| A resident's exposing regions are published per resident                        | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated))                        |
+| The guide's "needs key" cells match the keyed entrances' letters, 3 cells for 3 | Secondary source only: [guide item list](damocles-guide-resident-list.md); `guide-resident-list-check.py`                                                                                                                                                                |
+| Slots 248–255 are a world binding                                               | [catalogue](damocles-catalogue.md)                                                                                                                                                                                                                                       |

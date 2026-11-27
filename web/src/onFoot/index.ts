@@ -84,7 +84,7 @@ export interface ClampRegion {
 
 /// `$7B35` / `$71CD`, the flags' low byte: non-negative keeps the eye eleven units in.
 const EYE_CLEARANCE = 11;
-const clearanceFor = (flags: number): number =>
+export const clearanceFor = (flags: number): number =>
   (flags & 0x00_ff) < 0x80 ? EYE_CLEARANCE : 0;
 
 const inside = (

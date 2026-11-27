@@ -234,7 +234,7 @@ describe('get names what it took', () => {
   });
 
   /// `goto` lands at a cell's centre, and only slot 183 of the six pickup residents is drawn from
-  /// one in its Pose's 16x16 window. That is a fact about `goto`, not about reachability: the
+  /// one in the 16x16 windows of the Poses swept here. That is a fact about `goto`, not about reachability: the
   /// other five are stood beside by walking in from a cell centre, riding a lift, or travelling
   /// to another island or cell of the Midas field (test/damocles-body-aware.test.ts, #1002).
   ///
@@ -243,9 +243,9 @@ describe('get names what it took', () => {
   /// - slot 94 is on Floor 1, and a `goto` stands the player on Floor 0;
   /// - slot 101 is level 0 on Dion, but its insertion group 32 never names the region the cell's
   ///   centre binds;
-  /// - slot 95 is drawn on Midas only from its own cell of the field, about 2,200 cells from the
-  ///   field window the Midas Pose stands in.
-  test('slot 183 is the only pickup resident drawn from a cell centre', async () => {
+  /// - slot 95 is drawn from the centre of its own Midas cell, Body Coordinates (2364.5, 376.5),
+  ///   about 2,200 cells from the field window the Midas Pose stands in.
+  test('slot 183 is the only pickup resident a goto draws in its Pose window', async () => {
     const eris = await drawnAnywhere('eris-spaceport-onfoot');
     expect(eris.has('object-slot-183')).toBe(true);
     expect(eris.has('object-slot-151')).toBe(false);

@@ -4,9 +4,11 @@
 /// admits it to the selection. This walks the same rules the session runs, as a graph rather
 /// than frame by frame, so it can visit every structure of every admitted Body at once:
 ///
-/// - **Surface travel is a cell teleport.** Every cell of an admitted Body's 16x16 window is
-///   entered at its centre, as `teleportToCell` lands there, and so is every admitted arrival
-///   Pose. Walking or flying between cells is assumed, not walked.
+/// - **Surface travel is assumed, not walked.** The player stands at every admitted arrival Pose
+///   and, by Atlas Travel, in the cell of every resident's parent.
+/// - **Selection applies only in the cell's central half**, and the selection takes the nearest
+///   drawn resident within 512 units, so a resident counts only where a standable point of a
+///   reachable region exposing it is that close.
 /// - **Regions connect as the clamp lets the eye pass.** From a region the eye can leave its own
 ///   box only at an edge another region's opposite edge lies on; past it the regions are walked
 ///   and the first available one holding the point is entered (`clampRegionStep`).
@@ -34,29 +36,20 @@ import {
   structureInCell
 } from '../src/damocles/world.ts';
 import type { ScenePlacement as ErisPlacement } from '../src/enhanced/scene.ts';
-import { regionAt, type ClampRegion } from '../src/onFoot/index.ts';
+import {
+  clearanceFor,
+  regionAt,
+  type ClampRegion
+} from '../src/onFoot/index.ts';
 import { LIFT_REGION } from '../src/structure/lift.ts';
+import { workspaceBounds } from '../src/structure/selection.ts';
 
 type Region = NonNullable<
   ErisPlacement['selection']
 >['structure']['regions'][number];
 
-const EYE_CLEARANCE = 11;
-const clearanceFor = (flags: number): number =>
-  (flags & 0x00_ff) < 0x80 ? EYE_CLEARANCE : 0;
-
-/// The box the clamp and the region walk read: the bind's ±11 inset on a gated region's axis.
-const workspaceBounds = (region: Region): ClampRegion['bounds'] => {
-  if (region.insetAxis === undefined) {
-    return region.bounds;
-  }
-  const axis = region.insetAxis === 'x' ? 0 : 1;
-  return region.bounds.map((pair, index) =>
-    index === axis
-      ? ([pair[0] + EYE_CLEARANCE, pair[1] - EYE_CLEARANCE] as const)
-      : pair
-  );
-};
+/// `selection()`: the nearest drawn resident closer than this is selected.
+const SELECTION_RANGE = 512;
 
 /// One node of the graph: a region on a Floor of a structure placed in a cell.
 export interface Node {
@@ -76,10 +69,14 @@ export interface Structure {
   readonly central: Box;
   /// A fresh session standing at each start, by node.
   readonly enter: Map<string, () => DamoclesSession>;
+  /// The eye's height above a Floor, the storey pitch, and whether model Z is negated.
+  readonly eye: number;
   readonly floors: ReadonlyMap<number, ErisPlacement>;
   readonly ground: ErisPlacement;
+  readonly negate: boolean;
   /// Where an arrival Pose or Atlas Travel stands the player, before any walking.
   readonly starts: Node[];
+  readonly storey: number;
 }
 
 /// The door key a gated region waits on, or null where its door opens on approach.
@@ -271,10 +268,11 @@ export interface Reached {
 /// Every node of `structure` a player can stand in while carrying `keys`, breadth first.
 export const reachableNodes = (
   structure: Structure,
-  keys: ReadonlySet<number>
+  keys: ReadonlySet<number>,
+  starts: readonly Node[] = structure.starts
 ): ReadonlyMap<string, Reached> => {
   const seen = new Map<string, Reached>();
-  const queue: Reached[] = structure.starts.map(node => ({
+  const queue: Reached[] = starts.map(node => ({
     from: null,
     node,
     step: null
@@ -335,6 +333,48 @@ export const reachableNodes = (
     }
   }
   return seen;
+};
+
+/// Where in `node` a player stands closest to the resident at `residence`, if close enough to
+/// select it: the nearest point of the region's inset box within the central half.
+export const selectablePoint = (
+  structure: Structure,
+  node: Node,
+  residence: { readonly position: { x: number; y: number; z: number } }
+): Point2 | null => {
+  if (node.region === OUTSIDE) {
+    return null;
+  }
+  const region = structure.floors.get(node.floor)!.selection!.structure.regions[
+    node.region
+  ]!;
+  const clearance = clearanceFor(region.flags);
+  const box = workspaceBounds(region).map(([min, max], axis) => [
+    Math.max(min + clearance, structure.central[axis]![0]),
+    Math.min(max - clearance, structure.central[axis]![1]) - 1
+  ]);
+  if (box.some(([min, max]) => min! > max!)) {
+    return null;
+  }
+  // The session places a structure resident at its parent's position plus its own, unturned.
+  const { heading } = structure.ground;
+  const { x, y, z } = residence.position;
+  const resident = [
+    x * Math.cos(heading) - z * Math.sin(heading),
+    (x * Math.sin(heading) + z * Math.cos(heading)) *
+      (structure.negate ? -1 : 1)
+  ];
+  const point = box.map(([min, max], axis) =>
+    Math.min(Math.max(resident[axis]!, min!), max!)
+  ) as unknown as Point2;
+  const rise =
+    structure.ground.position.y +
+    y -
+    (node.floor * structure.storey + structure.eye);
+  return Math.hypot(point[0] - resident[0]!, point[1] - resident[1]!, rise) <
+    SELECTION_RANGE
+    ? point
+    : null;
 };
 
 /// The steps from a start to `target`, in order.
@@ -409,9 +449,12 @@ export const admittedStructures = async (
         cell,
         central: centralHalf(ground, content),
         enter: new Map(),
+        eye: content.doc.eye.heightUnits,
         floors,
         ground,
-        starts: []
+        negate: content.doc.orientation.modelZ === 'negate',
+        starts: [],
+        storey: content.models.peek(ground.modelId)?.storeyHeight ?? 0
       };
       structures.set(key, structure);
     }
@@ -537,11 +580,11 @@ export const admittedStructures = async (
 };
 
 export type Reach =
-  /// Stood beside with nothing carried.
-  | { readonly kind: 'doorsShut' }
-  /// Stood beside once these door keys, themselves reachable, are carried.
+  /// Selected with no door key carried.
+  | { readonly kind: 'noKey' }
+  /// Selected once these door keys, themselves reachable, are carried.
   | { readonly keys: readonly number[]; readonly kind: 'keyed' }
-  /// Its parent is in a reached cell, but no reachable region on its Floor exposes it.
+  /// Its parent is in a reached cell, but no reachable region on its Floor exposes it in range.
   | { readonly keys: readonly number[]; readonly kind: 'unexposed' }
   /// Atlas Travel stands no player in its parent's cell.
   | { readonly kind: 'untravelled'; readonly reason: string };
@@ -553,10 +596,12 @@ export interface Reachability {
   readonly wanted: readonly number[];
 }
 
-/// Every placed structure resident's reach, keys carried to a fixed point.
+/// Every placed structure resident's reach, keys carried to a fixed point. With `groundOnly`,
+/// only starts on Floor 0 are walked from, so every upper Floor is reached by lift.
 export const residentReachability = (
   catalogue: Catalogue,
-  { declined, structures }: Awaited<ReturnType<typeof admittedStructures>>
+  { declined, structures }: Awaited<ReturnType<typeof admittedStructures>>,
+  groundOnly = false
 ): Reachability => {
   const residents = catalogue.instances.filter(
     item => item.placement !== null && item.association !== null
@@ -584,7 +629,15 @@ export const residentReachability = (
     const nodes = new Map(
       structures.map(structure => [
         structure,
-        [...reachableNodes(structure, keys).values()].map(item => item.node)
+        [
+          ...reachableNodes(
+            structure,
+            keys,
+            groundOnly
+              ? structure.starts.filter(node => node.floor === 0)
+              : structure.starts
+          ).values()
+        ].map(item => item.node)
       ])
     );
     for (const item of residents) {
@@ -604,7 +657,8 @@ export const residentReachability = (
                   item.id,
                   residence,
                   node.region + 1
-                ) > 0
+                ) > 0 &&
+                selectablePoint(structure, node, residence) !== null
             )
         ) {
           reached.add(item.id);
@@ -621,9 +675,7 @@ export const residentReachability = (
       if (!reach.has(id)) {
         reach.set(
           id,
-          carried.size === 0
-            ? { kind: 'doorsShut' }
-            : { keys: [], kind: 'keyed' }
+          carried.size === 0 ? { kind: 'noKey' } : { keys: [], kind: 'keyed' }
         );
       }
     }
@@ -686,14 +738,15 @@ const wrap = (angle: number): number =>
 const sameNode = (here: Node | null, node: Node): boolean =>
   here !== null && nodeKey(here) === nodeKey(node);
 
-/// Walk `route` in a live session carrying `keys`, as a player would: turn to face each crossing, walk to it, wait
+/// Walk `route` in a live session carrying `keys`, as a player would, then on to `finish`: turn to face each crossing, walk to it, wait
 /// at a door until it opens, and ride each lift. Returns the session where the route ends, or
 /// throws naming the step the session refused.
 export const walkRoute = (
   content: DamoclesContent,
   structure: Structure,
   route: readonly Reached[],
-  keys: readonly number[] = []
+  keys: readonly number[] = [],
+  finish?: Point2
 ): DamoclesSession => {
   const start = route[0]!;
   const session = structure.enter.get(nodeKey(start.node))!();
@@ -781,5 +834,55 @@ export const walkRoute = (
       );
     }
   }
+  if (finish !== undefined) {
+    walkTo(finish);
+  }
   return session;
+};
+
+/// Walk to object `id` by the graph's route carrying `keys`, from `starts` (every start by
+/// default), and stand where it is selectable.
+export const walkToResident = (
+  content: DamoclesContent,
+  structures: readonly Structure[],
+  id: string,
+  keys: readonly number[] = [],
+  starts?: (structure: Structure) => readonly Node[]
+): DamoclesSession => {
+  const residence = catalogueResidence(content.catalogue, id);
+  if (residence?.kind !== 'structure') {
+    throw new Error(`${id} is not a structure resident`);
+  }
+  for (const structure of structures) {
+    if (structure.ground.id !== residence.parent) {
+      continue;
+    }
+    const reached = reachableNodes(
+      structure,
+      new Set(keys),
+      starts?.(structure) ?? structure.starts
+    );
+    for (const item of reached.values()) {
+      const point =
+        item.node.floor === residence.level &&
+        insertionsInRegion(
+          content.catalogue,
+          id,
+          residence,
+          item.node.region + 1
+        ) > 0
+          ? selectablePoint(structure, item.node, residence)
+          : null;
+      if (point !== null) {
+        return walkRoute(
+          content,
+          structure,
+          routeTo(reached, item.node),
+          keys,
+          point
+        );
+      }
+    }
+  }
+  throw new Error(`no route reaches ${id}`);
 };
