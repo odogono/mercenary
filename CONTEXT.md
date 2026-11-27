@@ -86,6 +86,10 @@ _Avoid_: Unlock, craft key, permission, key flag
 Where one object currently is: on a surface, in an interior, carried by the player, or out of the world, including the place it was left after being moved. In Targ an interior is a Room; in Damocles a placed object belongs to a Body and, where applicable, a structure region, independently of which Body or structure the player currently occupies.
 _Avoid_: Object position, inventory flag, room membership
 
+**Insertion Group**:
+A numbered entry in a Damocles structure's association list that says which regions an indoor resident is drawn in. A Drop inside a structure takes the current region's number as its group, and is refused when the structure has no group with that number; a structure whose list is empty refuses every indoor Drop.
+_Avoid_: Association group, region group
+
 **Carried Stack**:
 The ordered objects the player carries, most recently acquired first; its head is the object the panel names and the one a Drop removes. The player chooses that object by rotating the stack, so the next Drop is not a function of acquisition order.
 _Avoid_: Ordered inventory, carry order, inventory list
