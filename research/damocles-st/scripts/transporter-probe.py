@@ -11,9 +11,15 @@ the parts a port depends on against the running Working Authority:
   destination fires again while the player stays in it.
 - ``digit``: the same entry, then press a digit key while standing in the
   arrival transporter, which `$0555E4` routes to `$059184`.
+- ``outside``: the same entry, then leave the arrival cube, confirm the latch
+  `$7884` has cleared, press a digit key, and walk back in with the other stick.
 
-Every sample also reads the panel's cached location-name selector `$04DBF0`,
-which `$04DBFA` points at VOID (`$78`) while `$7882` is non-zero.
+A hop is counted only from a tracing breakpoint on the common hop `$0591FA`,
+armed before the first step, never inferred from a Body or cell change. Every
+sample reads the player state, the Cell Readout's camera cell words
+`$7A2C`/`$7A34` and the panel's cached location-name selector `$04DBF0` (which
+`$04DBFA` points at VOID, `$78`, while `$7882` is non-zero) in one debugger
+stop.
 
 Nothing is poked except the joystick soft-copy byte; keys are real key events.
 
@@ -48,6 +54,8 @@ from damocleslab.runtime import build_hatari_command, headless_env  # noqa: E402
 from damocleslab.toolchain import discover_toolchain  # noqa: E402
 
 PANEL_NAME = 0x04DBF0  # the selector $04DC18 last drew into the location field
+HOP = 0x0591FA  # the common hop both handlers reach
+READOUT_X, READOUT_Z = 0x7A2C, 0x7A34  # the camera cell words $04E246 draws as the Cell Readout
 FLOOR = 0x7AC4  # the Floor word; $0591FC writes its low byte from Association B byte 2
 LATCH = 0x7884  # the transporter the ring handler last fired for, cleared on leaving
 VIEW_YAW = 0x7AC2  # the yaw word $05913A reads for the direction
@@ -56,27 +64,60 @@ SCAN_DIGIT = {1: 0x02, 2: 0x03, 3: 0x04, 4: 0x05, 5: 0x06, 6: 0x07, 7: 0x08,
 
 
 class Machine(route.Machine):
-    def sample(self, **kwargs) -> dict:
+    """The arrival-route machine, reading the panel selector in the same stop as the state."""
+
+    def sample(self, *, shot: bool = False, keep: bool = False, full: bool = False) -> dict:
         index = self.samples
-        state = super().sample(**kwargs)
-        path = self.run_directory / "panel.bin"
-        _fifo_send(self.handle, ["hatari-stop", f"hatari-debug savebin {path} ${PANEL_NAME:x} $2",
-                                 "hatari-cont"])
-        for _ in range(60):
-            time.sleep(0.05)
-            if path.is_file() and path.stat().st_size == 2:
-                break
-        state["panelName"] = (f"0x{int.from_bytes(path.read_bytes(), 'big'):04x}"
-                              if path.is_file() and path.stat().st_size == 2 else None)
-        path.unlink(missing_ok=True)
-        kept = kwargs.get("keep", False)
-        low = self.run_directory / (f"sample{index:03d}-low.bin" if kept else "tick-low.bin")
-        if low.is_file():
-            data = low.read_bytes()
-            state["floor"] = route._u16(data, 0x6000, FLOOR)
-            state["latch"] = f"0x{route._u16(data, 0x6000, LATCH):04x}"
-            state["viewYaw"] = route._u16(data, 0x6000, VIEW_YAW)
+        self.samples += 1
+        prefix = f"sample{index:03d}" if keep else "tick"
+        windows = [route.WINDOWS[0], ("panel", PANEL_NAME, 2)]
+        if self.strings is None or keep or full:
+            windows += list(route.WINDOWS[1:])
+        paths = {label: self.run_directory / f"{prefix}-{label}.bin" for label, _, _ in windows}
+        for path in paths.values():
+            path.unlink(missing_ok=True)
+        commands = ["hatari-stop", "hatari-debug setopt hex"]
+        commands += [f"hatari-debug savebin {paths[label]} ${base:x} ${length:x}"
+                     for label, base, length in windows]
+        if shot:
+            commands.append(f"hatari-debug screenshot {self.run_directory}/{prefix}.png")
+        commands.append("hatari-cont")
+        _fifo_send(self.handle, commands)
+        blobs = dict(self.strings or {})
+        for (label, _, length), path in zip(windows, paths.values()):
+            for _ in range(100):
+                if path.is_file() and path.stat().st_size == length:
+                    break
+                time.sleep(0.03)
+            else:
+                raise LabError(f"sample {index} read nothing for window {label}")
+            blobs[label] = path.read_bytes()
+        if self.strings is None:
+            self.strings = {label: blobs[label] for label in ("strings", "pool")}
+        state = route.decode(blobs, self.watch)
+        low = blobs["low"]
+        state["panelName"] = f"0x{int.from_bytes(blobs['panel'], 'big'):04x}"
+        state["floor"] = route._u16(low, 0x6000, FLOOR)
+        state["latch"] = f"0x{route._u16(low, 0x6000, LATCH):04x}"
+        state["viewYaw"] = route._u16(low, 0x6000, VIEW_YAW)
+        state["cellReadout"] = [int.from_bytes(low[a - 0x6000:a - 0x5FFE], "big", signed=True)
+                                for a in (READOUT_X, READOUT_Z)]
+        state["hops"] = self.hops()
         return state
+
+    def arm_hop_trace(self) -> None:
+        self.watch_program_counters((HOP,))
+
+    def hops(self) -> int:
+        """Tracing breakpoint hits on the common hop, read from the emulator's log."""
+        log = self.run_directory / "hatari.log"
+        if not log.is_file():
+            return 0
+        text = log.read_text(errors="replace").lower()
+        # A hit prints the condition with its ":trace" option; the echo of the
+        # command that armed it starts with ">", and its confirmation has no option.
+        return sum(1 for line in text.splitlines()
+                   if f"${HOP:x} :trace" in line and not line.lstrip().startswith(">"))
 
 
 def retarget(snapshot: Path, run_directory: Path, tos: Path, program: Path) -> tuple[Path, list[str]]:
@@ -117,15 +158,17 @@ def retarget(snapshot: Path, run_directory: Path, tos: Path, program: Path) -> t
 
 
 def brief(state: dict) -> dict:
-    keys = ("bodySelector", "cell", "transporterMode", "latch", "panelName", "floor",
-            "x", "y", "z", "yaw", "viewYaw", "onFoot")
+    keys = ("hops", "bodySelector", "cell", "cellReadout", "transporterMode", "latch",
+            "panelName", "floor", "x", "y", "z", "yaw", "viewYaw", "onFoot")
     row = {key: state.get(key) for key in keys}
     row["message"] = (state.get("message") or {}).get("text")
     return row
 
 
-def arrival(state: dict) -> dict:
-    """The arrival measured against the slot the player now stands in."""
+def arrival(state: dict, hopped: bool) -> dict | None:
+    """The arrival measured against the nearest slot, only after a counted hop."""
+    if not hopped:
+        return None
     slot, gap = route.nearest_transporter(state)
     cube = state["residents"][str(slot)]
     return {
@@ -186,17 +229,18 @@ def enter(machine: Machine, forward: bool | None, standoff: int, backwards: bool
         machine.stick(route.STICK_STOP)
         sample = machine.sample()
         path.append(brief(sample))
-        if sample["bodySelector"] != before["bodySelector"] or sample["cell"] != before["cell"]:
+        if sample["hops"] > before["hops"]:
             arrived = sample
             break
     after = machine.sample(keep=True, shot=True)
-    log["moved"] = arrived is not None
+    log["hopped"] = arrived is not None
+    log["hopsBefore"], log["hopsAfter"] = before["hops"], after["hops"]
     return {"before": brief(before), "hop": log, "path": path, "after": brief(after),
-            "arrival": arrival(after)}
+            "arrival": arrival(after, arrived is not None)}
 
 
 def leave(machine: Machine, stick: str, clear: int = 90) -> dict:
-    """Pulse out of the cube the player stands in until clear of its box."""
+    """Pulse out of the cube the player stands in until clear of its box and the latch is 0."""
     start = machine.sample()
     slot, _ = route.nearest_transporter(start)
     rows = []
@@ -206,9 +250,22 @@ def leave(machine: Machine, stick: str, clear: int = 90) -> dict:
         machine.stick(route.STICK_STOP)
         state = machine.sample()
         rows.append(brief(state))
-        if route.distance(state, state["residents"][str(slot)]) > clear:
+        if route.distance(state, state["residents"][str(slot)]) > clear and state["latch"] == "0x0000":
             break
-    return {"slot": slot, "stick": stick, "path": rows[-3:], "steps": len(rows)}
+    return {"slot": slot, "stick": stick, "path": rows[-3:], "steps": len(rows),
+            "cleared": rows[-1]["latch"] == "0x0000" if rows else False}
+
+
+def press_digit(machine: Machine, digit: int) -> dict:
+    before = machine.sample()
+    slot, gap = route.nearest_transporter(before)
+    machine.press(SCAN_DIGIT[digit])
+    time.sleep(1.0)
+    after = machine.sample(keep=True, shot=True)
+    hopped = after["hops"] > before["hops"]
+    return {"digit": digit, "standingSlot": slot, "distance": gap,
+            "before": brief(before), "after": brief(after), "hopped": hopped,
+            "arrival": arrival(after, hopped)}
 
 
 def hold(machine: Machine, seconds: float) -> list[dict]:
@@ -266,25 +323,22 @@ def run(args) -> dict:
         with fifo.open("w", encoding="utf-8") as handle:
             time.sleep(args.settle)
             machine = Machine(handle, run_directory, route.TRANSPORTER_SLOTS)
+            machine.arm_hop_trace()
             result["start"] = brief(machine.sample(keep=True, shot=True))
             result["entry"] = enter(machine, None if args.side == "keep" else args.side == "forward",
                                     args.standoff, backwards=args.backwards, aim=not args.no_aim,
                                     pulse=args.pulse)
             result["standing"] = hold(machine, args.hold)
             if args.case == "digit":
-                before = machine.sample()
-                machine.press(SCAN_DIGIT[args.digit])
-                time.sleep(1.0)
-                after = machine.sample(keep=True, shot=True)
-                result["digit"] = {"digit": args.digit, "before": brief(before),
-                                   "after": brief(after), "arrival": arrival(after)}
+                result["digit"] = press_digit(machine, args.digit)
                 result["afterDigit"] = hold(machine, args.hold)
-                if args.reenter:
-                    result["leave"] = leave(machine, args.leave)
-                    result["reenter"] = enter(machine, None, args.standoff,
-                                              backwards=args.leave == "forward", aim=False,
-                                              turn=False)
-                    result["afterReenter"] = hold(machine, args.hold)
+            if args.case == "outside":
+                result["leave"] = leave(machine, args.leave)
+                result["digit"] = press_digit(machine, args.digit)
+                result["reenter"] = enter(machine, None, args.standoff,
+                                          backwards=args.leave == "forward", aim=False,
+                                          turn=False, pulse=args.pulse)
+                result["afterReenter"] = hold(machine, args.hold)
             _fifo_send(handle, ["hatari-stop"])
             time.sleep(0.4)
     finally:
@@ -301,7 +355,7 @@ def run(args) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("case", choices=("ring", "digit"))
+    parser.add_argument("case", choices=("ring", "digit", "outside"))
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--roms", type=Path, default=None)
     parser.add_argument("--settle", type=float, default=3.0)
@@ -317,14 +371,12 @@ def main() -> None:
     parser.add_argument("--digit", type=int, default=4, choices=range(10))
     parser.add_argument("--pulse", type=float, default=0.04,
                         help="seconds the stick is held per step of the entry walk")
-    parser.add_argument("--reenter", action="store_true",
-                        help="after the digit hop, leave the cube and walk back in")
     parser.add_argument("--leave", choices=("forward", "back"), default="forward",
-                        help="the stick that leaves; re-entry uses the other one")
+                        help="outside: the stick that leaves; re-entry uses the other one")
     args = parser.parse_args()
     result = run(args)
     print(json.dumps({key: result[key] for key in result
-                      if key in ("start", "entry", "standing", "digit", "afterDigit")},
+                      if key in ("entry", "leave", "digit", "reenter")},
                      indent=1, default=str))
     print("run:", result["runDirectory"])
 
