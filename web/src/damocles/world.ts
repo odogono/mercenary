@@ -195,6 +195,36 @@ export const islandLocalCell = (
   };
 };
 
+/// A raw-unit position re-expressed in the frame of the island nearest it (ADR 0095).
+///
+/// `$058F64` masks `$7AB2`/`$7ABA` to 28 bits, subtracts the nearest island's origin and
+/// sign-extends from 28 bits. That makes the position the island's origin plus a signed
+/// offset of under half a surface. The Catalogue's placements, outlines and boxes are laid out
+/// around their island's origin without wrapping, so a position in this frame can be subtracted
+/// from them directly. With no island the position is masked onto the surface, as `$7AB2` holds
+/// it. Y is untouched.
+export const inIslandFrame = <T extends Vector3>(
+  position: T,
+  surface: Pick<ErisSurface, 'grid' | 'islands'>
+): T => {
+  const span = SURFACE_CELLS * surface.grid.cellUnits;
+  const island = nearestIsland(surface, position);
+  // Whole surfaces only, so a position already in frame comes back exactly as it was.
+  const toward = (value: number, origin: number): number =>
+    value - Math.floor((value - origin + span / 2) / span) * span;
+  const x =
+    island === undefined
+      ? toward(position.x, span / 2)
+      : toward(position.x, island.origin.x * surface.grid.cellUnits);
+  const z =
+    island === undefined
+      ? toward(position.z, span / 2)
+      : toward(position.z, island.origin.z * surface.grid.cellUnits);
+  return x === position.x && z === position.z
+    ? position
+    : { ...position, x, z };
+};
+
 /** The one structure workspace selected by the current surface cell. */
 export const structureInCell = (
   surface: ErisSurface,
@@ -727,17 +757,60 @@ export const erisSurfaceFrom = (
   doc: ErisPresentationDocument,
   anchor: SurfaceAnchor = { bodyId: doc.body.id, origin: doc.grid.origin }
 ): ErisSurface => {
-  const grid: ErisGrid = {
-    cellsPerAxis: doc.grid.cellsPerAxis,
-    cellUnits: doc.grid.cellUnits,
-    origin: anchor.origin
-  };
   const body = catalogue.bodies.find(entry => entry.id === anchor.bodyId);
   if (body === undefined) {
     throw new Error(
       `The Damocles Catalogue has no body ${anchor.bodyId} for ${doc.body.name}`
     );
   }
+  const islands: ErisIsland[] = catalogue.islands
+    .filter(island => island.body === body.id)
+    .map(island => ({
+      areaName: island.areaName,
+      boxes: island.boxes.map(box => ({
+        kind: box.kind,
+        x: box.x,
+        z: box.z
+      })),
+      coastline: {
+        edges: island.coastline.edges,
+        vertices: island.coastline.vertices
+      },
+      id: island.id,
+      landColour: island.landColour,
+      locationTable: island.locationTable.entries,
+      origin: { x: island.origin[0], z: island.origin[1] },
+      roads: catalogue.roadNetworks.find(
+        network => network.island === island.id
+      ),
+      structureGroup: island.structureGroup
+    }));
+  // The workspace origin is a Body Coordinate too, laid in the Pose frame as the placements
+  // are (ADR 0095), so a cell counted from it agrees with one counted from the Pose.
+  const units = doc.grid.cellUnits;
+  const centre = inIslandFrame(
+    {
+      x: (anchor.origin.x + 0.5) * units,
+      y: 0,
+      z: (anchor.origin.z + 0.5) * units
+    },
+    {
+      grid: {
+        cellsPerAxis: doc.grid.cellsPerAxis,
+        cellUnits: units,
+        origin: anchor.origin
+      },
+      islands
+    }
+  );
+  const grid: ErisGrid = {
+    cellsPerAxis: doc.grid.cellsPerAxis,
+    cellUnits: units,
+    origin: {
+      x: Math.floor(centre.x / units),
+      z: Math.floor(centre.z / units)
+    }
+  };
   const placements: ErisPlacement[] = [];
   for (const instance of catalogue.instances) {
     const location = instance.location;
@@ -751,7 +824,11 @@ export const erisSurfaceFrom = (
     }
     const placement = placementOf(instance, models, doc, grid);
     if (placement !== undefined) {
-      placements.push(placement);
+      // A Body Coordinate placement is laid where the Pose frame meets it (ADR 0095).
+      const position = inIslandFrame(placement.position, { grid, islands });
+      placements.push(
+        position === placement.position ? placement : { ...placement, position }
+      );
     }
   }
   const field = catalogue.islands.find(
@@ -820,28 +897,7 @@ export const erisSurfaceFrom = (
     },
     grid,
     horizonDistances: ROAD_HORIZON_DISTANCES,
-    islands: catalogue.islands
-      .filter(island => island.body === body.id)
-      .map(island => ({
-        areaName: island.areaName,
-        boxes: island.boxes.map(box => ({
-          kind: box.kind,
-          x: box.x,
-          z: box.z
-        })),
-        coastline: {
-          edges: island.coastline.edges,
-          vertices: island.coastline.vertices
-        },
-        id: island.id,
-        landColour: island.landColour,
-        locationTable: island.locationTable.entries,
-        origin: { x: island.origin[0], z: island.origin[1] },
-        roads: catalogue.roadNetworks.find(
-          network => network.island === island.id
-        ),
-        structureGroup: island.structureGroup
-      })),
+    islands,
     placements,
     places,
     sky: body.bodySurface?.sky ?? null,

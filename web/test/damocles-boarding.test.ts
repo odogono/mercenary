@@ -1491,11 +1491,13 @@ describe('launch and space (#566)', () => {
     expect(landed.bodyName).toBe('LACHESIS');
     expect(landed.surface.body.id).toBe('body-7');
     expect(landed.pose.position.y).toBe(0x01_80_00_00);
-    // LACHESIS has no admitted Pose: the cell counts from the Body's own origin.
-    expect(landed.surface.grid.origin).toEqual({ x: 0, z: 0 });
+    // LACHESIS has no admitted Pose: the cell counts from the Body's own origin, laid in the
+    // Pose frame (ADR 0095), so it is that origin whole surfaces away.
+    const origin = landed.surface.grid.origin;
+    expect([origin.x % 4096, origin.z % 4096]).toEqual([0, 0]);
     expect(landed.cell).toEqual({
-      x: Math.floor(landed.pose.position.x / 0x1_00_00),
-      z: Math.floor(landed.pose.position.z / 0x1_00_00)
+      x: Math.floor(landed.pose.position.x / 0x1_00_00) - origin.x,
+      z: Math.floor(landed.pose.position.z / 0x1_00_00) - origin.z
     });
     // The landing launched LACHESIS's `$26`, which is spent whichever way its draw went.
     expect(
@@ -1516,7 +1518,7 @@ describe('launch and space (#566)', () => {
     // A Save on LACHESIS resumes there, though no admitted Pose anchors it (ADR 0052).
     const restored = roundTrip(session);
     expect(restored.snapshot.pose).toEqual(down.pose);
-    expect(restored.snapshot.surface.grid.origin).toEqual({ x: 0, z: 0 });
+    expect(restored.snapshot.surface.grid.origin).toEqual(origin);
     expect(restored.snapshot.daylight).toBe(down.daylight);
   });
 });
