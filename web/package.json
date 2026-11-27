@@ -26,6 +26,7 @@
     "test": "bun test --parallel --timings=test-timings.json",
     "test:e2e": "playwright test",
     "test:playthrough": "playwright test -c playwright.playthrough.config.ts",
+    "playthrough:ledger": "bun tools/playthrough-ledger.ts",
     "test:site": "playwright test -c playwright.site.config.ts",
     "test:quiet": "bun test --parallel --timings=test-timings.json --only-failures",
     "test:timings": "bun test --parallel --timings=test-timings.json --update-timings",
