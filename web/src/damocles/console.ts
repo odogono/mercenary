@@ -166,7 +166,7 @@ export const executeDamoclesConsoleCommand = (
       const snapshot = host.session().snapshot;
       const { heading, position } = snapshot.pose;
       return [
-        `${damoclesWhere(snapshot)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`,
+        damoclesWhere(snapshot),
         `position x ${threeDecimals(position.x)} y ${threeDecimals(position.y)} z ${threeDecimals(position.z)}`,
         `orientation heading ${threeDecimals(heading)} radians`,
         'on foot'
@@ -278,10 +278,7 @@ export const executeDamoclesConsoleCommand = (
       // A one-shot Semantic Action. The boot wrapper's existing rule checkpoints Session Resume
       // for it, so there is no new checkpoint rule here.
       const snapshot = host.session().snapshot;
-      return [
-        `switched to ${outcome.pose}`,
-        `${damoclesWhere(snapshot)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`
-      ];
+      return [`switched to ${outcome.pose}`, damoclesWhere(snapshot)];
     }
     case 'floor': {
       const outcome = host.session().changeFloor(command.floor);

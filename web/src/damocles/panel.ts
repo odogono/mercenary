@@ -27,8 +27,9 @@ import type { ErisCell } from './world.ts';
 
 /// One axis of the Cell Readout: the magnitude of an Island-Local Cell in two digits, or `**`
 /// once that magnitude passes 99. The sign is not printed here — a negative axis is printed in
-/// red instead, which is why the view model carries the signs beside the label (#397).
-const digits = (value: number): string => {
+/// red instead, which is why the view model carries the signs beside the label (#397). The
+/// location text (`damoclesWhere`) prints the same digits with a minus sign instead (#1014).
+export const cellReadoutDigits = (value: number): string => {
   const magnitude = Math.abs(value);
   return magnitude > 99 ? '**' : String(magnitude).padStart(2, '0');
 };
@@ -39,14 +40,14 @@ const digits = (value: number): string => {
 /// cell is signed and unbounded, and coincides with the bound workspace's own 0-15 cell only
 /// while the player stands inside that 16-cell window.
 export const cellReadout = (cell: ErisCell): string =>
-  `${digits(cell.x)}-${digits(cell.z)}`;
+  `${cellReadoutDigits(cell.x)}-${cellReadoutDigits(cell.z)}`;
 
 /// The Cell Readout's two axes as the panel draws them, so a negative axis can be red.
 export const cellReadoutAxes = (
   cell: ErisCell
 ): NonNullable<PanelViewModel['locationAxes']> => [
-  { negative: cell.x < 0, text: digits(cell.x) },
-  { negative: cell.z < 0, text: digits(cell.z) }
+  { negative: cell.x < 0, text: cellReadoutDigits(cell.x) },
+  { negative: cell.z < 0, text: cellReadoutDigits(cell.z) }
 ];
 
 /// One Body Coordinate step: `$40000` engine units, which is four Surface Cells. A Body's

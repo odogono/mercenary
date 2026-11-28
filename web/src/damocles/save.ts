@@ -36,6 +36,7 @@ import {
   pagesNoItems,
   type HeadCommandState
 } from './headCommands.ts';
+import { cellReadoutDigits } from './panel.ts';
 import { admittedPoses, type ArrivalPoses } from './poses.ts';
 import {
   admissiblePlacementClass,
@@ -2440,8 +2441,16 @@ export const decodeDamoclesSave = (
 /// The one place a Damocles location is put into words, for the console, the Session Resume and
 /// the Save record's slot line. It takes the Body name rather than assuming Eris: a switch makes
 /// every one of those three reachable on four Bodies.
+///
+/// The cell is the Island-Local Cell the panel's Cell Readout prints, not the cell measured from
+/// the Body's anchored workspace: on a Body with more than one island the two disagree away from
+/// the anchored one (#1014). Each axis is the readout's own digits; the panel shows a negative
+/// axis in red, so the text puts a minus sign before it instead.
 export const damoclesWhere = (where: {
   readonly bodyName: string;
-  readonly cell: { readonly x: number; readonly z: number };
+  readonly islandCell: { readonly x: number; readonly z: number };
 }): string =>
-  `${where.bodyName} ${String(where.cell.x).padStart(2, '0')}-${String(where.cell.z).padStart(2, '0')}`;
+  `${where.bodyName} ${whereAxis(where.islandCell.x)}-${whereAxis(where.islandCell.z)}`;
+
+const whereAxis = (value: number): string =>
+  `${value < 0 ? '-' : ''}${cellReadoutDigits(value)}`;
