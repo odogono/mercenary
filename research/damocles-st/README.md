@@ -420,6 +420,9 @@ Sale and its re-quote, and the credit a refused placement keeps.
 Each case names its pose under `snapshots/rehosted/`. A memstate stores the absolute
 paths of the TOS and disk images it was captured with, so the probe boots a run-local
 copy whose paths name the pinned images and checks that the copy's RAM is unchanged.
+`result.json` hashes every generated artifact: the debugger scripts and logs, both
+run-local snapshots, and each whole-machine capture, which is hashed before it is
+removed (`--keep-ram` keeps them).
 Hatari drops to its debugger prompt after a breakpoint script; the probe gives it an
 empty stdin so the prompt returns to emulation instead of waiting on the caller.
 
@@ -430,7 +433,8 @@ because a structure's region boxes are built by the scene pass. See
 
 The opening Buy Rate and Sell Rate are watched from the title screen by
 `scenarios/opening-trade-rates-writer.json`; run `lab observe` with stdin from
-`/dev/null` for the same reason.
+`/dev/null` for the same reason. The watch must be armed in a short interval of an
+in-place unpack, so most runs log nothing; the finding records the one that did.
 
 ## General object drop probe (#315)
 

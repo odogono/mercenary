@@ -70,7 +70,9 @@ The 241 resident slots with a model use 142 object records. Their price headers:
 | A Base Price of zero  | 12      | 21: the eleven craft in slots 1–7 and 10–13, and DOOR KEY A in slots 30–39 |
 | No price header       | 5       | 10: slots 74, 156 and 248–255                                              |
 
-The five records with no price header have no name header either: the sixteen bytes before them are not printable, and the four before those are not all packed decimal. What the quote would read there is not a price, and the payload publishes none.
+The five resident records with no price header are the ones with no name header: the sixteen bytes before each are not a printable name, so the four bytes before those are not a price field. In slot 74's record those four bytes are not packed decimal. In the other four records (slots 156, 248, 251 and 254) they happen to be valid packed decimal, but they belong to whatever precedes the record. What the quote would read there is not a price, and the payload publishes none.
+
+Twenty-nine more object Models have no name header and publish `null` for the same reason. None of them stands in a resident slot: their slots are 322 and above.
 
 | Object                            | Base Price     |
 | --------------------------------- | -------------- |
@@ -120,7 +122,7 @@ The table is 26 pairs at `$0239C0`, ending where the two words that precede the 
 | DION                     | 1      | (25, 15)                                                        |
 | ERIS, Snow Island        | 1      | (18, 12)                                                        |
 
-Every post pays less for an object than it asks for it. An object bought at one post can still sell for more at another: Buy Rates run from 6 to 40 and Sell Rates from 3 to 20.
+Every post pays less for an object than it asks for it. An object bought at one post can still sell for more at another: the table's Buy Rates run from 6 to 40 and its Sell Rates from 3 to 20. Those are the table's limits, not the game's, because one cell reads past the table.
 
 ### One cell reads past the table
 
@@ -128,11 +130,13 @@ MENTOR cell `$35` carries selector `$54`, one pair past the last. The code reads
 
 ### The opening rates
 
-Every fresh-start capture holds Buy Rate 15 and Sell Rate 5 before any post has bound. That pair is also selector `$2A`'s, but no cell installed it: it is part of the opening game state the loader unpacks from the disk.
+Every fresh-start capture holds Buy Rate 15 and Sell Rate 5 before any post has bound. The same pair is selector `$2A`'s, which two MENTOR posts install (cells `$23` and `$67`), but at a fresh start no cell has installed it: it is part of the opening game state the loader unpacks from the disk.
 
-A write watch on `$7960` from the title screen ([scenario](../../research/damocles-st/scenarios/opening-trade-rates-writer.json), run `observe-opening-trade-rates-writer-20261128T114158Z-6daf7611`) breaks inside the title-to-world unpacker, in the back-reference copy at `$0685FA`–`$068600`, with its descending output pointer at `$7961`. A hundred frames after the keypress the words still hold title-screen bytes; three thousand frames after it they hold `$000F0005` and the balance holds 9,000.00. No instruction in `$040000`–`$05FFFE` addresses `$7960`–`$7963` outside the cell bind and the quote.
+A write watch on `$7960` from the title screen ([scenario](../../research/damocles-st/scenarios/opening-trade-rates-writer.json), run `observe-opening-trade-rates-writer-20261128T114158Z-6daf7611`) broke inside the title-to-world unpacker, in the back-reference copy at `$0685FA`–`$068600`, with its descending output pointer at `$7961`. A hundred frames after the keypress the words still hold title-screen bytes; three thousand frames after it they hold `$000F0005` and the balance holds 9,000.00. No instruction in `$040000`–`$05FFFE` addresses `$7960`–`$7963` outside the cell bind and the quote.
 
-The opening pair cannot be met in play. Both rates are read only in the trading room, and the bind that takes the player there installs the post's own.
+The watch caught the write once and is not a repeatable recipe. The unpack is in place: every register dump taken during it has the input pointer `a0` below the output pointer `a2`, both descending, and the packed stream still lies across `$7960` until `a0` has passed it. The lab's watch pokes a sentinel into the watched word, so it names the writer only when it is armed after `a0` has passed `$7960` and before `a2` arrives. Six reruns on 2026-11-28, at this wait and at two others, armed the watch and logged nothing in sixty seconds. That interval is the likely reason, not an established one. The retained run's manifest names the scenario by the hash of its text before its description was corrected, `755dc8f14c37753a0980289561229062adbd1bda72244c74c00cf0b8667cf0ae`; its actions are unchanged.
+
+The opening state is never traded on. Both rates are read only in the trading room, and the bind that takes the player there installs the post's own. The pair (15, 5) is met in play only at the two MENTOR posts whose cells install it.
 
 ## What a post offers
 
@@ -178,7 +182,7 @@ The quote runs when the Carried Stack rotates, when an object is taken, and when
 
 ## Observed at the checkpoints
 
-All sixteen cases reached the exit recorded here, in the run `trading-post-20261128T112632Z-d1987e32`. Amounts are credits; the opening balance is 9,000.00.
+All sixteen cases reached the exit recorded here, in the run `trading-post-20261128T133615Z-926c2234`. Amounts are credits; the opening balance is 9,000.00.
 
 | Case                        | Steps                                                                                       | Outcome                                                                                                                                                    |
 | --------------------------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -221,7 +225,7 @@ The HI-FI cannot be bought with the opening balance, which is why the step sells
 
 The Catalogue publishes the two recovered inputs and leaves the product to the session.
 
-- **`basePrice`** on every object Model and on its `modelIndex` entry, in hundredths of a credit. It is `null` for a record with no price header and absent for every other kind.
+- **`basePrice`** on every object Model and on its `modelIndex` entry, in hundredths of a credit. It is `null` for a record with no name header, which has no price header either (34 object Models, five of them resident), and absent for every other kind.
 - **`tradingPost`** on every surface placement: `{ "buyRate", "sellRate" }` where the ground floor is the trading structure, and `null` elsewhere.
 
 A post's opening Offered Object is not published. It follows from the residents the Catalogue already carries, by the scan above, and the rule has to run at every bind because the player changes what stands in the room.
@@ -232,7 +236,7 @@ A post's opening Offered Object is not published. It follows from the residents 
 
 **Confirmed by an ordinary-route capture:** the bind, scan and quote at Snow Island, from `damocles.key-west`.
 
-**Confirmed by a write watch from a cold boot:** the opening rates arrive in the unpacked opening state.
+**Observed once by a write watch from a cold boot, and not reproduced in six reruns:** the opening rates arrive in the unpacked opening state.
 
 **Derived from the authored data:** the rates of the other 74 posts, by the same table and the same code path; every Base Price; the thirteen other stocked posts.
 
@@ -246,7 +250,7 @@ A post's opening Offered Object is not published. It follows from the residents 
 
 ## Evidence identities
 
-All hashes are SHA-256. Laboratory machine: ST, 1 MiB; program and TOS images are checked against [`working-authority.json`](../../research/damocles-st/config/working-authority.json). The checkpoint run is retained at `restricted/damocles-1026/trading-post-20261128T112632Z-d1987e32`.
+All hashes are SHA-256. Laboratory machine: ST, 1 MiB; program and TOS images are checked against [`working-authority.json`](../../research/damocles-st/config/working-authority.json). The checkpoint run is retained at `restricted/damocles-1026/trading-post-20261128T133615Z-926c2234`.
 
 | Input                              | Hash                                                               |
 | ---------------------------------- | ------------------------------------------------------------------ |
@@ -256,9 +260,9 @@ All hashes are SHA-256. Laboratory machine: ST, 1 MiB; program and TOS images ar
 | `rehosted/gaea-transporter.sav`    | `4892d7c2f28326a7a5e459a7ae631fe5de4f8ce1468a69c604b2c3949dfe9ac7` |
 | `rehosted/mentor-transporter.sav`  | `628a89561a8415501e8872ce3ab9e974bf311dc3304e6b2c6bc15b297b90daee` |
 | `damocles.key-west.sav`            | `37fdcff2c66fdc401d693e875768ecdb7344183625d59e23017f67ec53b30f29` |
-| Tracked probe                      | `d51f3ac56635ab7c5c5442daf56bc91ac2bf811f7415e7b98bfbfdc5731b5cb4` |
+| Tracked probe                      | `d363e0d71caea9f665c5799bc87f1fbd62a9562844ea88dfb3fd4597a7a6e400` |
 
-Source ranges read for this note, hashed in the pinned first-world capture. The probe fingerprints the quote block, the take handler, the drop handler and the cell bind in every capture of every case and fails if any differs, which is how it establishes that it edited state and not code:
+Source ranges read for this note, hashed in the pinned first-world capture. The probe holds both poses and every capture of every case to the four digests it carries for the quote block, the take handler, the drop handler and the cell bind, and fails if any differs, which is how it establishes that it edited state and not code. Its `result.json` records the hash of every capture and of the two run-local snapshots it booted:
 
 | Range                                                                  | Hash                                                               |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |

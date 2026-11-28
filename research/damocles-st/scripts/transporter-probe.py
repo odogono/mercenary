@@ -49,7 +49,6 @@ Usage (from the repository root):
 from __future__ import annotations
 
 import argparse
-import gzip
 import importlib.util
 import json
 import os
@@ -66,7 +65,7 @@ _spec.loader.exec_module(route)
 
 from damocleslab.core import LabError, validate_image  # noqa: E402
 from damocleslab.laboratory import _fifo_send, _run_id, load_configuration, resolve_images, resolve_roms_root  # noqa: E402
-from damocleslab.runtime import build_hatari_command, headless_env  # noqa: E402
+from damocleslab.runtime import build_hatari_command, headless_env, retarget_memstate  # noqa: E402
 from damocleslab.toolchain import discover_toolchain  # noqa: E402
 
 PANEL_NAME = 0x04DBF0  # the selector $04DC18 last drew into the location field
@@ -213,43 +212,6 @@ class Machine(route.Machine):
         # command that armed it starts with ">", and its confirmation has no option.
         return sum(1 for line in text.splitlines()
                    if f"${HOP:x} :trace" in line and not line.lstrip().startswith(">"))
-
-
-def retarget(snapshot: Path, run_directory: Path, tos: Path, program: Path) -> tuple[Path, list[str]]:
-    """A run-local copy of the memstate whose stored image paths name the pinned images.
-
-    Hatari reloads TOS and the floppy from the absolute paths a memstate stores,
-    so a capture taken under another checkout path, or under the Hatari.app
-    bundle's own `tos.img`, restores to a machine with no TOS. The bundled image
-    is byte-identical to the pinned `emutos206.img`, so pointing the field at the
-    pinned file restores the same machine. Each path is a NUL-padded fixed-size
-    field: the replacement is padded to the old field's extent, and refused if
-    it would not fit.
-    """
-    data = bytearray(gzip.decompress(snapshot.read_bytes()))
-    replaced = []
-    for suffix, target in ((b"tos.img", tos), (b"emutos206.img", tos), (b".stx", program)):
-        new = str(target.resolve()).encode()
-        start = 0
-        while (end := data.find(suffix + b"\x00", start)) >= 0:
-            end += len(suffix)
-            begin = data.rfind(b"\x00", 0, end) + 1
-            while begin < end and data[begin] < 0x20:  # a flag byte can precede the field
-                begin += 1
-            old = bytes(data[begin:end])
-            start = end
-            if not old.startswith(b"/") or old == new:
-                continue
-            pad = end
-            while pad < len(data) and data[pad] == 0:
-                pad += 1
-            if len(new) > pad - begin - 1:
-                raise LabError(f"pinned path does not fit the stored field for {old!r}")
-            data[begin:pad] = new + b"\x00" * (pad - begin - len(new))
-            replaced.append(old.decode(errors="replace"))
-    out = run_directory / "retargeted.sav"
-    out.write_bytes(gzip.compress(bytes(data), mtime=0))
-    return out, replaced
 
 
 def brief(state: dict) -> dict:
@@ -589,7 +551,8 @@ def run(args) -> dict:
     fifo = run_directory / "cmd.fifo"
     parse_script = run_directory / "play.txt"
     parse_script.write_text("c\n", encoding="utf-8")
-    memstate, retargeted = retarget(args.snapshot, run_directory, tos_path, program_path)
+    memstate = run_directory / "retargeted.sav"
+    retargeted = retarget_memstate(args.snapshot, memstate, tos=tos_path, program=program_path)
     command = build_hatari_command(
         hatari_binary=hatari_binary, tos=tos_path, disk_a=program_path,
         machine_model=config["machineModel"], memsize_mib=config["memsizeMiB"],

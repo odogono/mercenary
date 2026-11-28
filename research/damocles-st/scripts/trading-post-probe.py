@@ -21,7 +21,7 @@ All generated debugger scripts, RAM and results stay in ignored work/.
 from __future__ import annotations
 
 import argparse
-import gzip
+import errno
 import hashlib
 import json
 import os
@@ -38,7 +38,7 @@ from damocleslab.core import LabError, file_hash, validate_image  # noqa: E402
 from damocleslab.laboratory import (  # noqa: E402
     WORK_ROOT, _fifo_send, _run_id, load_configuration, resolve_images,
 )
-from damocleslab.runtime import build_hatari_command, headless_env  # noqa: E402
+from damocleslab.runtime import build_hatari_command, headless_env, retarget_memstate  # noqa: E402
 from damocleslab.toolchain import discover_toolchain  # noqa: E402
 
 BIND, QUOTE, LEAVE, TAKE, DROP = 0x054B2E, 0x04E05A, 0x054F52, 0x0541F0, 0x054520
@@ -65,13 +65,20 @@ COUNT, STACK, MESSAGE_GATE, SCANNER_GATE = 0x61CC, 0x61CE, 0x7BA0, 0x7AF6
 TRADING_ROOM = 9
 TRADING_ROOM_LIST = 0x05456D
 
-# Fingerprints of the code the cases execute, from the snapshot's own RAM.
+# Fingerprints of the code the cases execute, recorded from the pinned first-world
+# capture (docs/research/damocles-trading-post-prices.md): the quote, the take, the
+# drop and the cell bind. Every pose and every capture is held to them.
 CODE_WINDOWS = (
     (0x04E05A, 0x04E17E, "eb977e835d0a228a83fde200d0c9744c9dcc695b7aefee5d1873c176fb36726e"),
     (0x0541F0, 0x0542E0, "e6139be6700a08ff7676ca198aae6808fb2dc9138b29f7b9fe73b3ee63762298"),
     (0x054520, 0x054744, "32ff685b20f7b7a98476499f89b540abbef26150df2adfb297e2016e631d8f5e"),
+    (0x054B2E, 0x054F7C, "a016fbbae10bf3744023f19e70025dbf265a0118bd0c84fcb03ee543f69df919"),
 )
-BIND_WINDOW = (0x054B2E, 0x054F7C)
+
+
+def attested(ram: bytes) -> bool:
+    return all(hashlib.sha256(ram[start:end]).hexdigest() == digest
+               for start, end, digest in CODE_WINDOWS)
 
 GOLD, HIFI, WELSH_DRESSER, RANK_ZERO_SUPPORT = 155, 86, 89, 108
 MEGA_TRADING, EMPTY_POST, THIRD_POST, HOME = (5, 6), (4, 6), (6, 2), (8, 8)
@@ -254,37 +261,33 @@ def verify(rows: list[dict], run: Path) -> list[dict]:
 
 
 def retarget(snapshot: Path, run: Path, pose: str, tos: Path, program: Path) -> Path:
-    """A run-local copy of the memstate whose stored image paths name the pinned images.
-
-    Hatari reloads TOS and the floppy from the absolute paths a memstate stores, so
-    a capture taken under another checkout path restores to a machine with no TOS.
-    Each path is a NUL-padded fixed-size field: the replacement is padded to the old
-    field's extent, and refused if it would not fit. The 1 MiB ST RAM is untouched.
-    """
-    data = bytearray(gzip.decompress(snapshot.read_bytes()))
-    before = hatari_memstate_ram(bytes(data))
-    for suffix, target in ((b"tos.img", tos), (b"emutos206.img", tos), (b".stx", program)):
-        new = str(target.resolve()).encode()
-        start = 0
-        while (end := data.find(suffix + b"\x00", start)) >= 0:
-            end += len(suffix)
-            begin = data.rfind(b"\x00", 0, end) + 1
-            while begin < end and data[begin] < 0x20:  # a flag byte can precede the field
-                begin += 1
-            start = end
-            if not data[begin:end].startswith(b"/") or bytes(data[begin:end]) == new:
-                continue
-            pad = end
-            while pad < len(data) and data[pad] == 0:
-                pad += 1
-            if len(new) > pad - begin - 1:
-                raise LabError(f"Pinned image path does not fit the snapshot's field: {new!r}")
-            data[begin:pad] = new + b"\x00" * (pad - begin - len(new))
-    if hatari_memstate_ram(bytes(data)) != before:
-        raise LabError("Retargeting the snapshot's image paths changed its RAM")
+    """A run-local copy of the pose that boots the pinned images, its 1 MiB ST RAM untouched."""
     out = run / f"retargeted-{pose}.sav"
-    out.write_bytes(gzip.compress(bytes(data), mtime=0))
+    retarget_memstate(snapshot, out, tos=tos, program=program)
+    if hatari_memstate_ram(out.read_bytes()) != hatari_memstate_ram(snapshot.read_bytes()):
+        raise LabError("Retargeting the snapshot's image paths changed its RAM")
     return out
+
+
+def open_fifo(fifo: Path, process: subprocess.Popen, deadline: float):
+    """Hatari's command FIFO, opened for writing without waiting on a reader for ever.
+
+    A blocking open waits until some process reads the FIFO, so an emulator that
+    made the FIFO and then died would hold the probe past every deadline. The
+    open is retried until Hatari is reading, has exited, or the deadline passes.
+    """
+    while True:
+        try:
+            descriptor = os.open(fifo, os.O_WRONLY | os.O_NONBLOCK)
+        except OSError as error:
+            if error.errno not in (errno.ENOENT, errno.ENXIO):
+                raise
+            if process.poll() is not None or time.monotonic() >= deadline:
+                raise LabError("Hatari did not open its command FIFO") from error
+            time.sleep(0.02)
+            continue
+        os.set_blocking(descriptor, True)
+        return os.fdopen(descriptor, "w", encoding="utf-8")
 
 
 def _drive(run: Path, index: int, command: list[str], fifo: Path, first: Path,
@@ -296,12 +299,7 @@ def _drive(run: Path, index: int, command: list[str], fifo: Path, first: Path,
                                    stdin=subprocess.DEVNULL,
                                    env=os.environ | headless_env())
         try:
-            deadline = time.monotonic() + 20
-            while not fifo.exists():
-                if process.poll() is not None or time.monotonic() >= deadline:
-                    raise LabError("Hatari did not create its command FIFO")
-                time.sleep(0.02)
-            with fifo.open("w", encoding="utf-8") as pipe:
+            with open_fifo(fifo, process, time.monotonic() + 20) as pipe:
                 time.sleep(3)  # Allow --memstate to finish restoring.
                 _fifo_send(pipe, [f"hatari-debug parse {first}"])
                 # The debugger's own `quit` does not return from a breakpoint
@@ -373,25 +371,21 @@ def main() -> None:
                for pose in sorted({row["pose"] for row in rows})}
     snapshots = {pose: retarget(source, run, pose, tos, program)
                  for pose, source in sources.items()}
-    reference = hatari_memstate_ram(next(iter(sources.values())).read_bytes())
     for source in sources.values():
-        ram = hatari_memstate_ram(source.read_bytes())
-        for start, end, digest in CODE_WINDOWS:
-            if hashlib.sha256(ram[start:end]).hexdigest() != digest:
-                raise LabError("Snapshot code differs from the attested Working Authority")
-        if ram[BIND_WINDOW[0]:BIND_WINDOW[1]] != reference[BIND_WINDOW[0]:BIND_WINDOW[1]]:
-            raise LabError("Snapshots disagree about the cell bind's code")
+        if not attested(hatari_memstate_ram(source.read_bytes())):
+            raise LabError("Snapshot code differs from the attested Working Authority")
     for index, case in enumerate(rows):
         run_case(run=run, index=index, case=case, hatari=hatari, tos=tos, program=program,
                  config=config, snapshot=snapshots[case["pose"]], timeout=args.timeout)
         print(f"  {case['name']}")
     results = verify(rows, run)
-    windows = CODE_WINDOWS + (BIND_WINDOW + (None,),)
+    # Hashed before the optional cleanup, so a result names every capture it read.
+    captures = {}
     for path in sorted(run.glob("*.ram")):
         ram = path.read_bytes()
-        for start, end, _ in windows:
-            if ram[start:end] != reference[start:end]:
-                raise LabError(f"Program bytes changed: {path}")
+        if not attested(ram):
+            raise LabError(f"Program bytes changed: {path}")
+        captures[path.name] = hashlib.sha256(ram).hexdigest()
         if not args.keep_ram:
             path.unlink()
     report = {
@@ -400,13 +394,12 @@ def main() -> None:
         "snapshotSha256": {pose: file_hash(source) for pose, source in sources.items()},
         "toolchain": toolchain.as_dict(),
         "probeSha256": file_hash(Path(__file__)),
-        "codeSha256": {
-            f"${start:06x}-${end:06x}": hashlib.sha256(reference[start:end]).hexdigest()
-            for start, end, _ in windows},
+        "codeSha256": {f"${start:06x}-${end:06x}": digest for start, end, digest in CODE_WINDOWS},
         "scope": "Original routines at debugger checkpoints; no walk, input path or scene pass",
         "results": results,
-        "artifacts": {path.name: file_hash(path) for path in sorted(run.iterdir())
-                      if path.is_file() and path.suffix not in (".ram", ".sav")},
+        "artifacts": dict(sorted((captures | {
+            path.name: file_hash(path) for path in run.iterdir()
+            if path.is_file() and path.suffix != ".ram"}).items())),
     }
     (run / "result.json").write_text(json.dumps(report, indent=2) + "\n")
     print(f"Ran {sum(len(row['steps']) for row in rows)} checkpoints; evidence: {run}")

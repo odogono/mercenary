@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "name": "opening-trade-rates-writer",
   "checkpoint": "title-screen",
-  "description": "From the title screen, press Space and break on the first write to $7960 while the title-to-world unpack runs. Every fresh-start capture holds $000F0005 in $7960-$7963, the Buy Rate 15 and Sell Rate 5 that no Trading Post's cell installs, and no instruction in $040000-$05FFFE addresses those words outside the cell bind, so this names what leaves them there (#1026).",
+  "description": "From the title screen, press Space and break on the first write to $7960 while the title-to-world unpack runs. Every fresh-start capture holds $000F0005 in $7960-$7963, Buy Rate 15 and Sell Rate 5, before any Trading Post's cell has bound. Two MENTOR posts install the same pair, but only once the player reaches them, and no instruction in $040000-$05FFFE addresses those words outside the cell bind, so this names what leaves them there (#1026). The unpack is in place and the watch pokes a sentinel into $7960, so the watch names the writer only when it is armed after the unpacker's input pointer has passed $7960 and before its output pointer arrives: a run that logs nothing has missed that interval.",
   "actions": [
     {
       "type": "keypress",

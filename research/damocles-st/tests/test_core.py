@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import sys
@@ -37,6 +38,7 @@ from damocleslab.runtime import (  # noqa: E402
     render_dump_script,
     render_title_capture_script,
     render_vbl_wait_script,
+    retarget_memstate,
 )
 from damocleslab.toolchain import parse_hatari_version  # noqa: E402
 
@@ -315,6 +317,37 @@ class RuntimeScriptTests(unittest.TestCase):
             )
             self.assertNotIn("--joy0", without)
             self.assertNotIn("--joy1", without)
+
+
+class RetargetMemstateTests(unittest.TestCase):
+    """A memstate's stored image paths are fixed-width fields (#1026)."""
+
+    def _stream(self, tos: bytes, disk: bytes) -> bytes:
+        field = lambda path: path + bytes(512 - len(path))  # noqa: E731
+        return b"HEAD\x00" + field(tos) + b"\x01" + field(disk) + b"RAM-TAIL"
+
+    def test_stored_paths_name_the_pinned_images_in_the_same_fields(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            tos, program = root / "emutos206.img", root / "d.stx"
+            stream = self._stream(b"/old/checkout/tos.img", b"/old/checkout/damocles.stx")
+            (root / "in.sav").write_bytes(gzip.compress(stream))
+            replaced = retarget_memstate(root / "in.sav", root / "out.sav", tos=tos, program=program)
+            out = gzip.decompress((root / "out.sav").read_bytes())
+            self.assertEqual(replaced, ["/old/checkout/tos.img", "/old/checkout/damocles.stx"])
+            self.assertEqual(out, self._stream(str(tos).encode(), str(program).encode()))
+            # Already retargeted: nothing to replace, and the bytes do not move.
+            self.assertEqual(
+                retarget_memstate(root / "out.sav", root / "again.sav", tos=tos, program=program), [])
+            self.assertEqual((root / "again.sav").read_bytes(), (root / "out.sav").read_bytes())
+
+    def test_a_path_longer_than_its_field_is_refused(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp).resolve()
+            tos = root / ("t" * 600) / "emutos206.img"
+            (root / "in.sav").write_bytes(gzip.compress(self._stream(b"/a/tos.img", b"/a/d.stx")))
+            with self.assertRaisesRegex(LabError, "does not fit"):
+                retarget_memstate(root / "in.sav", root / "out.sav", tos=tos, program=root / "d.stx")
 
 
 class StickBitmaskTests(unittest.TestCase):
