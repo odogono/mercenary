@@ -1,7 +1,14 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-import { instance } from './catalogue.ts';
 import { Chapter } from './ledger.ts';
+import {
+  boardFromCarried,
+  dropHere,
+  placement,
+  rotateTo,
+  switchOn,
+  takeTheEagle
+} from './objects.ts';
 import { CHAPTER_2 as STEP } from './route.ts';
 import {
   at,
@@ -10,22 +17,17 @@ import {
   inventoryHead,
   islandAreas,
   pressUntil,
-  row,
   takeUntilHead
 } from './session.ts';
-import { MOORBY_START, startFrom } from './starts.ts';
+import { MOORBY_START, NIXON, NIXON_BACK_ROOM, startFrom } from './starts.ts';
+import { structureOrigin, walkTo } from './steering.ts';
 import {
-  local,
-  steer,
-  structureOrigin,
-  walkTo,
-  type Point
-} from './steering.ts';
-import {
-  doorOutside,
   flyToEntrance,
+  hopByDigit,
   reboard,
   rideTo,
+  stepOutOfCube,
+  walkIntoTransporter,
   type Parked
 } from './travel.ts';
 
@@ -40,94 +42,7 @@ const CAPITAL_11_08 = 'eris-surface-8b';
 const METIS_00_06 = 'metis-surface-60';
 /// NIXON INTR COURT at Metis 05-06. Its inner door's Proximity Box takes in the TABLE, so walking
 /// to the table opens the "secret door" to the back room and the WASHBASIN.
-const METIS_05_06 = 'metis-surface-65';
-/// In the back room, well away from the WASHBASIN: a craft dropped with a selection in range is
-/// refused, since it demands support rank 0 (docs/research/damocles-carry-capacity.md).
-const BACK_ROOM = { x: -400, z: 1300 };
-/// A resident's recovered placement inside its parent, structure-local.
-const placement = async (page: Page, slot: number): Promise<Point> => {
-  const position = (await instance(page, `object-slot-${slot}`))?.placement
-    ?.position;
-  if (position === undefined) {
-    throw new Error(`object-slot-${slot} has no recovered placement`);
-  }
-  return { x: position[0]!, z: position[2]! };
-};
-
-const centreBox = (page: Page) =>
-  page.locator('#panel-damocles [data-panel-control=centre]');
-
-/// Open the carried head on the centre box, step its switch to ON, and drop it. The switch bits
-/// `$7872` must change, or the trigger was not armed.
-/// The four detonators' bits of `$7872`: a switch row's index halved is its bit
-/// (`headCommands.ts`, `SWITCH_ROWS`, `switchBit`).
-const TRIGGER_BITS = { 1: 0x08, 2: 0x10, 3: 0x20, 4: 0x40 } as const;
-
-/// Open the head on the centre box, check it is the named NOVA TRIGGER, and switch it on: its own
-/// bit of `$7872` must be set.
-const switchOn = async (page: Page, trigger: 1 | 2 | 3 | 4): Promise<void> => {
-  await page.keyboard.press('Enter');
-  await expect(centreBox(page)).toHaveAttribute(
-    'data-panel',
-    `NOVA TRIGGER ${trigger}`,
-    { timeout: 10_000 }
-  );
-  // The centre box ignores the Head Commands while it is still opening.
-  await expect(page.locator('#frame')).toHaveAttribute(
-    'data-centre-box-steps',
-    '0',
-    { timeout: 10_000 }
-  );
-  // `.` is the laptop's keypad `+`: on.
-  await pressUntil(
-    page,
-    '.',
-    async () => (await centreBox(page).getAttribute('data-item')) === 'ON',
-    'switch it on'
-  );
-  await expect
-    .poll(
-      async () =>
-        Number.parseInt(await attribute(page, 'switches'), 16) &
-        TRIGGER_BITS[trigger]
-    )
-    .toBe(TRIGGER_BITS[trigger]);
-  await page.keyboard.press('Enter');
-};
-
-/// Rotate the Carried Stack until its head starts with `name`, as a player would with `[`.
-const rotateTo = async (page: Page, name: string): Promise<void> => {
-  await pressUntil(
-    page,
-    '[',
-    async () => (await inventoryHead(page)).startsWith(name),
-    `rotate ${name} to the head`
-  );
-};
-
-/// Drop the head where the player stands; on NO ROOM, carry it outside the structure and drop it
-/// there, as a player would, noting the refusal.
-const dropHere = async (
-  page: Page,
-  chapter: Chapter,
-  instance: string,
-  name: string
-): Promise<void> => {
-  const dropped = async () => (await inventoryHead(page)) !== name;
-  try {
-    await pressUntil(page, 'd', dropped, `drop ${name}`, 4000);
-    return;
-  } catch {
-    const refusal = await row(page);
-    const region = await attribute(page, 'region');
-    chapter.note(
-      `Dropping ${name} inside ${instance} (region ${region}) is refused${refusal === '' ? '' : ` with "${refusal}"`}; dropped outside instead.`
-    );
-  }
-  await walkTo(page, instance, await doorOutside(page, instance), 'outside');
-  await pressUntil(page, 'd', dropped, `drop ${name} outside`);
-};
-
+const METIS_05_06 = NIXON;
 test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
   page
 }, testInfo) => {
@@ -206,47 +121,19 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
     await chapter.step(STEP.transporter, async () => {
       // Come at slot 69 from the north and walk south into it: facing the southern half of the
       // compass steps up the ring, to GAEA slot 70 (docs/research/damocles-arrival-routes.md).
-      const slot = await placement(page, 69);
-      await walkTo(
+      await walkIntoTransporter(
         page,
         CAPITAL_11_08,
-        { x: slot.x, z: slot.z + 120 },
-        'north of the transporter',
-        25
-      );
-      await steer(
-        page,
-        [
-          {
-            name: 'into the transporter',
-            radius: 5,
-            to: local(await structureOrigin(page, CAPITAL_11_08), slot)
-          }
-        ],
-        { mode: 'walk', untilBodyChanges: true }
+        await placement(page, 69),
+        'north'
       );
       expect(await attribute(page, 'body')).toBe('body-8');
       // Stopped in the arrival cube: the panel names VOID and the Cell Readout the destination.
       const arrived = await at(page, areas);
       expect([arrived.body, arrived.cell]).toEqual(['VOID', '08-08']);
       // Key n names slot 64 + n: 3 is Metis slot 67.
-      await page.keyboard.press('Digit3');
-      await expect
-        .poll(async () => attribute(page, 'body'), {
-          message: 'digit 3 in the Gaea cube did not reach Metis',
-          timeout: 5000
-        })
-        .toBe('body-15');
-      // Step out of the Metis cube so the panel names the Body again.
-      for (const key of ['ArrowUp', 'ArrowDown']) {
-        if ((await at(page, areas)).body !== 'VOID') {
-          break;
-        }
-        await page.keyboard.down(key);
-        await page.waitForTimeout(700);
-        await page.keyboard.up(key);
-        await page.waitForTimeout(200);
-      }
+      await hopByDigit(page, 3, 'body-15');
+      await stepOutOfCube(page, areas);
       await expectAt(page, areas, STEP.transporter.target);
     });
 
@@ -270,33 +157,12 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
       );
 
       // Out of DOOBERRYS SOLICITORS, drop the Eagle and fly it to NIXON INTR COURT.
-      await rideTo(page, METIS_00_06, 0);
-      await walkTo(
-        page,
-        METIS_00_06,
-        await doorOutside(page, METIS_00_06),
-        'outside',
-        60
-      );
-      await rotateTo(page, 'EAGLE NINE S E');
-      await pressUntil(
-        page,
-        'd',
-        async () => (await inventoryHead(page)) !== 'EAGLE NINE S E',
-        'drop the Eagle'
-      );
-      await pressUntil(
-        page,
-        'b',
-        async () => (await attribute(page, 'occupancy')) === EAGLE,
-        'board the Eagle'
-      );
+      await boardFromCarried(page, METIS_00_06);
       // A short hop: most of it is the slow final approach, which outlasts the default budget.
       parked = await flyToEntrance(page, METIS_05_06, { timeoutSeconds: 600 });
 
       // Take the Eagle again, go in past the table, and leave the transporter in the back room.
-      await walkTo(page, null, parked.at, 'beside the Eagle', 150);
-      await takeUntilHead(page, 'EAGLE NINE S E');
+      await takeTheEagle(page, parked);
       const table = await placement(page, 114);
       await walkTo(
         page,
@@ -305,7 +171,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
         'at the table',
         40
       );
-      await walkTo(page, METIS_05_06, BACK_ROOM, 'in the back room', 40);
+      await walkTo(page, METIS_05_06, NIXON_BACK_ROOM, 'in the back room', 40);
       await rotateTo(page, 'TRANSPORTER');
       await pressUntil(
         page,

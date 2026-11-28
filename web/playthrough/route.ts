@@ -140,6 +140,40 @@ export const CHAPTER_2 = {
   }
 } as const satisfies Record<string, SolutionStep>;
 
+const GAEA = 'GAEA';
+const UR_CITY = 'UR CITY';
+const CHALDEA = 'CHALDEA METROPOLIS';
+
+/// Chapter 3: from NOVA TRIGGER 4 on Metis to selling the gold on Gaea, after ST Format 20 steps 5
+/// and 6. It stops at the Sale until the session has Trading Posts (#1024); the NOVABOMB
+/// and ICARUS are the next chapter's, from a start that has bought the HI-FI.
+export const CHAPTER_3 = {
+  gold: {
+    cite: { section: 'step 6', solution: 'stf20' },
+    id: '3.2',
+    proves:
+      'the ring takes the player from Ur City to Chaldea slot 70, EAGLE NINE S E flies on Gaea, and the inventory head reads GOLD on Floor 10 of the BANK OF GAEA HQ',
+    says: 'Go back through the transporter to Chaldea 08.08, then fly to 06.06 and take the gold bar from the basement.',
+    target: { body: GAEA, cell: '06-06', floor: 10, island: CHALDEA }
+  },
+  sell: {
+    cite: { section: 'step 6', solution: 'stf20' },
+    id: '3.3',
+    proves:
+      'dropping the GOLD in the trading room of the Trading Post at Chaldea 04.06 is a Sale, which credits its Price to the balance (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back")',
+    says: 'Fly to 04.06 and sell the gold bar.',
+    target: { body: GAEA, cell: '04-06', island: CHALDEA }
+  },
+  sideboard: {
+    cite: { section: 'step 5', solution: 'stf20' },
+    id: '3.1',
+    proves:
+      'walking north into the Transporter dropped in the back room steps down the ring, digit 0 reaches Ur City slot 64, and the SIDEBOARD is NOVA TRIGGER 1, switches ON and is dropped switched on',
+    says: 'Walk into the transporters by their arrowed sides until you reach Ur City 07.01. Find NOVA TRIGGER 1 (the sideboard), take it, turn it on and drop it. The step takes the first hop by walking and the rest by the digit key.',
+    target: { body: GAEA, cell: '07-01', island: UR_CITY }
+  }
+} as const satisfies Record<string, SolutionStep>;
+
 /// The seam probe: ST Format 20's first leg flown the short way, across the wrap of Eris's
 /// surface, as a player heading straight for Key West would.
 export const CHAPTER_2_SEAM = {

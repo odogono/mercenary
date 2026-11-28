@@ -18,7 +18,7 @@ Steps are paraphrased with a citation; no solution text is copied here. Sources:
 
 ## Capital Spaceport to the Eagle (`chapter-1`)
 
-Run 2026-11-27T22:54:04.017Z. Start: a New Game: /damocles with no Session Resume record.
+Run 2026-11-28T09:55:23.711Z. Start: a New Game: /damocles with no Session Resume record.
 It assumes nothing a New Game does not give.
 
 11 passed, 0 failed, 0 not reached. Page errors: 0.
@@ -29,13 +29,13 @@ It assumes nothing a New Game does not give.
 | 1.2 | stf14 ¶2 | Get into the limo. | ERIS · CAPITAL CITY · 07-08 | passed | 0:00:54 | 02-46-35 |
 | 1.3 | stf14 ¶2 | Drive to the first building you find, the State Office. | ERIS · CAPITAL CITY · 09-08 | passed | 0:01:29 | 02-45-59 |
 | 1.4 | stf14 ¶3 | Go inside the State Office. | ERIS · CAPITAL CITY · 09-08 · Floor 0 | passed | 0:01:37 | 02-45-51 |
-| 1.5 | stf14 ¶3 | Take the Damocles file and read it. | ERIS · CAPITAL CITY · 09-08 · Floor 0 | passed | 0:01:46 | 02-45-42 |
+| 1.5 | stf14 ¶3 | Take the Damocles file and read it. | ERIS · CAPITAL CITY · 09-08 · Floor 0 | passed | 0:01:46 | 02-45-43 |
 | 1.6 | stf14 ¶3 | Take the lift to the President’s office. | ERIS · CAPITAL CITY · 09-08 · Floor 2 | passed | 0:02:00 | 02-45-28 |
-| 1.7 | stf14 ¶3 | Haggle with the President for the bounty until she offers 20 million, then accept; she says where the spacecraft key is. | ERIS · CAPITAL CITY · 09-08 · Floor 2 | passed | 0:03:32 | 02-43-57 |
-| 1.8 | stf14 ¶3 | Fetch the spacecraft key (the President says: the basement). | ERIS · CAPITAL CITY · 09-08 · Floor 10 | passed | 0:04:05 | 02-43-24 |
-| 1.9 | stf14 ¶3 | Get back in the car. | ERIS · CAPITAL CITY · 09-08 | passed | 0:04:35 | 02-42-53 |
-| 1.10 | stf14 ¶4 | The craft is at the Moorby School of Flying: get in. | ERIS · CAPITAL CITY · 09-09 | passed | 0:05:04 | 02-42-24 |
-| 1.11 | stf14 ¶4 | Take off. | ERIS · CAPITAL CITY | passed | 0:05:06 | 02-42-22 |
+| 1.7 | stf14 ¶3 | Haggle with the President for the bounty until she offers 20 million, then accept; she says where the spacecraft key is. | ERIS · CAPITAL CITY · 09-08 · Floor 2 | passed | 0:03:31 | 02-43-57 |
+| 1.8 | stf14 ¶3 | Fetch the spacecraft key (the President says: the basement). | ERIS · CAPITAL CITY · 09-08 · Floor 10 | passed | 0:04:05 | 02-43-23 |
+| 1.9 | stf14 ¶3 | Get back in the car. | ERIS · CAPITAL CITY · 09-08 | passed | 0:04:36 | 02-42-52 |
+| 1.10 | stf14 ¶4 | The craft is at the Moorby School of Flying: get in. | ERIS · CAPITAL CITY · 09-09 | passed | 0:05:05 | 02-42-23 |
+| 1.11 | stf14 ¶4 | Take off. | ERIS · CAPITAL CITY | passed | 0:05:07 | 02-42-21 |
 
 ### Gaps
 
@@ -43,18 +43,18 @@ None in this chapter.
 
 ## Moorby to NOVA TRIGGER 4 on Metis (`chapter-2`)
 
-Run 2026-11-27T23:02:38.970Z. Start: a built Session Resume record: a fresh session’s snapshot with the assumptions applied.
+Run 2026-11-28T10:03:57.925Z. Start: a built Session Resume record: a fresh session’s snapshot with the assumptions applied.
 It assumes: on foot beside EAGLE NINE S E at the Moorby School of Flying (end of Chapter 1); KEY - EAGLE 9SE carried, its pickup trigger spent; the first offer accepted (script flag bit 0) and the State Office triggers spent; unlike a played Chapter 1: the impact clock and session time are a New Game’s, not about five minutes on; KEY- V.I.P. LIMO and the DAMOCLES FILE are not carried; the accepted reward is a fresh session’s, not the 20 million the haggle reaches.
 
 5 passed, 0 failed, 0 not reached. Page errors: 0.
 
 | Step | Source | The step | Target | Outcome | Run time | Panel clock |
 | --- | --- | --- | --- | --- | --- | --- |
-| 2.1 | stf20 step 1; stf14 ¶5 | Fly to Key West 07.07 and take the Antigrav from the basement. ST Format 20 gives the square as 09.02; its own excursion (f), ST Format 14 and ST Format 15 all give Key West 07.07, which this step follows. | ERIS · KEY WEST · 07-07 · Floor 10 | passed | 0:03:40 | 02-43-48 |
-| 2.2 | stf20 step 2 | Fly to Snow Island 03.00, find NOVA TRIGGER 2 (the cupboard), take it, turn it on and drop it. | ERIS · SNOW ISLAND · 03-00 | passed | 0:08:34 | 02-38-54 |
+| 2.1 | stf20 step 1; stf14 ¶5 | Fly to Key West 07.07 and take the Antigrav from the basement. ST Format 20 gives the square as 09.02; its own excursion (f), ST Format 14 and ST Format 15 all give Key West 07.07, which this step follows. | ERIS · KEY WEST · 07-07 · Floor 10 | passed | 0:03:42 | 02-43-46 |
+| 2.2 | stf20 step 2 | Fly to Snow Island 03.00, find NOVA TRIGGER 2 (the cupboard), take it, turn it on and drop it. | ERIS · SNOW ISLAND · 03-00 | passed | 0:08:35 | 02-38-53 |
 | 2.3 | stf20 step 3 | Fly to Capital City 11.08, pick up the Eagle, take the lift down to the basement. | ERIS · CAPITAL CITY · 11-08 · Floor 10 | passed | 0:13:00 | 02-34-29 |
 | 2.4 | stf20 step 4 | Walk into the transporters by their arrowed sides until you come out at the Metis moon base, 00.06. The step takes the first hop by walking and the rest by the digit key. | METIS · METIS MOONBASE · 00-06 · Floor 9 | passed | 0:13:19 | 02-34-10 |
-| 2.5 | stf20 step 4 | Ride on round the ring to Metis 00.06. Take the transporter, go outside, drop the Eagle and fly to 05.06; take the Eagle again, go in, walk to the table to open a secret door, go through, drop the transporter and take NOVA TRIGGER 4 (the washbasin); turn it on and drop it. | METIS · METIS MOONBASE · 05-06 | passed | 0:19:43 | 02-27-45 |
+| 2.5 | stf20 step 4 | Ride on round the ring to Metis 00.06. Take the transporter, go outside, drop the Eagle and fly to 05.06; take the Eagle again, go in, walk to the table to open a secret door, go through, drop the transporter and take NOVA TRIGGER 4 (the washbasin); turn it on and drop it. | METIS · METIS MOONBASE · 05-06 | passed | 0:19:44 | 02-27-45 |
 
 ### Gaps
 
@@ -62,18 +62,35 @@ None in this chapter.
 
 ## Moorby to Key West the short way (`chapter-2-seam`)
 
-Run 2026-11-27T22:59:11.747Z. Start: a built Session Resume record: a fresh session’s snapshot with the assumptions applied.
+Run 2026-11-28T10:00:32.408Z. Start: a built Session Resume record: a fresh session’s snapshot with the assumptions applied.
 It assumes: on foot beside EAGLE NINE S E at the Moorby School of Flying (end of Chapter 1); KEY - EAGLE 9SE carried, its pickup trigger spent; the first offer accepted (script flag bit 0) and the State Office triggers spent; unlike a played Chapter 1: the impact clock and session time are a New Game’s, not about five minutes on; KEY- V.I.P. LIMO and the DAMOCLES FILE are not carried; the accepted reward is a fresh session’s, not the 20 million the haggle reaches.
 
 1 passed, 0 failed, 0 not reached. Page errors: 0.
 
 | Step | Source | The step | Target | Outcome | Run time | Panel clock |
 | --- | --- | --- | --- | --- | --- | --- |
-| 2s.1 | stf20 step 1; stf14 ¶5 | Fly from the Moorby School of Flying to Key West 07.07, the short way. | ERIS · KEY WEST · 07-07 | passed | 0:03:25 | 02-44-03 |
+| 2s.1 | stf20 step 1; stf14 ¶5 | Fly from the Moorby School of Flying to Key West 07.07, the short way. | ERIS · KEY WEST · 07-07 | passed | 0:03:24 | 02-44-05 |
 
 ### Gaps
 
 None in this chapter.
+
+## Metis to selling the gold on Gaea (`chapter-3`)
+
+Run 2026-11-28T10:23:43.040Z. Start: a built Session Resume record: a fresh session’s snapshot with the assumptions applied.
+It assumes: on foot in NIXON INTR COURT’s back room at Metis 05-06, beside Transporter slot 67, which lies there (end of Chapter 2); EAGLE NINE S E, the ANTIGRAV and KEY - EAGLE 9SE carried; NOVA TRIGGERs 2 and 4 switched on, each where it was found rather than where Chapter 2 dropped it; the first offer accepted (script flag bit 0) and the State Office triggers spent; unlike a played Chapter 2: the impact clock and session time are a New Game’s, not about thirty-five minutes on; no landing script has run.
+
+2 passed, 1 failed, 0 not reached. Page errors: 0.
+
+| Step | Source | The step | Target | Outcome | Run time | Panel clock |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3.1 | stf20 step 5 | Walk into the transporters by their arrowed sides until you reach Ur City 07.01. Find NOVA TRIGGER 1 (the sideboard), take it, turn it on and drop it. The step takes the first hop by walking and the rest by the digit key. | GAEA · UR CITY · 07-01 | passed | 0:00:39 | 02-46-49 |
+| 3.2 | stf20 step 6 | Go back through the transporter to Chaldea 08.08, then fly to 06.06 and take the gold bar from the basement. | GAEA · CHALDEA METROPOLIS · 06-06 · Floor 10 | passed | 0:07:35 | 02-39-54 |
+| 3.3 | stf20 step 6 | Fly to 04.06 and sell the gold bar. | GAEA · CHALDEA METROPOLIS · 04-06 | failed | 0:13:12 | 02-34-16 |
+
+### Gaps
+
+- **3.3, missing feature.** dropping the GOLD in the trading room left the balance at 000,009,000.00: no Sale (#1024). The step had to prove that dropping the GOLD in the trading room of the Trading Post at Chaldea 04.06 is a Sale, which credits its Price to the balance (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back").
 
 Run time is wall-clock time from the chapter’s start to the end of each step. The panel
 clock is the Damocles Panel’s own clock at that moment, the time left before impact.
