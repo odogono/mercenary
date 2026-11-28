@@ -831,3 +831,118 @@ describe('a carried Transporter’s digit (#1017)', () => {
     ).toThrow('pose names a Body no admitted Pose or landing reaches');
   });
 });
+
+/// The VOID room the player is bound in, as the session draws it.
+const room = (session: DamoclesSession) =>
+  session.snapshot.surface.placements.find(
+    item => item.id === session.snapshot.structure?.instanceId
+  )!;
+
+/// Two takeable objects that are not Transporters, to stand ahead of slot 66.
+const ahead = () =>
+  catalogue.instances
+    .filter(
+      item =>
+        item.handling?.takeable === true &&
+        item.handling.carried !== true &&
+        item.location !== undefined &&
+        item.placementClass !== undefined
+    )
+    .slice(0, 2)
+    .map(item => item.id);
+
+describe('VOID’s rooms (#1022)', () => {
+  test('a carried Transporter lands on its index’s Floor of the INVENTORY room', () => {
+    const session = intoVoid(carrying66(atSlot69Floor(), ahead()));
+    for (let frame = 0; frame < 10; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session)).toEqual({ body: 'body-30', cell: '0-1', floor: 2 });
+    expect(session.snapshot.structure?.instanceId).toBe('void-31-surface-10');
+    // Live, Floor 2 is orange: palette 82's ceiling and floor.
+    expect(room(session).selection!.background).toEqual({
+      ceiling: '#ee6600',
+      floor: '#442200'
+    });
+  });
+
+  test('Floor 0 is the yellow-ceilinged room the live run shows', () => {
+    const session = intoVoid(carrying66(atSlot69Floor()));
+    session.advance(1 / 50);
+    expect(at(session)).toEqual({ body: 'body-30', cell: '0-1', floor: 0 });
+    expect(room(session).selection!.background).toEqual({
+      ceiling: '#eeee66',
+      floor: '#2266aa'
+    });
+  });
+
+  test('each carried object is drawn on its own Floor and nowhere else', () => {
+    const [first, second] = ahead();
+    const session = intoVoid(carrying66(atSlot69Floor(), ahead()));
+    for (let frame = 0; frame < 10; frame += 1) {
+      session.advance(1 / 50);
+    }
+    const drawn = session.snapshot.residents.map(item => item.id);
+    // Floor 2 holds index 2, the Transporter, drawn round the player.
+    expect(drawn).toContain('object-slot-66');
+    expect(drawn).not.toContain(first);
+    expect(drawn).not.toContain(second);
+    expect(
+      session.snapshot.residents.find(item => item.id === 'object-slot-66')
+        ?.position
+    ).toEqual({ x: 33_237, y: 600, z: 99_100 });
+
+    // The lift's arrival: live, Floor 1 showed the object at index 1 on the column, and Floor 0
+    // the one at index 0.
+    for (const [floor, shown] of [
+      [1, second],
+      [0, first]
+    ] as const) {
+      expect(session.changeFloor(floor)).toEqual({ kind: 'moved' });
+      session.advance(1 / 50);
+      const residents = session.snapshot.residents;
+      expect(residents.map(item => item.id)).not.toContain('object-slot-66');
+      expect(residents.find(item => item.id === shown)?.position).toEqual({
+        x: 33_237,
+        y: 300 * floor,
+        z: 99_100
+      });
+    }
+  });
+
+  test('one left in the BRIEFCASE lands in the BRIEFCASE room', () => {
+    const saved = atSlot69Floor();
+    const session = intoVoid({
+      ...saved,
+      briefcaseStore: ['object-slot-66'],
+      residence: saved.residence.filter(
+        item => item.instance !== 'object-slot-66'
+      )
+    });
+    for (let frame = 0; frame < 10; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session)).toEqual({ body: 'body-30', cell: '0-2', floor: 0 });
+    expect(session.snapshot.structure?.instanceId).toBe('void-31-surface-20');
+  });
+
+  test('the room’s walls stop the walk where the live run stopped', () => {
+    // East and west from the column, long enough to cross the room twice over.
+    const ends = [Math.PI / 2, -Math.PI / 2].map(heading => {
+      const resumed = intoVoid(carrying66(atSlot69Floor())).captureResume();
+      const walker = new DamoclesSession(content, {
+        ...resumed,
+        pose: { ...resumed.pose, heading }
+      });
+      walker.intent = { ...IDLE, walk: 1 };
+      for (let frame = 0; frame < 400; frame += 1) {
+        walker.advance(1 / 50);
+      }
+      expect(walker.snapshot.pose.body).toBe('body-30');
+      return walker.snapshot.pose.position.x;
+    });
+    // Region 0's clamp, X 0–900 local less 11 each side: live, X 32779–33656.
+    expect(Math.min(...ends)).toBeCloseTo(32_768 + 11, -1);
+    expect(Math.max(...ends)).toBeCloseTo(32_768 + 888, -1);
+  });
+});
