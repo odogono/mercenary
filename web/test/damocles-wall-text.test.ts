@@ -256,8 +256,8 @@ const labelled: ErisPlacement = {
     ...placement.selection!,
     structure: {
       attachments: [],
-      detailModel: structure.detailModel,
-      detailVariant: structure.detailVariant,
+      detailModel: structure.detailModel!,
+      detailVariant: structure.detailVariant!,
       floorLabels: [label],
       plan: structure.plan,
       regions: structure.regions,

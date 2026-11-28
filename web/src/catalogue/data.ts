@@ -666,8 +666,10 @@ export interface CraftBody {
 }
 export interface StructureSelection {
   readonly attachments: readonly EntranceAttachment[];
-  readonly detailModel: string;
-  readonly detailVariant: string;
+  /// The Building detail the structure binds, and which of its variants. Absent where that
+  /// detail is intentionally empty: no geometry and no visibility groups to bind (#1022).
+  readonly detailModel?: string;
+  readonly detailVariant?: string;
   readonly floorLabels?: readonly FloorLabel[];
   readonly liveSelector?: boolean;
   readonly plan: Mesh;
@@ -998,7 +1000,7 @@ export interface Catalogue {
   readonly modelIndex: readonly ModelSummary[];
   readonly places: readonly Place[];
   readonly roadNetworks: readonly RoadNetwork[];
-  readonly schemaVersion: 18;
+  readonly schemaVersion: 19;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -1809,10 +1811,17 @@ const structureSelection = (value: unknown): StructureSelection => {
   if (wallTexts?.length === 0) {
     fail('empty wall text list');
   }
+  if ((s['detailModel'] === undefined) !== (s['detailVariant'] === undefined)) {
+    fail('selector detail model and variant disagree');
+  }
   return {
     attachments,
-    detailModel: string(s['detailModel']),
-    detailVariant: string(s['detailVariant']),
+    ...(s['detailModel'] === undefined
+      ? {}
+      : {
+          detailModel: string(s['detailModel']),
+          detailVariant: string(s['detailVariant'])
+        }),
     ...(floorLabels === undefined ? {} : { floorLabels }),
     ...(s['liveSelector'] === true ? { liveSelector: true } : {}),
     plan,
@@ -2362,7 +2371,7 @@ const craft = (value: unknown): Craft => {
 
 export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 18) {
+  if (r['schemaVersion'] !== 19) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -2970,7 +2979,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     modelIndex,
     places,
     roadNetworks,
-    schemaVersion: 18,
+    schemaVersion: 19,
     source,
     tables,
     textFrameGlyphs: textFrameGlyphs(r['textFrameGlyphs'] ?? {})
@@ -3066,7 +3075,10 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
     if (model.kind !== 'structure') {
       fail('structure selector requires a structure model');
     }
-    if (ids.models.get(selection.detailModel)?.kind !== 'interior') {
+    if (
+      selection.detailModel !== undefined &&
+      ids.models.get(selection.detailModel)?.kind !== 'interior'
+    ) {
       fail('invalid selector detail binding');
     }
     for (const label of selection.floorLabels ?? []) {
@@ -3096,7 +3108,7 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
 /// Catalogue's own so a file left behind by another run is refused rather than drawn.
 export const parseModelFile = (value: unknown, document: Catalogue): Model => {
   const r = object(value);
-  if (r['schemaVersion'] !== 18) {
+  if (r['schemaVersion'] !== 19) {
     fail('unsupported model file schema version');
   }
   const src = object(r['source']);
@@ -3116,7 +3128,7 @@ export const checkDetailBinding = (
 ): void => {
   const selection = structure.structureSelection;
   if (
-    selection !== undefined &&
+    selection?.detailModel !== undefined &&
     (detail?.detailSelection === undefined ||
       !detail.variants.some(v => v.id === selection.detailVariant))
   ) {
@@ -3140,7 +3152,7 @@ export const assembleCatalogue = (
   }
   for (const model of models) {
     const selection = model.structureSelection;
-    if (selection !== undefined) {
+    if (selection?.detailModel !== undefined) {
       checkDetailBinding(model, byId.get(selection.detailModel));
     }
   }

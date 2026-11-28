@@ -2855,9 +2855,10 @@ def decode_location_table(data: bytes, group: int) -> dict:
 ISLAND_TABLE_POINTER = 0x4BD1E
 ISLAND_TERMINATOR = 0x8000
 ISLAND_RECORD_BYTES = 10
-# Body slots $00-$1D. Slot 30 is the VOID sentinel, which is space rather than a
-# surface; its table entry is excluded from the census for that reason.
-SURFACE_BODIES = 30
+# Body slots $00-$1E. Slot 30 is VOID, which space never ranges to or lands on, but
+# its island table entry is an ordinary record: one island whose structure group
+# $31 builds the INVENTORY and BRIEFCASE rooms carried objects stand in (#1022).
+SURFACE_BODIES = 31
 # $058F64 masks the body position to twelve bits on both axes, so a body surface
 # is a 4096 x 4096 Surface Cell torus rather than a bounded plane.
 SURFACE_CELLS = 0x1000
@@ -3588,12 +3589,19 @@ def bind_floor_structures(models: list[dict], by_address: dict, tables: list,
                 gaps = [gap for gap in gaps
                         if gap != 'Authored surface attachments/openings are not yet decoded.'
                         ] + selection.pop('wallTextGaps')
-                selection['detailModel'] = instance['detailModel']
-                selection['detailVariant'] = instance['detailVariant']
-                detail = next(variant['mesh'] for variant in by_address[instance['detailModel']]['variants']
-                              if variant['id'] == instance['detailVariant'])
-                drawn = (assemble_mesh(mesh, turn_detail_mesh(data, detail, scale, 0), (1, 1))
-                         if 'articulation' in detail else assemble_mesh(mesh, detail, scale))
+                # An intentionally empty detail binds nothing: the Floor draws its
+                # structure alone (#1022).
+                detail_model = instance.get('detailModel')
+                if detail_model is None:
+                    detail = None
+                    drawn = mesh
+                else:
+                    selection['detailModel'] = detail_model
+                    selection['detailVariant'] = instance['detailVariant']
+                    detail = next(variant['mesh'] for variant in by_address[detail_model]['variants']
+                                  if variant['id'] == instance['detailVariant'])
+                    drawn = (assemble_mesh(mesh, turn_detail_mesh(data, detail, scale, 0), (1, 1))
+                             if 'articulation' in detail else assemble_mesh(mesh, detail, scale))
                 source = by_address[floor_id]
                 derived = {
                     'id': identity, 'kind': 'structure',
@@ -3603,13 +3611,14 @@ def bind_floor_structures(models: list[dict], by_address: dict, tables: list,
                     'reason': ' '.join(gaps + [
                         f"The Floor form of {floor_id}: its record decoded at the "
                         f"{scale[0]}\u00d7{scale[1]} scale of the instance that binds it, with "
-                        f"that instance's Building detail {instance['detailModel']}, as the "
-                        'lift draws it.'
+                        + (f"that instance's Building detail {detail_model}"
+                           if detail_model else "no Building detail, as that instance's is empty")
+                        + ', as the lift draws it.'
                     ]),
                     'variants': [{'id': 'assembly',
                                   'name': f'Floor as drawn · palette {own_palette}',
                                   'mesh': drawn}],
-                    'relatedModels': [floor_id, instance['detailModel']],
+                    'relatedModels': [floor_id] + ([detail_model] if detail_model else []),
                     'linkedInstances': [],
                     'evidence': [{
                         'claim': ('Only the cell bind writes the structure scale ($054D98/$054DA8, '
@@ -3666,7 +3675,7 @@ def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) ->
             if 'paletteIndex' not in floor or target is None:
                 continue
             selection = target.get('structureSelection')
-            detail = [] if selection is None else [
+            detail = [] if selection is None or 'detailModel' not in selection else [
                 variant['mesh'] for variant in by_id.get(selection['detailModel'], {}).get('variants', [])
                 if variant['id'] == selection['detailVariant']
             ]
@@ -4405,7 +4414,9 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
     if selector == 0 or selector % 4:
         raise ValueError('live workspace body selector is invalid')
     body = selector // 4
-    if body >= 30:
+    # VOID, body 30, is reached only by an image-replayed island: no capture
+    # stands in it as a world (#1022).
+    if body > 30 or (body == 30 and image_island is None):
         raise ValueError('live workspace body selector is out of range')
     label = workspace[0x81dc + body * 8:0x81e4 + body * 8].decode('ascii').strip() or bodies[body]['name']
     slug = label.lower()
@@ -4611,10 +4622,13 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         ground_table['entries'].append(identity)
         by_address[identity]['slots'] = [len(ground_table['entries']) - 1]
     ground_table['entryCount'] = len(ground_table['entries'])
-    ground_table['extentEvidence'] += (
-        f' Entries after index 255 are live {label} workspace-local ground records, '
-        'not first-world $1E400 slots.'
-    )
+    if extras:
+        # An image-replayed island, VOID's among them, adds no workspace-local ground
+        # records, so it claims none (#1022).
+        ground_table['extentEvidence'] += (
+            f' Entries after index 255 are live {label} workspace-local ground records, '
+            'not first-world $1E400 slots.'
+        )
     group = struct.unpack_from('>H', workspace, 0x794e)[0]
     network = decode_road_network(
         workspace, ground_model_by_cell, f'roads-{prefix}', body,
@@ -5134,8 +5148,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     })
     bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()} for i in range(31)]
     for index, body in enumerate(bodies):
-        # VOID is the space-as-place sentinel rather than a body surface, so it
-        # carries no surface and none of its table entry is published.
+        # VOID's surface is published like any Body's: its island record holds the
+        # rooms carried objects stand in (#1022).
         body['bodySurface'] = None if index >= SURFACE_BODIES else {
             'baseColour': st_rgb(body_base_colour(data, index)),
             'sourceColour': body_base_colour(data, index),
@@ -6098,6 +6112,15 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             continue
         detail = by_address[tables[2]['entries'][slot]] if slot < len(tables[2]['entries']) else None
         variant_id = f'palette-{palette_index}'
+        if detail is not None and detail.get('intentionalEmpty'):
+            # An intentionally empty detail has no geometry and no visibility groups
+            # to bind, which is complete rather than missing: the selector keeps its
+            # regions, wall text and Floor Labels, and names no detail (#1022).
+            model['reason'] += (
+                ' Its linked detail is intentionally empty, so the structure selector'
+                ' binds no detail model and its regions draw no detail groups.'
+            )
+            continue
         if detail is None or 'detailSelection' not in detail or not any(v['id'] == variant_id for v in detail['variants']):
             del model['structureSelection']
             if selection.get('floorLabels'):
@@ -6111,19 +6134,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     f' Its literal wall text {named} rides on region queues that are not'
                     ' retained, so none is published.'
                 )
-            if detail is not None and detail.get('intentionalEmpty'):
-                model['reason'] += (
-                    ' That empty detail carries no visibility groups either, so this'
-                    ' record keeps no structure selector and its region queues are'
-                    ' not retained.'
-                )
-            else:
-                model.pop('intentionalEmpty', None)
-                model['status'] = 'partial' if model['variants'] else 'unresolved'
-                model['reason'] += (
-                    ' Linked detail selection unavailable, so view-conditioned'
-                    ' visibility is not simulated for this record.'
-                )
+            model.pop('intentionalEmpty', None)
+            model['status'] = 'partial' if model['variants'] else 'unresolved'
+            model['reason'] += (
+                ' Linked detail selection unavailable, so view-conditioned'
+                ' visibility is not simulated for this record.'
+            )
         else:
             selection['detailModel'] = detail['id']
             selection['detailVariant'] = variant_id
@@ -6254,7 +6270,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
         'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',
         'Every resident slot also carries Association A byte 3, decoded as placementClass. It is mutable placement state rather than identity: direct placement copies $7A39 over it at $0546FC and support placement inherits the support\'s, so a session departs from the authored value as objects move. $7A39 is the 3x3 zone of the intra-cell position against the bound structure\'s extent rectangle (docs/research/damocles-placement-class.md). The class is not the handling byte\'s low nibble; they disagree for 176 of the 241 resident slots.',
-        'Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 62 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group\'s area name. A record has no name of its own. 21 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. The VOID slot\'s table entry is excluded because VOID is the space-as-place sentinel rather than a body surface. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).',
+        'Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 63 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group\'s area name. A record has no name of its own. 22 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. VOID\'s entry, slot 30, is one of them: space never ranges to or lands on it, but its record\'s structure group $31 builds the INVENTORY and BRIEFCASE rooms carried objects stand in. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).',
         'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
         'Every resident slot carries boarding, what the board gate answers for it, with the gate\'s constants read from the refusal chooser and gate at $0542E0-$05434F rather than assumed. Boardable is the gate\'s two table facts, the bound at slot 23 and the model guard\'s single-Y-turn orientation command; the reach, region, Occupancy and VOID guards are live state and the key test asks the Carried Stack. Under the bound the chooser outcome, the paired slot at slot + 178 and the refusal string are published even where the model guard refuses, because the key test runs first; a paired slot with no instance is published as missing. No seated eye height is published: boarding puts the eye at the resident position plus 63 for every slot (docs/design/damocles-boarding-admission.md).',
         'The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry\'s bra.w reaches, the pass\'s constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries\' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing\'s arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts\' random skip reads (docs/research/damocles-landing-messages.md). Since #581 it also carries the TOLOSA encounter\'s pool constants and the first world\'s records for slots 8, 11 and 15 (docs/research/damocles-tolosa-encounter.md).',
@@ -6370,7 +6386,7 @@ def articulation_table(data: bytes) -> list[int]:
     return list(struct.unpack_from('>320h', data, TRIG_TABLE))
 
 
-SCHEMA_VERSION = 18
+SCHEMA_VERSION = 19
 MODEL_INDEX_FIELDS = ('id', 'kind', 'name', 'recordClass', 'slots', 'status')
 # The facts a game rule reads without drawing: a structure's storey pitch admits a structure
 # residence, a support's top decides a Drop, and a structure's Insertion Groups admit a Drop
@@ -6415,7 +6431,7 @@ def body_models(result: dict) -> dict[str, list[str]]:
     for ids in closure.values():
         for model_id in list(ids):
             selection = models[model_id].get('structureSelection')
-            if selection is not None:
+            if selection is not None and 'detailModel' in selection:
                 ids.add(selection['detailModel'])
     return {body: sorted(ids) for body, ids in closure.items()}
 

@@ -606,8 +606,8 @@ entry until the player left the cube. The frame counter `$7AE8` ran throughout
 and HELP opened its menu, so the main loop is not stopped. Inside the cube the
 view is white, as in any transporter cube. A step out, cell `$10` draws walls
 under a yellow ceiling that box the player in at about X 32779–33656, Z
-98645–99118, and cell `$20` is all yellow; what draws them is
-[#1022](https://github.com/odogono/mercenary/issues/1022)'s. Outside the cube,
+98645–99118, and cell `$20` is all yellow; they are VOID's INVENTORY and
+BRIEFCASE rooms ([below](#void-1022)). Outside the cube,
 with the latch clear, no digit hops, as on any Body.
 
 **The BRIEFCASE store.** The BRIEFCASE drop (`$054632`–`$05467C`) cuts the
@@ -630,6 +630,66 @@ The probe wrote the parked placements itself, as `$052D42` writes them, and the
 first run traced `$052D42` doing the same. The panel's carried label read the
 previous head's, because the probe's writes skip the label refresh `$04DDCC`; that
 is the probe's, not the game's.
+
+##### VOID (#1022)
+
+**VOID is an ordinary authored building.** The island table at `$04BD1E` has a
+list for VOID at `$0633EC` with one record: origin 0,0, the shared
+coastline-less stub at `$06340C`, structure group `$31` and land colour `$777`.
+VOID's base colour and both sky words are `$777` too. Group `$31` (record
+`$025B68`, place list `$025B80`, an empty location table at `$025B81`, no
+extent runs) overrides two cells, each with its structure origin at the cell
+corner plus `$8000`:
+
+| Cell | Structure | Wall text | Floors | Palettes |
+| --- | --- | --- | --- | --- |
+| `$10` | slot 34, an alias of slot 33 at 3×3 | INVENTORY | 0–9 bind slot 33, storeys 300 apart | 80–85, then 80–83 |
+| `$20` | slot 36, an alias of slot 35 at 3×4 | BRIEFCASE | 0–9 bind slot 35 | 86–90 |
+
+Both link Building detail 1, which is intentionally empty. In local units the
+INVENTORY building is a lift car at X 300–600, Z 0–300, a doorway at X
+390–510, Z 300–330, and a main room at X −3–900, Z 330–1230, 150 high. The
+carried column, local (469, 796), stands in the main room, and Y = 300 ×
+index + 63 is the eye on each index's Floor. The BRIEFCASE building has its
+lift car at X 300–600, Z 0–400, its doorway at Z 400–440, and its room at X
+300–600, Z 440–1640.
+
+**Carried objects are its residents.** `$052D42` writes Association A byte 1
+`$31` and Association B `$78 01 ii 10`: an interior resident of group `$31`,
+insertion group 1, level `ii`, cell `$10` (or `$20` past the wrap). The
+interior pass `$052CDC` draws only the residents on the current level, so each
+Floor shows the one object whose index it is, and no other. **The Floor word
+the hop takes is read**: it binds the storey, its palette and which carried
+object is drawn. The #1017 subsection above lands the player on it.
+
+**The walk is the ordinary region clamp** (`$05A5F0`, inset 11). Slot 34's
+region 0 is X 0–900, Z 330–1230, flags `$0001`; region 1, the doorway, is X
+390–510, Z 300–330, flags `$03FD`, behind an attachment latch; region 2, the
+lift car, is X 300–600, Z 0–300, flags `$2001`, bit 13 marking the lift. The
+clamp gives X 11–888, which is the box #1017 saw; its Z 99118 edge was where
+that walk stopped, not a wall. Every walkable region has bit 14 clear, so the
+frame background is the room's own ceiling and floor, and no sky or star field
+is drawn. VOID's sky-body list at `$0081CB` would apply only in an exterior
+region, and none is reachable.
+
+Live, a run walked out of the carried cube, through the door into the lift,
+and rode it to Floors 1 and 2 with a real key:
+
+| Floor | Seen | Colours |
+| --- | --- | --- |
+| 0 | the carried transporter's black cube, marked 4, in the room; the Floor Label G on the back wall | walls `#88aacc`/`#6688aa`, ceiling `#eeee66`, floor `#2266aa` |
+| 1 | KEY - 22 CV on the column | pink, palette 81 |
+| 2 | DAMOCLES FILE on the column | ceiling `#ee6600`, floor `#442200`, palette 82 |
+
+In cell `$20` the all-yellow view #1017 saw is the yellow `#eeee66` X 300 wall,
+450 high, 61 units away. That is inferred from the geometry; no run looked
+round there.
+
+The catalogue had dropped all of this: `SURFACE_BODIES` kept the island decode
+away from body 30, and a structure whose detail was intentionally empty lost
+its selector (regions, wall text, Floor Labels) because that detail has no
+visibility groups. An empty detail binds nothing, which is complete rather
+than missing, so the selector is now kept for all nine such structures.
 
 #### Arrival
 
@@ -877,6 +937,8 @@ that a body cannot be stood on**, and each of the seven is an open gap.
 | Live GAEA destruction clearing transporters 64 and 70 | `restricted/damocles-1013/endgame-switches-20261128T070657Z-669aa9e7`, samples 038 and 039; `endgame-probe.py switches` from a retargeted `dion-2-3.sav` |
 | A carried transporter's digit hops into VOID, into its own cube, and leaves by the ring or a digit; the BRIEFCASE store's column | `restricted/damocles-1017/runs/transporter-digit-20261128T{075404Z-4e45c02d,080232Z-a27c669b,080400Z-0b45d456,080831Z-f129b2c1}`; `transporter-probe.py digit --carry` |
 | Carried column, its wrap at 10, the BRIEFCASE drop, Drop refusal in VOID, Save and Load copy | `$052D42`–`$052DA2`, `$054524`, `$054632`–`$05467C`, `$0542B6`–`$0542BE`, `$0552CE`–`$05530E`; `restricted/damocles-1017/static-listings.txt` |
+| VOID's island, group `$31`, the INVENTORY and BRIEFCASE rooms, their regions, Floors and palettes | `$04BD1E`, `$0633EC`, `$025B68`–`$025B81`, `$05A5F0`; `restricted/damocles-1022/void-island-group31.txt`, `structure-group-31.json`, `void-structures-static.txt`, `void-structure-selection.json` |
+| Live walk out of the carried cube, the room, and the lift to Floors 1 and 2 with a carried object on each | `restricted/damocles-1022/runs/transporter-digit-20261128T090836Z-a810614a`, samples 076, 119, 205, 215, 289, 371, 453; `transporter-probe.py digit --carry 68 --look 1 2` |
 | Twenty-seven arrival poses on twenty-three bodies | Twenty-seven Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
 | Eight bodies reached by steered craft flight   | Captured in play by the project owner, 2026-09-19; not instrumented, so no per-body flight log exists |
 | A body can carry more than one 16×16 window    | `gaea-transporter` against `docs/research/damocles-gaea-ur-city-workspace.md` |

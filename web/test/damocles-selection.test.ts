@@ -19,8 +19,8 @@ interface RawModel {
   kind: string;
   structureSelection: {
     attachments: unknown[];
-    detailModel: string;
-    detailVariant: string;
+    detailModel?: string;
+    detailVariant?: string;
     regions: {
       bounds: number[][];
       queue: { index: number; kind: string; slot?: number }[];
@@ -474,6 +474,13 @@ test('selector payload rejects invalid bindings, references, bounds, tags and ki
   change(m => {
     m.structureSelection.detailVariant = 'missing';
   });
+  // A detail model needs its variant, and the variant its model (#1022).
+  change(m => {
+    delete m.structureSelection.detailVariant;
+  });
+  change(m => {
+    delete m.structureSelection.detailModel;
+  });
   change(m => {
     m.structureSelection.regions[0]!.queue[0]!.index = 999;
   });
@@ -489,6 +496,12 @@ test('selector payload rejects invalid bindings, references, bounds, tags and ki
   change(m => {
     m.kind = 'object';
   });
+  // Neither: the structure binds an intentionally empty detail.
+  const unbound = structuredClone(raw);
+  const structure = unbound.models.find(m => m.id === placement.modelId)!;
+  delete structure.structureSelection.detailModel;
+  delete structure.structureSelection.detailVariant;
+  expect(() => parseCatalogue(unbound)).not.toThrow();
   const copy = structuredClone(raw);
   copy.models.find(
     m => m.id === 'interior-0303d6'

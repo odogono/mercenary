@@ -308,9 +308,10 @@ describe('the Eris surface from the Damocles Catalogue', () => {
       placement => placement.mesh === undefined
     );
     // INTERSTELLARSHIP and RED BEACON now draw; only the intentional empty
-    // surface record has nothing to place, on Capital City and the other four islands.
+    // surface record has nothing to place, on Capital City and the other four islands. Each
+    // binds its structure selector, with nothing to draw, so none is a gap (#1022).
     expect(unresolved).toHaveLength(22);
-    expect(surface.unresolvedCount).toBe(22);
+    expect(surface.unresolvedCount).toBe(0);
     expect(unresolved.every(placement => placement.faceCount === 0)).toBe(true);
     // Two intentionally empty records: Capital City places 01a618, Bare Island and Key West
     // 01d1a2.

@@ -3109,9 +3109,10 @@ class IslandTests(unittest.TestCase):
     def test_the_payload_carries_every_record_of_every_body_surface(self):
         document = self.payload()
         islands = document['islands']
-        self.assertEqual(len(islands), 62)
-        self.assertEqual(len({island['id'] for island in islands}), 62)
-        self.assertEqual(len({island['body'] for island in islands}), 30)
+        # VOID's one record included (#1022).
+        self.assertEqual(len(islands), 63)
+        self.assertEqual(len({island['id'] for island in islands}), 63)
+        self.assertEqual(len({island['body'] for island in islands}), 31)
         self.assertEqual(sum(1 for i in islands if i['coastline']['vertices']), 41)
         self.assertEqual(sum(1 for i in islands if i['areaName']), 29)
         # The two properties are independent: an island needs no settlement and a
@@ -3121,11 +3122,11 @@ class IslandTests(unittest.TestCase):
         # Group $00 is the shared empty record, so it binds no workspace.
         for island in islands:
             self.assertEqual(island['structureGroup'] == 0, island['workspace'] is None)
-        # Every body surface states its colour and its wrapping extent; VOID is
-        # the space-as-place sentinel and has none.
+        # Every body surface states its colour and its wrapping extent, VOID's
+        # included: its one island holds the rooms carried objects stand in (#1022).
         surfaces = [body for body in document['bodies'] if body['bodySurface']]
-        self.assertEqual(len(surfaces), 30)
-        self.assertIsNone(document['bodies'][30]['bodySurface'])
+        self.assertEqual(len(surfaces), 31)
+        self.assertEqual(document['bodies'][30]['bodySurface']['sourceColour'], 0x777)
         eris = next(body for body in surfaces if body['name'] == 'ERIS')
         self.assertEqual(eris['bodySurface']['sourceColour'], 0x003)
         self.assertEqual(eris['bodySurface']['extentCells'], [4096, 4096])
@@ -3358,10 +3359,12 @@ class SettlementRoadNetworkTests(unittest.TestCase):
         # the image, which is a different provenance and not a lesser network.
         attested = [n for n in networks if n['attestation'] == 'capture']
         self.assertEqual(len(attested), 1 + len(self.WORKSPACES))
-        # An empty network is a reading: these three Settlements have no roads.
+        # An empty network is a reading: these three Settlements have no roads,
+        # nor has VOID's group $31 (#1022).
         self.assertEqual(
             sorted(n['id'] for n in networks if not n['cells']),
-            ['roads-gaea-0e', 'roads-midas-the-midas-project', 'roads-solon'])
+            ['roads-gaea-0e', 'roads-midas-the-midas-project', 'roads-solon',
+             'roads-void-31'])
         # Twenty-one Bodies now carry roads: the twenty a capture reached,
         # plus LACHESIS, which no pose stands on and no craft route reaches.
         self.assertEqual(len({n['body'] for n in networks if n['cells']}), 21)

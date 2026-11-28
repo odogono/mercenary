@@ -183,7 +183,7 @@ describe('the Mercenary III content boundary', () => {
       text: '',
       value: {
         kind: 'catalogue',
-        schemaVersion: 18,
+        schemaVersion: 19,
         source: { programSha256: DAMOCLES_PROGRAM }
       }
     });

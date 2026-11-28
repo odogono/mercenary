@@ -4,8 +4,9 @@ import { DAMOCLES_RESUME_KEY, watchErrors } from './damocles-play.ts';
 
 /// Browser verification of a carried Transporter's digit (#1017): a player standing in Eris
 /// slot 69's cube carries Transporter slot 66, as an ANTIGRAV take leaves it. Its digit takes
-/// them into VOID, into its own cube on the carried column, and a digit there takes them out.
-test('a carried Transporter’s digit hops into VOID and a digit hops out', async ({
+/// them into VOID, into its own cube in the INVENTORY room, and walking back into it after a
+/// reload takes them out round the ring.
+test('a carried Transporter’s digit hops into VOID’s room, and the ring hops out', async ({
   page
 }, testInfo) => {
   test.setTimeout(60_000);
@@ -91,19 +92,30 @@ test('a carried Transporter’s digit hops into VOID and a digit hops out', asyn
   await expect(location).toHaveText('VOID');
   await page.screenshot({ path: testInfo.outputPath('in-void.png') });
 
-  // Reloaded in VOID, the player is still in the carried cube, and its digits still work.
+  // Backed out of the cube, the INVENTORY room's walls, floor and ceiling (#1022).
+  await page.keyboard.down('ArrowDown');
+  await expect
+    .poll(async () => Number(await frame.getAttribute('data-z')), {
+      timeout: 5000
+    })
+    .toBeGreaterThan(99_100 + 80);
+  await page.keyboard.up('ArrowDown');
+  await page.screenshot({ path: testInfo.outputPath('in-the-room.png') });
+
+  // Reloaded in the room, the carried cube is still there to walk back into: the ring fires
+  // and takes the player out of VOID.
   await page.reload();
   await expect(frame).toHaveAttribute('data-state', 'ready', {
     timeout: 20_000
   });
   await expect(frame).toHaveAttribute('data-cell', '0-1');
-  await expect(frame).toHaveAttribute('data-x', '33237');
-
-  // Eris slot 65, as live.
-  await page.keyboard.press('1');
+  await expect(location).toHaveText('VOID');
+  await page.keyboard.down('ArrowUp');
   await expect(frame).not.toHaveAttribute('data-cell', '0-1', {
     timeout: 5000
   });
-  await expect(frame).not.toHaveAttribute('data-x', '33237');
+  await page.keyboard.up('ArrowUp');
+  // Landed in the next Transporter's cube, whose panel names VOID too: the Body has changed.
+  await expect(frame).not.toHaveAttribute('data-x', /^33\d{3}$/);
   expect(errors).toEqual([]);
 });

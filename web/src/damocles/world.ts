@@ -457,12 +457,26 @@ const placementSelection = (
   models: ModelLookup
 ): ErisPlacement['selection'] => {
   const selection = model.structureSelection;
+  // An intentionally empty detail binds nothing: no geometry, no visibility groups (#1022).
+  const empty = selection !== undefined && selection.detailModel === undefined;
   const detail =
-    selection === undefined ? undefined : models.peek(selection.detailModel);
+    selection?.detailModel === undefined
+      ? undefined
+      : models.peek(selection.detailModel);
   const [ceiling, floor] = (model.sceneColours ?? []).map(entry =>
     entry.colour === undefined ? undefined : { ...entry, colour: entry.colour }
   );
   const background = sceneBackground(ceiling, floor);
+  if (empty) {
+    return {
+      ...(background === undefined ? {} : { background }),
+      boxes: { supports: [], walls: [] },
+      detail: { faces: [], lines: [], vertices: [] },
+      extent: null,
+      groups: [],
+      structure: selection
+    };
+  }
   return selection === undefined || detail?.detailSelection === undefined
     ? undefined
     : {

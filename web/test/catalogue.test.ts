@@ -116,7 +116,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 18,
+  schemaVersion: 19,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -494,9 +494,10 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
     data.models.filter(model => model.conditions.includes('viewerPosition'))
       .length
   ).toBe(19);
-  // 256 table records, and 47 Floor forms: an upper Floor in its instance's frame (#531).
+  // 265 table records, nine of them binding an intentionally empty detail (#1022), and 49
+  // Floor forms: an upper Floor in its instance's frame (#531).
   expect(data.models.filter(model => model.structureSelection).length).toBe(
-    303
+    314
   );
   expect(data.models.filter(model => model.detailSelection).length).toBe(59);
   expect(
@@ -1249,8 +1250,8 @@ it('places only residents selected by the native surface-body association', asyn
 it('records the cell background colours a surface record carries', async () => {
   const data = await loadCatalogue();
   const withColours = data.models.filter(model => model.sceneColours?.length);
-  // Including the 47 Floor forms, which keep their slot's own scene colours.
-  expect(withColours).toHaveLength(312);
+  // Including the 49 Floor forms, which keep their slot's own scene colours.
+  expect(withColours).toHaveLength(314);
   expect(withColours.every(model => model.kind === 'structure')).toBe(true);
   // Capital Spaceport resolves both through its own scene palette; the frame
   // loop installs them for a raster fill, so they are not wall colours.
@@ -1773,20 +1774,21 @@ describe('Damocles island records', () => {
 
 it('admits every island record of every body surface into the catalogue', async () => {
   const data = await loadCatalogue();
-  expect(data.islands).toHaveLength(62);
-  expect(new Set(data.islands.map(island => island.body)).size).toBe(30);
-  // A record is not a settlement and a settlement is not a record: 21 carry no
-  // coastline at all, and 33 bind no named area.
+  // VOID's one record included (#1022).
+  expect(data.islands).toHaveLength(63);
+  expect(new Set(data.islands.map(island => island.body)).size).toBe(31);
+  // A record is not a settlement and a settlement is not a record: 22 carry no
+  // coastline at all, and 34 bind no named area.
   expect(
     data.islands.filter(island => island.coastline.vertices.length === 0)
-  ).toHaveLength(21);
+  ).toHaveLength(22);
   expect(data.islands.filter(island => island.areaName !== null)).toHaveLength(
     29
   );
+  // VOID's surface too: its one island holds the rooms carried objects stand in (#1022).
   const surfaces = data.bodies.filter(body => body.bodySurface !== null);
-  expect(surfaces).toHaveLength(30);
-  // VOID is the space-as-place sentinel rather than a body surface.
-  expect(data.bodies.at(-1)!.bodySurface).toBeNull();
+  expect(surfaces).toHaveLength(31);
+  expect(data.bodies.at(-1)!.bodySurface?.baseColour).toBe('#eeeeee');
   const eris = surfaces.find(body => body.name === 'ERIS')!;
   expect(eris.bodySurface).toEqual({
     baseColour: '#000066',

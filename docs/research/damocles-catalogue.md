@@ -76,7 +76,7 @@ Each surface-cell placement carries `keyBase`, the `$7AFB` door-key base its `$A
 
 A structure selection whose post-plan list carries a wall text reaching the Floor Label (`$CD04`, tokens `$80`/`$81`) carries `floorLabels`: the queue entry the text rides on, the builder's anchor, plane, font, glyph scales and colour at the record's own scale. The document's `floorLabelGlyphs` holds `G`, `1`–`9` and `B` in each font those labels use, so a session draws the label for its current Floor (#473). A font-4 label also carries a `fallback`: it draws in font 3 while slot 49 or 91 is carried. Literal wall text is published as `wallTexts`: the queue entry, the text, font and plane, and glyphs baked at the builder's placement, with a font-3 fallback mesh for font 4. Wall text that prints a live token (a door key letter, or the Trading Post readout) is named in the model reason and not drawn. See [Floor Label](damocles-floor-label.md) and [structure wall text](damocles-structure-wall-text.md) (#485).
 
-The `islands` collection is the whole Gamma System's landmasses: all 62 ten-byte
+The `islands` collection is the whole Gamma System's landmasses: all 63 ten-byte
 records of the per-body lists the table at `$04BD1E` roots, one entry a record,
 keyed `island-<body-slug>-<recordAddress>` because a record carries no name of its
 own. Each names an `origin` in Body Coordinates (the record's `+0`/`+2`, with
@@ -87,14 +87,15 @@ give — the backwards `boxes` the classifier tests, tagged `extent`, `core` and
 `exclusion` in the order `$0560F2` reads them, a `landColour`, the `structureGroup`
 at `+6`, the `workspace` group record that group selects, and `areaName`, which is
 that group's area name rather than the island's own. `workspace` and `areaName` are
-both null where the record names group `$00`, the shared empty record, and 21
+both null where the record names group `$00`, the shared empty record, and 22
 records share one coastline-less stub whose extent and core boxes are the whole
 coordinate plane: on those bodies the classifier answers `core` everywhere, which is
 recovered behaviour rather than an absence. `extent` restates box 0 in Body
 Coordinates, where an upper bound below its lower bound is a wrapped span and not an
-empty one — Eris's Snow Island and four of Lucan's twelve cross the seam. The VOID
-slot's table entry is excluded: VOID is the space-as-place sentinel, not a Body
-surface. See [the Eris islands note](damocles-eris-islands.md) and
+empty one — Eris's Snow Island and four of Lucan's twelve cross the seam. VOID's
+table entry is one ordinary record: coastline-less, structure group `$31`, whose
+INVENTORY and BRIEFCASE rooms are where carried objects stand
+([#1022](damocles-arrival-routes.md#void-1022)). See [the Eris islands note](damocles-eris-islands.md) and
 [the island census](damocles-island-census.md). Each island also carries its group's
 `locationTable`, the location-trigger table the workspace loader publishes at
 `$7A68`: its `sourceAddress` and its four-byte `entries` as raw `cell`, `region`,
@@ -131,7 +132,8 @@ Each body carries `bodySurface`: its `baseColour`, the low word of `$0060C0 + 4*
 masked to twelve bits at `$0592AC`, which is what the surface is drawn in wherever no
 island is painted over it; and the extent `$058F64` masks positions onto, 4096 × 4096
 Surface Cells wrapping on both axes. It is stated rather than implied so that a
-consumer cannot treat a Body surface as a bounded plane. VOID's is null.
+consumer cannot treat a Body surface as a bounded plane. VOID's is published like
+any Body's: base colour and both sky words `$777`.
 
 Every surface placement's `coordinateSystem` is `Body Coordinates`, and each names
 the `island` whose origin the Structure Workspace it sits in was built at — the
@@ -328,7 +330,7 @@ displays each table's qualification. Every slot maps to one model identity;
 repeated pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **1766 unique records**: **1436 decoded**,
+Current extraction accounts for **1768 unique records**: **1438 decoded**,
 **330 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.

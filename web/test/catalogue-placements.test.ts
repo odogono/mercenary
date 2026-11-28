@@ -17,7 +17,8 @@ describe('the Catalogue hand-off into the Atlas', () => {
   test('joins every Catalogue Body to the Atlas Body of the same source slot', () => {
     // The Catalogue keys a Body by slot and the Gamma System document by slug, both from the
     // recovered source index, so every Body but one joins. VOID is the exception by design: the
-    // Catalogue carries it as a space-as-place sentinel and the Atlas holds no Body for it.
+    // Catalogue carries its two rooms (#1022), but nothing ranges to it, so the Atlas holds no
+    // Body for it.
     const unjoined = catalogue.bodies.filter(body => !bodies.get(body.id));
     expect(unjoined.map(body => body.name)).toEqual(['VOID']);
     expect(bodies.get('body-11')).toBe('eris');
@@ -43,8 +44,11 @@ describe('the Catalogue hand-off into the Atlas', () => {
   test('offers a hand-off for every placed Instance in the Catalogue', () => {
     const placed = catalogue.instances.filter(value => value.location);
     expect(placed.length).toBeGreaterThan(0);
+    // Every one but VOID's two rooms, which have no Atlas Body to open on.
     expect(
-      placed.filter(value => atlasLinkFor(bodies, value) === null)
-    ).toEqual([]);
+      placed
+        .filter(value => atlasLinkFor(bodies, value) === null)
+        .map(value => value.id)
+    ).toEqual(['void-31-surface-10', 'void-31-surface-20']);
   });
 });

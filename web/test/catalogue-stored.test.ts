@@ -194,7 +194,7 @@ describe('the Model store', () => {
   test('admits a structure only together with the interior it binds', async () => {
     const { reads, store } = await counted();
     const spaceport = await store.get('structure-01484e');
-    const interior = spaceport.structureSelection!.detailModel;
+    const interior = spaceport.structureSelection!.detailModel!;
     expect(store.peek(interior)).toBeDefined();
     expect(reads).toEqual([modelPath('structure-01484e'), modelPath(interior)]);
   });
