@@ -704,6 +704,13 @@ python3 research/damocles-st/scripts/transporter-probe.py drop --slot 66 --hold 
     --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
 ```
 
+```sh
+# carry slot 68 at stack index 2, press its digit 4 in the Gaea arrival cube, then try the exits (#1017);
+# --carry-index 10 puts it in the BRIEFCASE store instead, and --exit-digit N presses N in VOID's cube
+python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 --carry 68 --carry-index 2 \
+    --exits --side keep --no-aim --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+```
+
 Walks in short stick pulses so the player usually stops where a hop leaves them,
 and counts hops only from a tracing breakpoint on `$0591FA`. Each sample reads
 `$7882`, the latch `$7884`, the Cell Readout words `$7A2C`/`$7A34`, the Floor
