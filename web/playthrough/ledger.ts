@@ -68,6 +68,18 @@ export type GapClass =
   | 'solution error'
   | 'unconfirmed lead';
 
+/// A failure already triaged: thrown from the one check whose failure is known, such as a Sale
+/// the session does not have yet, so that a failure elsewhere in the step keeps its own class.
+export class KnownGapError extends Error {
+  override name = 'KnownGapError';
+  constructor(
+    readonly gapClass: GapClass,
+    message: string
+  ) {
+    super(message);
+  }
+}
+
 export interface Setup {
   readonly assumes: readonly string[];
   /// What the chapter's start assumed, and how it got there: a built Save, a console command.
@@ -176,8 +188,7 @@ export class Chapter {
 
   async step(
     definition: SolutionStep,
-    play: () => Promise<void>,
-    options: { readonly lead?: GapClass } = {}
+    play: () => Promise<void>
   ): Promise<void> {
     const base = {
       cite: definition.cite,
@@ -208,7 +219,9 @@ export class Chapter {
         class:
           error instanceof SteeringError
             ? 'harness gap'
-            : (options.lead ?? 'unconfirmed lead'),
+            : error instanceof KnownGapError
+              ? error.gapClass
+              : 'unconfirmed lead',
         detail: detail.split('\n').slice(0, 6).join('\n')
       };
       this.#stopped = true;

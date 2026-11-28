@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
 
 import { Chapter } from './ledger.ts';
-import { dropHere, placement, rotateTo, switchOn } from './objects.ts';
+import {
+  boardFromCarried,
+  dropHere,
+  placement,
+  rotateTo,
+  switchOn,
+  takeTheEagle
+} from './objects.ts';
 import { CHAPTER_2 as STEP } from './route.ts';
 import {
   at,
@@ -15,7 +22,6 @@ import {
 import { MOORBY_START, NIXON, NIXON_BACK_ROOM, startFrom } from './starts.ts';
 import { structureOrigin, walkTo } from './steering.ts';
 import {
-  doorOutside,
   flyToEntrance,
   hopByDigit,
   reboard,
@@ -151,33 +157,12 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
       );
 
       // Out of DOOBERRYS SOLICITORS, drop the Eagle and fly it to NIXON INTR COURT.
-      await rideTo(page, METIS_00_06, 0);
-      await walkTo(
-        page,
-        METIS_00_06,
-        await doorOutside(page, METIS_00_06),
-        'outside',
-        60
-      );
-      await rotateTo(page, 'EAGLE NINE S E');
-      await pressUntil(
-        page,
-        'd',
-        async () => (await inventoryHead(page)) !== 'EAGLE NINE S E',
-        'drop the Eagle'
-      );
-      await pressUntil(
-        page,
-        'b',
-        async () => (await attribute(page, 'occupancy')) === EAGLE,
-        'board the Eagle'
-      );
+      await boardFromCarried(page, METIS_00_06);
       // A short hop: most of it is the slow final approach, which outlasts the default budget.
       parked = await flyToEntrance(page, METIS_05_06, { timeoutSeconds: 600 });
 
       // Take the Eagle again, go in past the table, and leave the transporter in the back room.
-      await walkTo(page, null, parked.at, 'beside the Eagle', 150);
-      await takeUntilHead(page, 'EAGLE NINE S E');
+      await takeTheEagle(page, parked);
       const table = await placement(page, 114);
       await walkTo(
         page,

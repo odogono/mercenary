@@ -2,9 +2,15 @@ import { expect, type Page } from '@playwright/test';
 
 import { instance } from './catalogue.ts';
 import type { Chapter } from './ledger.ts';
-import { attribute, inventoryHead, pressUntil, row } from './session.ts';
+import {
+  attribute,
+  inventoryHead,
+  pressUntil,
+  row,
+  takeUntilHead
+} from './session.ts';
 import { walkTo, type Point } from './steering.ts';
-import { doorOutside } from './travel.ts';
+import { doorOutside, rideTo, type Parked } from './travel.ts';
 
 /// Handling objects as a player does: finding a resident, rotating the Carried Stack, switching a
 /// NOVA TRIGGER on from the centre box and dropping it.
@@ -93,4 +99,38 @@ export const dropHere = async (
   }
   await walkTo(page, instance, await doorOutside(page, instance), 'outside');
   await pressUntil(page, 'd', dropped, `drop ${name} outside`);
+};
+
+const EAGLE = 'object-slot-3';
+
+/// Out of `from` by its door, drop the carried EAGLE NINE S E there and board it.
+export const boardFromCarried = async (
+  page: Page,
+  from: string
+): Promise<void> => {
+  await rideTo(page, from, 0);
+  await walkTo(page, from, await doorOutside(page, from), 'outside', 60);
+  await rotateTo(page, 'EAGLE NINE S E');
+  await pressUntil(
+    page,
+    'd',
+    async () => (await inventoryHead(page)) !== 'EAGLE NINE S E',
+    'drop the Eagle'
+  );
+  await pressUntil(
+    page,
+    'b',
+    async () => (await attribute(page, 'occupancy')) === EAGLE,
+    'board the Eagle'
+  );
+};
+
+/// Beside the parked Eagle, take it again: the ANTIGRAV makes a craft takeable
+/// (docs/research/damocles-carry-capacity.md).
+export const takeTheEagle = async (
+  page: Page,
+  parked: Parked
+): Promise<void> => {
+  await walkTo(page, null, parked.at, 'beside the Eagle', 150);
+  await takeUntilHead(page, 'EAGLE NINE S E');
 };
