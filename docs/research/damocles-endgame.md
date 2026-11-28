@@ -59,7 +59,10 @@ script listings stay ignored Restricted Material under `research/damocles-st/wor
 
    The marker records the Body's centre as the blast centre (slot 74), sets the Body's word at
    `$626A` to `$8000`, counts it in `$7BEA`, and removes every object whose Association B names
-   that Body. If the Body is the player's (`$7AA8`), `$04CBAE` kills the player: system string
+   that Body, clearing it to `$00000000`; a carried object, at `$78`, is spared, and a
+   destroyed Body's transporters drop out of the ring
+   ([arrival routes](damocles-arrival-routes.md#a-destroyed-bodys-transporters-1013)).
+   If the Body is the player's (`$7AA8`), `$04CBAE` kills the player: system string
    `$23`, YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP, the death sound `$04C700`, `$7A64` ← 1 and
    the `$AAAA` flash. Otherwise it starts the explosion debris (`$04CCD2`).
 4. **Zero on the clock.** When the waypoint table runs out, `$051F42` destroys DAMOCLES and ERIS
