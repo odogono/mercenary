@@ -529,8 +529,10 @@ Neither handler tests whether the destination Body is destroyed, and neither
 needs to. The destruction marker `$04C98E` walks slots 255 down to 0 and, for
 every slot whose Association B byte 0 equals the Body's selector, clears
 Association B to `$00000000` and `$6FA9` to 0 (`$04C9D4`–`$04C9EE`). **A
-transporter on a destroyed Body is therefore unclaimed**: the ring passes it
-with string 18, and its digit raises string 20. No hop reaches a destroyed
+transporter on a destroyed Body is therefore unclaimed**: the ring skips it like
+any other unavailable slot, hopping on with string 18 or, if it comes back to
+the entry slot, refusing with string 17, and its digit raises string 20. No hop
+reaches a destroyed
 Body, so what a landing there would do does not arise.
 
 A carried transporter's byte 0 is `$78`, which no selector (`$00`–`$74`)
