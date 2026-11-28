@@ -313,6 +313,9 @@ def drop_transporter(machine: Machine, slot: int, clear: int, seconds: float) ->
         time.sleep(0.05)
         machine.stick(route.STICK_STOP)
     before = machine.sample(keep=True, shot=True)
+    _, gap = route.nearest_transporter(before)
+    if gap <= clear or before["latch"] != "0x0000":
+        raise LabError(f"did not clear every cube before the drop: {gap} units, latch {before['latch']}")
     machine.press(SCAN_DROP)
     after = []
     started = time.monotonic()
@@ -333,6 +336,8 @@ def drop_transporter(machine: Machine, slot: int, clear: int, seconds: float) ->
             time.sleep(1.0)
     else:
         raise LabError("the machine did not answer after the drop")
+    if slot in last["carried"]:
+        raise LabError(f"the drop was refused: slot {slot} is still carried")
     cube = last["residents"][str(slot)]
     return {
         "slot": slot, "stackAfterCarry": stack, "carriedRead": carrying["carried"],

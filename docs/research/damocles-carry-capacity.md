@@ -148,7 +148,7 @@ The checkpoints confirm all three outcomes with TRANSPORTER slot 66 and INTERSTE
 
 The pose's player stands in a region with bit 14 set, so this direct drop took Insertion Group 0. An interior drop's group comes from the same instruction as any other object's.
 
-Whether a dropped TRANSPORTER is then available to the Transporter Ring follows from [the arrival-routes note](damocles-arrival-routes.md): on foot, only Body byte `$00` or `$78` makes a slot unavailable, and a dropped craft holds the player’s Body. Aboard a craft the ring also passes one dropped inside a structure. Dropping one does not carry the player off: the drop sets the Transporter latch, so the cube they are left standing in fires only once they leave it and walk in again ([Entry fires once](damocles-arrival-routes.md#entry-fires-once-the-latch-7884), observed live).
+Whether a dropped TRANSPORTER is then available to the Transporter Ring follows from [the arrival-routes note](damocles-arrival-routes.md): on foot, only Body byte `$00` or `$78` makes a slot unavailable, and a dropped craft holds the player’s Body. Aboard a craft the ring also passes one dropped inside a structure. Dropping one does not carry the player off: the drop sets the Transporter latch, so the cube they are left standing in does not fire while they stand there (observed live). That it fires once they leave and walk in again is inferred from the latch handler, as for an arrival cube ([Entry fires once](damocles-arrival-routes.md#entry-fires-once-the-latch-7884)); the run did not walk out.
 
 | Run | `result.json` hash |
 |---|---|

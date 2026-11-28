@@ -476,8 +476,9 @@ as a take writes it, 574 units from slot 69: after Down, `$7884` read `$FFFF` fo
 the whole eight seconds sampled. `$7882` alternated between 0 and `$0108`
 (66 × 4) as above, and the panel named VOID. No hop was counted on `$0591FA`.
 Slot 66 lay at the player's X and Z, Y 1100 for an eye at 1163, Association B
-`$2C050A8B`: ERIS, Insertion Group 5, Level 10, cell `$8B`. The player leaves it
-like an arrival cube, and walking in again fires.
+`$2C050A8B`: ERIS, Insertion Group 5, Level 10, cell `$8B`. The run held the player
+still; that they leave it like an arrival cube, and that walking in again fires, is
+inferred from the latch handler above, not observed.
 
 #### Direction
 
