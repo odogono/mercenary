@@ -2,10 +2,15 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { type Catalogue } from '../src/catalogue/data.ts';
 import { ModelStore } from '../src/catalogue/modelStore.ts';
+import {
+  executeDamoclesConsoleCommand,
+  type DamoclesConsoleHost
+} from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
+  damoclesWhere,
   decodeDamoclesSave,
   encodeDamoclesSave,
   type DamoclesSaveSnapshot
@@ -24,6 +29,7 @@ import {
 } from '../src/damocles/transporter.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { IDLE } from '../src/gameCore/index.ts';
+import { parseConsoleCommand } from '../src/shell/console.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
@@ -188,6 +194,22 @@ describe('walking into a Transporter', () => {
     walkIn(north, 1);
     expect(at(north)).toEqual({ body: 'body-14', cell: '4-6', floor: 10 });
     expect(north.snapshot.pose.position.y).toBe(3170 + 63);
+  });
+
+  test('the location text names the cell the panel reads on the island the hop reached', () => {
+    // Gaea's Chaldea Metropolis is not the island Gaea's workspace is anchored at (Ur City), so
+    // the anchored cell reads something like -248--1016 here while the panel reads 08-08 (#1014).
+    const south = near69(100, SOUTH);
+    walkIn(south, 1);
+    const snapshot = south.snapshot;
+    expect(snapshot.cell).not.toEqual(snapshot.islandCell);
+    expect(damoclesWhere(snapshot)).toBe('GAEA 08-08');
+    const where = executeDamoclesConsoleCommand(
+      parseConsoleCommand('where', 16)!,
+      { session: () => south } as unknown as DamoclesConsoleHost
+    );
+    expect(where[0]).toStartWith('GAEA 08-08');
+    expect(where[0]).not.toContain('· cell');
   });
 
   test('walking backwards reverses the direction', () => {
