@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 75,
     "conditions": [],
     "evidence": [],
     "id": "object-03dca2",

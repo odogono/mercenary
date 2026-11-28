@@ -1547,6 +1547,69 @@ def cell_key_base(entry: int) -> int:
     return 0
 
 
+TRADING_STRUCTURE_SLOT = 82
+SCENE_RATE_BASE, GROUP_ROOT_WORD = 0x1E000, 0x1E64C
+
+
+def cell_trade_rates(data: bytes, entry: int) -> dict | None:
+    """The Buy Rate and Sell Rate a cell's `$ABDC` entry byte installs (#1026).
+
+    `$054CDE` takes values from `$20` up to `$9E` as an index, less `$20`, into the
+    byte pairs that end at the two words before the structure-group root:
+    `$1E000 + word($1E64C)` is the root, and `adda.w -2(a2), a2` adds the word
+    before it **sign-extended**, so the pairs sit below the root, not above it. The
+    first byte of a pair goes to `$7963`, the Sell Rate the quote `$04E05A` applies
+    to the carried head; the second goes to `$7961`, the Buy Rate it applies to the
+    Offered Object. Every other value leaves both rates as the last post set them.
+    """
+    entry &= 0xFE
+    if not 0x20 <= entry < 0xA0:
+        return None
+    root = SCENE_RATE_BASE + struct.unpack_from('>H', data, GROUP_ROOT_WORD)[0]
+    pair = root + struct.unpack_from('>h', data, root - 2)[0] + entry - 0x20
+    return {'buyRate': data[pair + 1], 'sellRate': data[pair]}
+
+
+def decode_base_price(data: bytes, address: int) -> int | None:
+    """An object Model's Base Price in hundredths of a credit, the balance's unit (#1026).
+
+    `$04E094` reads the four packed-decimal bytes that sit twenty bytes before the
+    record, just ahead of its sixteen-byte name. None denotes a record with no
+    name header before it, or bytes there that are not packed decimal: such a
+    record has no price header, and what the original would read is not a price.
+    """
+    label, price = data[address - 16:address], data[address - 20:address - 16]
+    if len(price) != 4 or not all(32 <= character < 127 for character in label):
+        return None
+    if any(nibble > 9 for byte in price for nibble in (byte >> 4, byte & 15)):
+        return None
+    return int(price.hex())
+
+
+def check_trading_posts(models: list, instances: list) -> None:
+    """Rates are published on exactly the Instances whose ground floor is the trading structure.
+
+    A scene selector that installs rates and a ground floor that trades are two
+    separate facts in the original. They coincide in every authored cell; a cell
+    where they did not would trade at another post's rates, which the published
+    shape cannot express, so it is refused here instead of exported wrongly.
+    """
+    by_id = {model['id']: model for model in models}
+
+    def ground_slot(model: dict) -> int | None:
+        binding = model.get('levelBinding')
+        if binding is not None:
+            return binding['floors'][0]['structureSlot']
+        return model['slots'][0] if model['kind'] == 'structure' else None
+
+    for instance in instances:
+        if 'tradingPost' not in instance:
+            continue
+        trades = ground_slot(by_id[instance['model']]) == TRADING_STRUCTURE_SLOT
+        if trades != (instance['tradingPost'] is not None):
+            raise ValueError(f"{instance['id']}: trading structure and installed rates disagree")
+
+
 def attachment_key_label(base: int, command: int) -> int:
     """The label byte `$059FC4` writes for an attachment's control word.
 
@@ -4488,6 +4551,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             'association': None,
             'handling': None,
             'keyBase': key_base or None,
+            'tradingPost': cell_trade_rates(workspace, record >> 8),
             'placementClass': None,
             'placement': None,
             'location': {
@@ -4824,6 +4888,7 @@ def attach_uniform_field(data: bytes, island: dict, cells: list[tuple[int, int]]
                 'association': None,
                 'handling': None,
                 'keyBase': (key_base or None) if kind == 'surface' else None,
+                'tradingPost': cell_trade_rates(data, record >> 8) if kind == 'surface' else None,
                 'placementClass': None,
                 'placement': None,
                 'location': {
@@ -4899,6 +4964,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             models.append(model)
             if kind == 'object':
                 model['supportTop'] = decode_support_top(data, address)
+                model['basePrice'] = decode_base_price(data, address)
                 orientation = decode_instance_orientation(data, address)
                 if orientation is not None:
                     model['instanceOrientation'] = orientation
@@ -5262,6 +5328,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                           'association': None,
                           'handling': None,
                           'keyBase': cell_key_base(record >> 8) or None,
+                          'tradingPost': cell_trade_rates(data, record >> 8),
                           'placementClass': None,
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
@@ -5446,6 +5513,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'placementClass': None,
             'placement': None,
             'keyBase': twin.get('keyBase') if twin else None,
+            'tradingPost': twin.get('tradingPost') if twin else None,
             'location': {
                 'body': 'body-11', 'place': parent_place,
                 'position': parent_position,
@@ -6303,6 +6371,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     }
     bind_beacon_phases(models, data)
     bind_draw_ranges(models, hardware)
+    check_trading_posts(models, instances)
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'roadNetworks': road_networks,
@@ -6391,8 +6460,8 @@ MODEL_INDEX_FIELDS = ('id', 'kind', 'name', 'recordClass', 'slots', 'status')
 # The facts a game rule reads without drawing: a structure's storey pitch admits a structure
 # residence, a support's top decides a Drop, and a structure's Insertion Groups admit a Drop
 # inside it. Indexed where the Model records them, so a Save can be validated before any Model
-# file is read.
-MODEL_INDEX_RULE_FIELDS = ('insertionGroups', 'storeyHeight', 'supportTop')
+# file is read. An object's Base Price is what a Trading Post multiplies into a Price (#1026).
+MODEL_INDEX_RULE_FIELDS = ('basePrice', 'insertionGroups', 'storeyHeight', 'supportTop')
 
 
 def floor_structures(model: dict) -> list[dict] | None:

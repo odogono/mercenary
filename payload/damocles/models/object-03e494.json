@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 120000,
     "conditions": [],
     "evidence": [
       {

@@ -115,7 +115,7 @@ The multiplier a Trading Post applies to the Base Price of an object the player 
 _Avoid_: Sell multiplier, discount, trade-in rate
 
 **Sale**:
-A Drop in a Trading Post's trading room while the post has no Offered Object, which credits the object's Price at the Sell Rate and makes it the Offered Object even when the Drop is then refused; the object the post last offered sells at the Buy Rate instead, so returning a Purchase refunds it.
+A Drop in a Trading Post's trading room while the post has no Offered Object, which credits the object's Price at the Sell Rate and makes it the Offered Object even when the Drop is then refused; the object the post last offered sells at the Buy Rate instead, so returning a Purchase before leaving the trading room refunds it.
 _Avoid_: Sell action, trade, inventory sale
 
 **Offered Object**:

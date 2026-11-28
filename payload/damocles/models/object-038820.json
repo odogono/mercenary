@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 230000,
     "conditions": [
       "resident slot (digit label)",
       "viewerPosition"

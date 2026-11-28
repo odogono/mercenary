@@ -27,7 +27,51 @@ it('retains recovered Drop metadata and rejects values outside the native word r
   }
 });
 
+it('retains a Base Price of eight packed-decimal digits and refuses anything else', () => {
+  const value = fixture();
+  for (const basePrice of [null, 0, 500_000, 99_999_999]) {
+    const model = { ...value.models[0]!, basePrice };
+    expect(
+      parseCatalogue({ ...value, models: [model] }).models[0]?.basePrice
+    ).toBe(basePrice);
+  }
+  expect(parseCatalogue(value).models[0]?.basePrice).toBeUndefined();
+  for (const invalid of [-1, 1.5, 100_000_000, Number.NaN, '500000']) {
+    expect(() =>
+      parseCatalogue({
+        ...value,
+        models: [{ ...value.models[0], basePrice: invalid }]
+      })
+    ).toThrow();
+  }
+});
+
+it('retains the rates a Trading Post cell installs and refuses anything but two bytes', () => {
+  const value = fixture();
+  const withPost = (tradingPost: unknown) =>
+    parseCatalogue({
+      ...value,
+      instances: [{ ...value.instances[0]!, tradingPost }]
+    }).instances[0]?.tradingPost;
+  expect(withPost({ buyRate: 16, sellRate: 10 })).toEqual({
+    buyRate: 16,
+    sellRate: 10
+  });
+  expect(withPost(null)).toBeNull();
+  expect(parseCatalogue(value).instances[0]?.tradingPost).toBeNull();
+  for (const invalid of [
+    { buyRate: 256, sellRate: 10 },
+    { buyRate: 16, sellRate: -1 },
+    { buyRate: 16 },
+    { buyRate: 16, markup: 2, sellRate: 10 },
+    16
+  ]) {
+    expect(() => withPost(invalid)).toThrow();
+  }
+});
+
 interface FixtureModel {
+  readonly basePrice?: unknown;
   readonly id: string;
   readonly kind: string;
   readonly name: string;
@@ -56,6 +100,7 @@ const parseCatalogue = (value: unknown) => {
       recordClass: model.recordClass ?? 'geometry',
       slots: model.slots,
       status: model.status,
+      ...('basePrice' in model ? { basePrice: model.basePrice } : {}),
       ...('storeyHeight' in model ? { storeyHeight: model.storeyHeight } : {}),
       ...('supportTop' in model ? { supportTop: model.supportTop } : {})
     }))

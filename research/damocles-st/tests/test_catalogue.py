@@ -4005,6 +4005,110 @@ class LocationTableTests(unittest.TestCase):
             self.assertEqual(table['sourceAddress'], int.from_bytes(ram[0x7A68:0x7A6C], 'big'), path.name)
 
 
+class TradingPostTests(unittest.TestCase):
+    """Base Prices and the rates a Trading Post's cell installs (#1026)."""
+
+    def test_the_cell_entry_byte_installs_the_rates_below_the_group_root(self):
+        from damocleslab.catalogue import cell_trade_rates
+
+        data = bytearray(0x30000)
+        root = 0x1E000 + 0x4000
+        struct.pack_into('>H', data, 0x1E64C, 0x4000)
+        # `adda.w -2(a2), a2` sign-extends: the pairs end just before the two
+        # words ahead of the root. An unsigned add would look 64 KiB higher.
+        struct.pack_into('>h', data, root - 2, -8)
+        data[root - 8:root - 4] = bytes([3, 6, 9, 12])
+        self.assertEqual(cell_trade_rates(data, 0x20), {'buyRate': 6, 'sellRate': 3})
+        # $054CBE masks with $FE, so bit 0 belongs to the surface slot.
+        self.assertEqual(cell_trade_rates(data, 0x23), {'buyRate': 12, 'sellRate': 9})
+        # The empty cell, the key-base range and the $CD74 text pointer range
+        # leave both rates as the last Trading Post set them.
+        for entry in (0x00, 0x02, 0x1E, 0xA0, 0xFE):
+            self.assertIsNone(cell_trade_rates(data, entry))
+
+    def test_a_base_price_is_the_packed_decimal_ahead_of_the_name(self):
+        from damocleslab.catalogue import decode_base_price
+
+        def record(price: str, name: bytes = b'GOLD            ') -> bytes:
+            return bytes.fromhex(price) + name + bytes(4)
+
+        self.assertEqual(decode_base_price(record('00500000'), 20), 500000)
+        self.assertEqual(decode_base_price(record('00003425'), 20), 3425)
+        # Zero is a price: a craft sells for nothing and still becomes the Offered Object.
+        self.assertEqual(decode_base_price(record('00000000'), 20), 0)
+        # A record with no name header has no price header either.
+        self.assertIsNone(decode_base_price(record('6000000a'), 20))
+        self.assertIsNone(decode_base_price(record('00500000', bytes(16)), 20))
+
+    def test_the_key_west_capture_pins_the_snow_island_rates(self):
+        """The one capture taken after a trade holds the rates and quote this rule predicts.
+
+        It was saved over Key West after the Snow Island TRADING POST had bound: the
+        post still offers the FRIDGE, quoted at the post's Buy Rate.
+        """
+        from damocleslab.catalogue import (
+            cell_trade_rates, decode_base_price, decode_group_overrides, hatari_memstate_ram,
+        )
+
+        root = Path(__file__).resolve().parents[1]
+        snapshot = root / 'snapshots' / 'damocles.key-west.sav'
+        if not snapshot.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        ram = hatari_memstate_ram(snapshot.read_bytes())
+        snow_island, trading_post, fridge = 0x10, 0x43, 113
+        overrides = decode_group_overrides(ram, snow_island)
+        rates = cell_trade_rates(ram, overrides[trading_post]['word'] >> 8)
+
+        self.assertEqual(rates, {'buyRate': 18, 'sellRate': 12})
+        self.assertEqual(struct.unpack_from('>4H', ram, 0x795C), (fridge, fridge, 18, 12))
+        record = 0x35700 + struct.unpack_from('>I', ram, 0x35700 + fridge * 4)[0]
+        self.assertEqual(decode_base_price(ram, record), 3425)
+        self.assertEqual(ram[0x7956:0x795C].hex(), f'{3425 * 18:012d}')
+
+    def payload(self) -> dict:
+        root = Path(__file__).resolve().parents[3]
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
+
+    def test_the_payload_publishes_rates_on_every_trading_post_and_only_there(self):
+        payload = self.payload()
+        models = {model['id']: model for model in payload['models']}
+
+        def ground_floor(model: dict) -> str:
+            binding = model.get('levelBinding')
+            return binding['floors'][0]['structureId'] if binding else model['id']
+
+        posts = {}
+        for instance in payload['instances']:
+            trades = ground_floor(models[instance['model']]) == 'structure-015eea'
+            self.assertEqual(instance.get('tradingPost') is not None, trades, instance['id'])
+            if trades:
+                posts[instance['id']] = (instance['tradingPost']['buyRate'],
+                                         instance['tradingPost']['sellRate'])
+        self.assertEqual(len(posts), 79)
+        self.assertEqual(posts['gaea-chaldea-metropolis-surface-65'], (16, 10))
+        self.assertEqual(posts['gaea-chaldea-metropolis-surface-64'], (15, 9))
+        self.assertEqual(posts['eris-snow-island-surface-43'], (18, 12))
+        # The one selector past the last pair reads the two bytes that follow it.
+        self.assertEqual(posts['mentor-surface-35'], (142, 124))
+        self.assertTrue(all(buy > sell for buy, sell in posts.values()))
+
+    def test_the_payload_publishes_a_base_price_on_every_named_object_model(self):
+        payload = self.payload()
+        prices = {model['name']: model['basePrice'] for model in payload['models']
+                  if model['kind'] == 'object'}
+        self.assertEqual(prices['GOLD'], 500000)
+        self.assertEqual(prices['HI-FI'], 250000)
+        self.assertEqual(prices['FRIDGE'], 3425)
+        self.assertEqual(prices['DOOR KEY A'], 0)
+        resident = {instance['model'] for instance in payload['instances']
+                    if instance['id'].startswith('object-slot-')}
+        unpriced = sorted(model['slots'][0] for model in payload['models']
+                          if model['id'] in resident and model['basePrice'] is None)
+        self.assertEqual(unpriced, [74, 156, 248, 251, 254])
+        self.assertFalse(any('basePrice' in model for model in payload['models']
+                             if model['kind'] != 'object'))
+
+
 if __name__ == '__main__':
     unittest.main()
 

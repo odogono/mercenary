@@ -4,6 +4,7 @@
   "format": "mercenary-geometry-sidecar",
   "record": {
     "model": {
+      "basePrice": 1000,
       "conditions": [],
       "evidence": [],
       "id": "object-03f774",
@@ -44,8 +45,9 @@
   "source": {
     "document": "damocles/models/object-03f774.json",
     "path": "$",
-    "sha256": "074be6b7f02dc2977a86cea6b3e1f15d06a769293adccc7fe89c9595d0298f14"
+    "sha256": "9ebf907668e851aeb216af425ecfce3befdf3de57c82444714d9a10be52d20b1"
   },
   "title": "damocles",
   "version": 2
 }
+

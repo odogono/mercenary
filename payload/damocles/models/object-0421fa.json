@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": null,
     "conditions": [],
     "evidence": [],
     "id": "object-0421fa",

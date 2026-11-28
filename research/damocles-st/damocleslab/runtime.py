@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 from pathlib import Path
 
 from .core import LabError
@@ -100,3 +101,39 @@ def headless_env() -> dict[str, str]:
         "SDL_VIDEODRIVER": "dummy",
         "SDL_AUDIODRIVER": "dummy",
     }
+
+
+def retarget_memstate(snapshot: Path, out: Path, *, tos: Path, program: Path) -> list[str]:
+    """Write a copy of a memstate whose stored image paths name the pinned images.
+
+    Hatari reloads TOS and the floppy from the absolute paths a memstate stores,
+    so a capture taken under another checkout path, or under the Hatari.app
+    bundle's own `tos.img`, restores to a machine with no TOS. The bundled image
+    is byte-identical to the pinned `emutos206.img`, so pointing the field at the
+    pinned file restores the same machine. Each path is a NUL-padded fixed-size
+    field: the replacement is padded to the old field's extent, and refused if
+    it would not fit. Returns the paths it replaced.
+    """
+    data = bytearray(gzip.decompress(snapshot.read_bytes()))
+    replaced = []
+    for suffix, target in ((b"tos.img", tos), (b"emutos206.img", tos), (b".stx", program)):
+        new = str(target.resolve()).encode()
+        start = 0
+        while (end := data.find(suffix + b"\x00", start)) >= 0:
+            end += len(suffix)
+            begin = data.rfind(b"\x00", 0, end) + 1
+            while begin < end and data[begin] < 0x20:  # a flag byte can precede the field
+                begin += 1
+            old = bytes(data[begin:end])
+            start = end
+            if not old.startswith(b"/") or old == new:
+                continue
+            pad = end
+            while pad < len(data) and data[pad] == 0:
+                pad += 1
+            if len(new) > pad - begin - 1:
+                raise LabError(f"pinned path does not fit the stored field for {old!r}")
+            data[begin:pad] = new + b"\x00" * (pad - begin - len(new))
+            replaced.append(old.decode(errors="replace"))
+    out.write_bytes(gzip.compress(bytes(data), mtime=0))
+    return replaced

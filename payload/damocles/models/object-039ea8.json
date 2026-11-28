@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 2360,
     "conditions": [
       "state $7A60"
     ],

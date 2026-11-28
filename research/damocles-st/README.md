@@ -399,6 +399,43 @@ carried craft's drop (#1007).
 walk and the scene pass would otherwise produce, and none of the three special items
 has a recovered placement, so no case is a claim that ordinary play reaches it. See
 [the carry capacity research](../../docs/research/damocles-carry-capacity.md).
+## Trading Post probe (#1026)
+
+```sh
+python3 research/damocles-st/scripts/trading-post-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/trading-post-probe.py --roms /path/to/roms \
+  --case sale-refused-placement --keep-ram
+```
+
+Runs the original cell bind `$054B2E`, the quote `$04E05A`, the trading-room exit
+`$054F52` and the take and drop handlers at controlled checkpoints, one case per
+emulator. A case is a chain of steps: each writes the few words one routine reads,
+enters it at its own entry and stops at whichever of its exits it reaches, and the next
+step inherits what it left. The bind reads the cell's entry from the pose's live
+workspace, so the rates and the Offered Object are the original's own. Cases cover the
+rates three CHALDEA METROPOLIS posts and two MENTOR posts install, the quote at both
+rates, the Purchase and its refusal, the refund and its loss on leaving the room, the
+Sale and its re-quote, and the credit a refused placement keeps.
+
+Each case names its pose under `snapshots/rehosted/`. A memstate stores the absolute
+paths of the TOS and disk images it was captured with, so the probe boots a run-local
+copy whose paths name the pinned images and checks that the copy's RAM is unchanged.
+`result.json` hashes every generated artifact: the debugger scripts and logs, both
+run-local snapshots, and each whole-machine capture, which is hashed before it is
+removed (`--keep-ram` keeps them).
+Hatari drops to its debugger prompt after a breakpoint script; the probe gives it an
+empty stdin so the prompt returns to emulation instead of waiting on the caller.
+
+**These are instruction checkpoints, not ordinary routes.** The region word `$7AFC` is
+written, and the region scanner is held at its own gate for steps in the trading room,
+because a structure's region boxes are built by the scene pass. See
+[Trading Post prices](../../docs/research/damocles-trading-post-prices.md).
+
+The opening Buy Rate and Sell Rate are watched from the title screen by
+`scenarios/opening-trade-rates-writer.json`; run `lab observe` with stdin from
+`/dev/null` for the same reason. The watch must be armed in a short interval of an
+in-place unpack, so most runs log nothing; the finding records the one that did.
+
 ## General object drop probe (#315)
 
 ```sh

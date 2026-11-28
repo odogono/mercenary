@@ -269,6 +269,12 @@ export interface DetailBoxes {
   readonly walls: readonly DetailBox[];
 }
 export interface Model {
+  /**
+   * An object Model's Base Price in hundredths of a credit, the balance's unit: the packed
+   * decimal `$04E094` reads ahead of the record's name. Null means the record has no price
+   * header; absent for every other kind.
+   */
+  readonly basePrice?: number | null;
   /** A Building detail's box lists; absent on other kinds. */
   readonly boxes?: DetailBoxes;
   /**
@@ -763,6 +769,12 @@ export interface Instance {
   readonly placementClass: number | null;
   readonly reason: string;
   readonly sourceAddress: number;
+  /**
+   * The rates this cell's `$ABDC` entry byte installs ($054CDE) where its ground floor is the
+   * trading structure, and null everywhere else: a Trading Post quotes its Offered Object at
+   * Base Price times `buyRate` and the object the player sells at Base Price times `sellRate`.
+   */
+  readonly tradingPost: TradingPostRates | null;
 }
 export interface Place {
   readonly body: string | null;
@@ -853,6 +865,11 @@ export interface Island {
   /** The group record that workspace is built from; null because group `$00` binds nothing. */
   readonly workspace: number | null;
 }
+/** A Trading Post's Buy Rate and Sell Rate, both named from the player's side. */
+export interface TradingPostRates {
+  readonly buyRate: number;
+  readonly sellRate: number;
+}
 export interface IslandField {
   readonly ground: string;
   readonly instancePrefix: string;
@@ -909,6 +926,8 @@ export interface InsertionGroup {
   }[];
 }
 export interface ModelSummary {
+  /** An object's Base Price, which a Trading Post multiplies into a Price; null without one. */
+  readonly basePrice?: number | null;
   /**
    * The structure each Floor binds, from the Model's Floor table. Above Floor 0 a Drop is
    * admitted by that structure's Insertion Groups, not the building's ($7B0E, #355).
@@ -1049,6 +1068,11 @@ const integer = (value: unknown): number => {
 const byte = (value: unknown): number => {
   const n = integer(value);
   return n <= 0xff ? n : fail('expected a byte');
+};
+/** Eight packed-decimal digits: the four bytes ahead of an object record's name. */
+const basePrice = (value: unknown): number => {
+  const n = integer(value);
+  return n <= 99_999_999 ? n : fail('expected a base price of eight digits');
 };
 const nonnegativeSignedWord = (value: unknown): number => {
   const n = integer(value);
@@ -1493,6 +1517,13 @@ const fields = (value: unknown, allowed: readonly string[]) => {
     fail('unknown selector field');
   }
   return r;
+};
+const tradingPost = (value: unknown): TradingPostRates => {
+  const r = object(value);
+  if (Object.keys(r).some(key => key !== 'buyRate' && key !== 'sellRate')) {
+    fail('unknown trading post field');
+  }
+  return { buyRate: byte(r['buyRate']), sellRate: byte(r['sellRate']) };
 };
 const bounds = (value: unknown, axes: number): Bounds => {
   const result = list(value).map(pair => {
@@ -1998,6 +2029,11 @@ const modelRecord = (item: unknown): Model => {
               ? null
               : nonnegativeSignedWord(m['supportTop'])
         }),
+    ...(m['basePrice'] === undefined
+      ? {}
+      : {
+          basePrice: m['basePrice'] === null ? null : basePrice(m['basePrice'])
+        }),
     variants,
     ...(m['structureSelection'] === undefined
       ? {}
@@ -2422,6 +2458,12 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
               m['supportTop'] === null
                 ? null
                 : nonnegativeSignedWord(m['supportTop'])
+          }),
+      ...(m['basePrice'] === undefined
+        ? {}
+        : {
+            basePrice:
+              m['basePrice'] === null ? null : basePrice(m['basePrice'])
           })
     };
   });
@@ -2717,7 +2759,11 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
           ? null
           : byte(i['placementClass']),
       reason: string(i['reason']),
-      sourceAddress: integer(i['sourceAddress'])
+      sourceAddress: integer(i['sourceAddress']),
+      tradingPost:
+        i['tradingPost'] === null || i['tradingPost'] === undefined
+          ? null
+          : tradingPost(i['tradingPost'])
     };
   });
   const instanceIds = unique(instances);
@@ -3022,6 +3068,7 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
     return fail(`model ${model.id} is not in the model index`);
   }
   for (const field of [
+    'basePrice',
     'kind',
     'name',
     'recordClass',
@@ -3287,7 +3334,8 @@ const fieldInstance = (
     placementClass: null,
     reason:
       'A uniform field copy the Catalogue does not store: every Surface Cell holds one.',
-    sourceAddress: kind === 'surface' ? 0xab_dc : 0x1_e4_00
+    sourceAddress: kind === 'surface' ? 0xab_dc : 0x1_e4_00,
+    tradingPost: null
   };
 };
 
