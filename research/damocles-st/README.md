@@ -709,6 +709,11 @@ python3 research/damocles-st/scripts/transporter-probe.py drop --slot 66 --hold 
 # --carry-index 10 puts it in the BRIEFCASE store instead, and --exit-digit N presses N in VOID's cube
 python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 --carry 68 --carry-index 2 \
     --exits --side keep --no-aim --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+# land in VOID, walk out of the carried cube round to the lift, and screenshot the column on Floors
+# 1 and 2 (#1022); --watch reads those slots' resident words in every sample
+python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 --carry 68 --carry-index 0 \
+    --look 1 2 --watch 191 151 181 183 --side keep --no-aim --hold 1.5 \
+    --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
 ```
 
 Walks in short stick pulses so the player usually stops where a hop leaves them,

@@ -101,7 +101,11 @@ class Machine(route.Machine):
         # The remote debugger now and then drops a burst of FIFO lines; send the stop again.
         # Each attempt dumps to its own paths and counts only if it wrote every window, so a
         # sample never mixes windows from two stops.
-        for attempt in range(3):
+        for attempt in range(8):
+            if attempt:
+                # #1022: a dropped burst can leave the machine stopped; continue it first.
+                _fifo_send(self.handle, ["hatari-cont"])
+                time.sleep(0.5)
             paths = {label: self.run_directory / f"{prefix}-{attempt}-{label}.bin"
                      for label, _, _ in windows}
             for path in paths.values():
@@ -453,6 +457,113 @@ def exits(machine: Machine, slot: int, seconds: float, digit: int | None, stando
     return out
 
 
+def face(machine: Machine, point: tuple[int, int], tolerance: int = 8) -> dict:
+    """Turn on the spot until facing `point` (#1022)."""
+    state = machine.sample()
+    for _ in range(60):
+        state = machine.sample()
+        want = route.heading_to(state, {"x": point[0], "z": point[1]})
+        error = (want - (state["yaw"] & route.YAW_MASK)) % 1024
+        error -= 1024 if error > 512 else 0
+        if abs(error) <= tolerance:
+            break
+        machine.stick(route.STICK_RIGHT if error > 0 else route.STICK_LEFT)
+        time.sleep(min(0.3, max(0.06, abs(error) / 600)))
+        machine.stick(route.STICK_STOP)
+        time.sleep(0.08)
+    return {"yaw": state["yaw"] & route.YAW_MASK, "x": state["x"], "z": state["z"]}
+
+
+def stroll(machine: Machine, point: tuple[int, int], tolerance: int = 24) -> dict:
+    """Walk to `point` in short pulses, stopping when it stops closing (#1022)."""
+    rows = []
+    best, stalled = None, 0
+    for _ in range(200):
+        state = machine.sample()
+        gap = max(abs(point[0] - state["x"]), abs(point[1] - state["z"]))
+        rows.append({"x": state["x"], "z": state["z"], "regionFlags": state.get("regionFlags"),
+                     "gap": gap})
+        if gap <= tolerance:
+            return {"outcome": "arrived", "path": rows[-4:], "steps": len(rows)}
+        if best is None or gap < best - 4:
+            best, stalled = gap, 0
+        else:
+            stalled += 1
+            if stalled >= 12:
+                return {"outcome": "stalled", "path": rows[-4:], "steps": len(rows)}
+        # One debugger stop per step: Hatari stops reading the FIFO after a few hundred.
+        want = route.heading_to(state, {"x": point[0], "z": point[1]})
+        error = (want - (state["yaw"] & route.YAW_MASK)) % 1024
+        error -= 1024 if error > 512 else 0
+        if abs(error) > 16:
+            stalled = max(0, stalled - 1)
+            machine.stick(route.STICK_RIGHT if error > 0 else route.STICK_LEFT)
+            time.sleep(min(0.3, max(0.06, abs(error) / 600)))
+        else:
+            machine.stick(route.STICK_FORWARD)
+            time.sleep(min(0.25, max(0.06, gap / 1500)))
+        machine.stick(route.STICK_STOP)
+        time.sleep(0.08)
+    return {"outcome": "exhausted", "path": rows[-4:], "steps": len(rows)}
+
+
+def look(machine: Machine, slot: int, floors: list[int], out: dict) -> dict:
+    """VOID's carried column (#1022): from the carried cube, leave it, look back at it,
+    walk through the door into the lift, ride to each Floor in `floors`, walk back out
+    and look at the column there. Every view is sampled with its screenshot."""
+    out["leave"] = leave(machine, "forward")
+    start = machine.sample()
+    cube = start["residents"][str(slot)]
+    # Cell origin of the bound structure: the cell's own corner plus the $8000 bias.
+    origin = (cube["x"] - (cube["x"] & 0xFFFF) + 0x8000, cube["z"] - (cube["z"] & 0xFFFF) + 0x8000)
+    column = (cube["x"], cube["z"])
+    view = (origin[0] + 450, origin[1] + 1150)
+    lift = (origin[0] + 450, origin[1] + 150)
+    # Round the carried cube at the column, never through it: crossing it fires the ring.
+    around = [(origin[0] + 150, origin[1] + 1100), (origin[0] + 150, origin[1] + 450),
+              (origin[0] + 450, origin[1] + 450)]
+    def route_to(points: list[tuple[int, int]]) -> list[dict]:
+        legs = []
+        for point in points:
+            legs.append(stroll(machine, point))
+            if machine.sample()["bodySelector"] != "0x0078":
+                legs.append({"left VOID": True})
+                break
+        return legs
+    out["origin"] = origin
+    def snap(label: str, target: tuple[int, int]) -> dict:
+        turned = face(machine, target)
+        state = machine.sample(keep=True, shot=True)
+        return {"label": label, "faced": turned, "state": brief(state) | {
+            "regionFlags": state.get("regionFlags"), "carried": state["carried"],
+            "residents": {key: value for key, value in state["residents"].items()
+                          if key in {str(s) for s in state["carried"]}}},
+            "sample": machine.samples - 1}
+    out["views"] = [snap("back of room, facing the column and door", column)]
+    out["toView"] = route_to([around[0], view])
+    out["views"].append(snap("far wall, facing the column", column))
+    out["toLift"] = route_to(around + [lift])
+    out["views"].append(snap("lift, facing back into the room", column))
+    out["rides"] = []
+    for floor in floors:
+        before = machine.sample()
+        machine.press(SCAN_DIGIT[floor] if floor else 0x22)
+        rows = []
+        for _ in range(40):
+            time.sleep(0.25)
+            state = machine.sample()
+            rows.append({"floor": state["floor"], "y": state["y"], "regionFlags": state.get("regionFlags")})
+            if state["floor"] == floor and state["y"] == 300 * floor + 63:
+                break
+        ride = {"floor": floor, "before": brief(before), "path": rows[-4:]}
+        out["rides"].append(ride)
+        ride["views"] = [snap(f"floor {floor}, lift, facing the room", column)]
+        ride["toView"] = route_to(list(reversed(around)) + [view])
+        ride["views"].append(snap(f"floor {floor}, far wall, facing the column", column))
+        ride["toLift"] = route_to(around + [lift])
+    return out
+
+
 def hold(machine: Machine, seconds: float) -> list[dict]:
     rows = []
     started = time.monotonic()
@@ -510,7 +621,8 @@ def run(args) -> dict:
             raise LabError("Hatari did not create the command FIFO")
         with fifo.open("w", encoding="utf-8") as handle:
             time.sleep(args.settle)
-            machine = Machine(handle, run_directory, route.TRANSPORTER_SLOTS)
+            machine = Machine(handle, run_directory,
+                              tuple(route.TRANSPORTER_SLOTS) + tuple(args.watch or ()))
             machine.arm_hop_trace()
             result["start"] = brief(machine.sample(keep=True, shot=True))
             if args.case == "drop":
@@ -529,6 +641,10 @@ def run(args) -> dict:
                     result["carry"]["read"] = carried_slot(machine.sample(keep=True), args.carry)
                 result["digit"] = press_digit(machine, args.digit)
                 result["afterDigit"] = hold(machine, args.hold)
+                if args.look is not None:
+                    result["look"] = {}
+                    result["look"] = look(machine, args.carry or 64 + args.digit, args.look,
+                                          result["look"])
                 if args.exits:
                     result["exits"] = exits(machine, args.carry or 64 + args.digit, args.hold,
                                             args.exit_digit, args.standoff, args.pulse)
@@ -543,6 +659,8 @@ def run(args) -> dict:
             time.sleep(0.4)
     except _Done:
         pass
+    except LabError as error:
+        result["error"] = str(error)
     finally:
         process.terminate()
         try:
@@ -587,10 +705,14 @@ def main() -> None:
                         help="seconds the stick is held per step of the entry walk")
     parser.add_argument("--leave", choices=("forward", "back"), default="forward",
                         help="outside: the stick that leaves; re-entry uses the other one")
+    parser.add_argument("--look", type=int, nargs="*", default=None,
+                        help="digit --carry (#1022): leave the VOID cube, look, then ride the lift to these Floors")
+    parser.add_argument("--watch", type=int, nargs="*", default=None,
+                        help="extra resident slots to read in every sample")
     args = parser.parse_args()
     result = run(args)
     print(json.dumps({key: result[key] for key in result
-                      if key in ("entry", "carry", "leave", "digit", "reenter", "drop")},
+                      if key in ("entry", "carry", "leave", "digit", "reenter", "drop", "look")},
                      indent=1, default=str))
     print("run:", result["runDirectory"])
 
