@@ -67,7 +67,13 @@ test('a carried Transporter’s digit hops into VOID and a digit hops out', asyn
     });
   });
   await page.addInitScript(
-    ({ encoded, key }) => localStorage.setItem(key, encoded),
+    // Once: a later reload must restore what the session itself last resumed.
+    ({ encoded, key }) => {
+      if (sessionStorage.getItem('seeded') === null) {
+        localStorage.setItem(key, encoded);
+        sessionStorage.setItem('seeded', '1');
+      }
+    },
     { encoded, key: DAMOCLES_RESUME_KEY }
   );
   await page.reload();
@@ -84,6 +90,14 @@ test('a carried Transporter’s digit hops into VOID and a digit hops out', asyn
   await expect(frame).toHaveAttribute('data-z', '99100');
   await expect(location).toHaveText('VOID');
   await page.screenshot({ path: testInfo.outputPath('in-void.png') });
+
+  // Reloaded in VOID, the player is still in the carried cube, and its digits still work.
+  await page.reload();
+  await expect(frame).toHaveAttribute('data-state', 'ready', {
+    timeout: 20_000
+  });
+  await expect(frame).toHaveAttribute('data-cell', '0-1');
+  await expect(frame).toHaveAttribute('data-x', '33237');
 
   // Eris slot 65, as live.
   await page.keyboard.press('1');

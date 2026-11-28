@@ -230,6 +230,7 @@ import {
   digitHop,
   insideTransporterCube,
   parkedPosition,
+  reachesVoid,
   ringHop,
   ringStepsUp,
   transporterInstance,
@@ -1109,9 +1110,18 @@ export class DamoclesSession implements TitleSession<
         : content.models
             .peek(bound.model)
             ?.levelBinding?.floors.find(entry => entry.level === floor);
+    // VOID has no surface waves: the cube a restore there stands in is a held Transporter's,
+    // whose Model must be in hand before the latch settles, or it fires once it lands (#1017).
+    const held =
+      restore.pose.body === VOID_BODY
+        ? [...restore.carried, ...restore.briefcaseStore]
+            .filter(id => reachesVoid([id]))
+            .flatMap(id => instanceById(content.catalogue, id)?.model ?? [])
+        : [];
     return [
       ...(modelWaves(content.catalogue, surface, restore.pose.position)[0] ??
         []),
+      ...held,
       ...(bound === undefined ? [] : [bound.model]),
       ...(floorStructure === undefined ? [] : [floorModelId(floorStructure)])
     ].filter(id => content.models.peek(id) === undefined);

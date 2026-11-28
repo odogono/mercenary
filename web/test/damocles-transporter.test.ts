@@ -798,6 +798,16 @@ describe('a carried Transporter’s digit (#1017)', () => {
     expect(restored.snapshot.pose.body).toBe('body-30');
     expect(transporterCues(restored)).toBe(0);
 
+    // A reload reads the held Transporter's Model before it restores, since VOID has no
+    // surface waves to bring it, so the cube is there when the latch settles.
+    const model = catalogue.instances.find(
+      item => item.id === 'object-slot-66'
+    )!.model!;
+    const { content: cold } = delayed(model);
+    expect(
+      DamoclesSession.missingModels(cold, session.captureResume())
+    ).toContain(model);
+
     // Nothing but a carried Transporter reaches VOID, so a VOID Save without one is refused.
     const saved = session.captureResume();
     expect(() =>

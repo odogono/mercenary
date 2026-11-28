@@ -97,19 +97,23 @@ class Machine(route.Machine):
         windows = [route.WINDOWS[0], ("panel", PANEL_NAME, 2)]
         if self.strings is None or keep or full:
             windows += list(route.WINDOWS[1:])
-        paths = {label: self.run_directory / f"{prefix}-{label}.bin" for label, _, _ in windows}
-        for path in paths.values():
-            path.unlink(missing_ok=True)
-        commands = ["hatari-stop", "hatari-debug setopt hex"]
-        commands += [f"hatari-debug savebin {paths[label]} ${base:x} ${length:x}"
-                     for label, base, length in windows]
-        if shot:
-            commands.append(f"hatari-debug screenshot {self.run_directory}/{prefix}.png")
-        commands.append("hatari-cont")
         blobs = dict(self.strings or {})
         # The remote debugger now and then drops a burst of FIFO lines; send the stop again.
+        # Each attempt dumps to its own paths and counts only if it wrote every window, so a
+        # sample never mixes windows from two stops.
         for attempt in range(3):
+            paths = {label: self.run_directory / f"{prefix}-{attempt}-{label}.bin"
+                     for label, _, _ in windows}
+            for path in paths.values():
+                path.unlink(missing_ok=True)
+            commands = ["hatari-stop", "hatari-debug setopt hex"]
+            commands += [f"hatari-debug savebin {paths[label]} ${base:x} ${length:x}"
+                         for label, base, length in windows]
+            if shot:
+                commands.append(f"hatari-debug screenshot {self.run_directory}/{prefix}.png")
+            commands.append("hatari-cont")
             _fifo_send(self.handle, commands)
+            read = {}
             for (label, _, length), path in zip(windows, paths.values()):
                 for _ in range(100):
                     if path.is_file() and path.stat().st_size == length:
@@ -117,8 +121,9 @@ class Machine(route.Machine):
                     time.sleep(0.03)
                 else:
                     break
-                blobs[label] = path.read_bytes()
+                read[label] = path.read_bytes()
             else:
+                blobs.update(read)
                 break
         else:
             raise LabError(f"sample {index} read nothing for window {label}")
@@ -155,6 +160,12 @@ class Machine(route.Machine):
         or more puts it in the BRIEFCASE store instead: at that array index beyond the count,
         `$61CA` counting the store, parked as the pass last left it before the drop."""
         stack = self.sample()["carried"]
+        # Ten carried and ten stored are the most there can be; a carried index past the end
+        # of the stack would land lower than asked, and the result would misreport it.
+        if not 0 <= index < 20:
+            raise LabError(f"--carry-index {index} is outside 0-19")
+        if index < 10 and index > len(stack):
+            raise LabError(f"--carry-index {index} is past the {len(stack)}-entry Carried Stack")
         if index >= 10:
             self.poke(ASSOCIATION_B + slot * 4, CARRIED_FORM.to_bytes(4, "big"))
             self.poke(HANDLING + slot * 4, bytes([0xA0]))
