@@ -571,6 +571,66 @@ on VESTA, cell `$64`, Floor 10, with the latch still holding `$0114`. In a
 separate run the player walked out of the Gaea cube until `$7884` read 0, and
 `0` then counted no hop and left the player where they were.
 
+##### A carried transporter's digit (#1017)
+
+The digit gate tests body byte `$00` and nothing else, so a **carried**
+transporter, body byte `$78`, passes it and the player hops to wherever the
+carried object is parked: VOID, on the column `$052D42` writes at every scene
+rebuild ([the carried coordinates](damocles-object-selection.md#the-carried-coordinates)).
+For Carried Stack index `i` below 10 that is X `33237`, Z `99100`, Y
+`300 × i`, Association B `$78 01 ii 10`. From index 10 the loop wraps
+(`$052D94`–`$052DA2`): index `10 + k` is parked at X `33237`, Z `164636`
+(`$2831C`), Y `300 × k`, Association B `$78 01 kk 20`. `$0591FA` adds `$3F` to
+Y as for any hop, and the Floor word takes the level byte, the index.
+
+**It is not a trap.** The carried form's cell byte (`$10`, or `$20` past the
+wrap) is VOID's cell, so the carried transporter is drawn there, its cube test
+fires, and the player lands inside it. Both handlers then work as anywhere
+else: backing out and in again runs the ring with the carried slot as the
+entry, and any digit hops on. Drop refuses on body `$78` (`$054524`).
+
+Live, from `eris-transporter-11-8` the ring took the player from Eris slot 69
+to Gaea slot 70; slot 68 was then written onto the Carried Stack as a take and
+`$052D42` leave it, and `4` was pressed in the slot 70 cube. Every hop counted
+on `$0591FA`:
+
+| Slot 68 | Lands at | Cell Readout | Exit |
+| --- | --- | --- | --- |
+| Carried, index 0 | VOID, cell `$10`, X 33237, Y 63, Z 99100, Floor 0 | 00-01 | backing in again: ring to METIS slot 67 |
+| Carried, index 2 | VOID, cell `$10`, X 33237, Y 663, Z 99100, Floor 2 | 00-01 | digit `1`: ERIS slot 65 |
+| In the BRIEFCASE store, `k` = 0 | VOID, cell `$20`, X 33237, Y 63, Z 164636, Floor 0 | 00-02 | backing in again: METIS slot 67 |
+
+In each, the panel's location field read `$78`, `$7882` alternated between 0
+and `$0110` (slot 68) as in any cube, and `$7884` held `$0114` from the Gaea
+entry until the player left the cube. The frame counter `$7AE8` ran throughout
+and HELP opened its menu, so the main loop is not stopped. Inside the cube the
+view is white, as in any transporter cube. A step out, cell `$10` draws walls
+under a yellow ceiling that box the player in at about X 32779–33656, Z
+98645–99118, and cell `$20` is all yellow; what draws them is
+[#1022](https://github.com/odogono/mercenary/issues/1022)'s. Outside the cube,
+with the latch clear, no digit hops, as on any Body.
+
+**The BRIEFCASE store.** The BRIEFCASE drop (`$054632`–`$05467C`) cuts the
+count to 9 and clears the carried bit of the dropped head alone. The objects
+left in the case keep the carried form the last pass gave them, at the indices
+`10 + k` they held with the BRIEFCASE at the head, and `$052D42` no longer
+reaches them because it stops at the count. A stored transporter's digit
+therefore hops to its `10 + k` column, which the third run reproduces. An object
+carried at index 10 to 19 while the BRIEFCASE is carried is parked the same way.
+
+**Inferred, not run.** Save and Load copy `$6140`–`$7E17` unchanged
+(`$0552CE`–`$05530E`), which holds the position, Body, latch, Carried Stack and
+resident arrays, so a game saved in VOID loads back into the same cube. The
+probe did not press F1, because Save writes to the floppy. A take writes only
+`$78000000` (`$0542B6`–`$0542BE`), and the parked placement arrives at the next
+rebuild, so a digit pressed between a take and that rebuild would hop to the
+transporter's old X, Y and Z in VOID. No run reached that gap.
+
+The probe wrote the parked placements itself, as `$052D42` writes them, and the
+first run traced `$052D42` doing the same. The panel's carried label read the
+previous head's, because the probe's writes skip the label refresh `$04DDCC`; that
+is the probe's, not the game's.
+
 #### Arrival
 
 The common hop at `$0591FA` first writes the player position
@@ -815,6 +875,8 @@ that a body cannot be stood on**, and each of the seven is an open gap.
 | Live leave with the latch cleared, digit `0` outside a cube, backwards re-entry Gaea 70 → Eris 69 | `restricted/damocles-1005/transporter-outside-20261127T161401Z-2ea4f482`; `transporter-probe.py outside` |
 | A destroyed Body's transporters are unclaimed; carried ones survive | `$04C98E`–`$04CA20`, hashed under `$04C8D2`–`$04CA20` in [the endgame note](damocles-endgame.md); `restricted/damocles-1013/marker-listing.txt` |
 | Live GAEA destruction clearing transporters 64 and 70 | `restricted/damocles-1013/endgame-switches-20261128T070657Z-669aa9e7`, samples 038 and 039; `endgame-probe.py switches` from a retargeted `dion-2-3.sav` |
+| A carried transporter's digit hops into VOID, into its own cube, and leaves by the ring or a digit; the BRIEFCASE store's column | `restricted/damocles-1017/runs/transporter-digit-20261128T{075404Z-4e45c02d,080232Z-a27c669b,080400Z-0b45d456,080831Z-f129b2c1}`; `transporter-probe.py digit --carry` |
+| Carried column, its wrap at 10, the BRIEFCASE drop, Drop refusal in VOID, Save and Load copy | `$052D42`–`$052DA2`, `$054524`, `$054632`–`$05467C`, `$0542B6`–`$0542BE`, `$0552CE`–`$05530E`; `restricted/damocles-1017/static-listings.txt` |
 | Twenty-seven arrival poses on twenty-three bodies | Twenty-seven Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
 | Eight bodies reached by steered craft flight   | Captured in play by the project owner, 2026-09-19; not instrumented, so no per-body flight log exists |
 | A body can carry more than one 16×16 window    | `gaea-transporter` against `docs/research/damocles-gaea-ur-city-workspace.md` |

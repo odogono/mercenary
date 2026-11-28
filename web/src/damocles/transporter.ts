@@ -1,3 +1,5 @@
+import type { Vector3 } from '../orientation/index.ts';
+
 /// The Damocles Transporter rules as the first-world image reads them (#998,
 /// docs/research/damocles-arrival-routes.md#what-the-handlers-do-1005). They are pure: the
 /// session says which Transporter the player stands in, how available each slot is and which
@@ -15,6 +17,17 @@ export const isTransporterSlot = (slot: number): boolean =>
 
 export const transporterInstance = (slot: number): string =>
   `object-slot-${slot}`;
+
+/// The VOID staging Body, selector `$78`, where carried objects are parked.
+export const VOID_BODY = 'body-30';
+
+/// Whether a player may stand in VOID with these objects carried or left in the BRIEFCASE: only
+/// a carried Transporter's digit takes them there, and nothing there lets it go (#1017).
+export const reachesVoid = (held: readonly string[]): boolean =>
+  held.some(id => {
+    const slot = Number(/^object-slot-(\d+)$/.exec(id)?.[1] ?? -1);
+    return isTransporterSlot(slot);
+  });
 
 /// A region box as the Model payload publishes it (`mesh.viewGroups[n].bounds`): per axis, the
 /// half-open range the object's position less the eye's must lie in.
@@ -89,13 +102,13 @@ export const ringStepsUp = (yaw: number, inverted: boolean): boolean => {
   return (((inverted ? ~word : word) >> 9) & 1) === 0;
 };
 
-/// What a digit key does to a slot's body byte (`$059184`).
+/// What a digit key does to a slot's body byte (`$059184`), which is tested for 0 and nothing
+/// else.
 /// - `unclaimed`: body byte 0, which raises string 20, `TRANSPORTER NOT AVAILABLE`.
-/// - `carried`: body byte `$78`. The original hops to the carried object's parked placement,
-///   which is unrecovered (#1007), so the port does nothing.
-/// - `placed`: the hop. Nothing else is checked: not VOID, not interior, not the slot the player
+/// - `claimed`: any other, the hop. Nothing else is checked: not VOID, so a carried Transporter
+///   takes the player to its parked placement (#1017); not interior, not the slot the player
 ///   stands in, and not the latch.
-export type DigitTarget = 'carried' | 'placed' | 'unclaimed';
+export type DigitTarget = 'claimed' | 'unclaimed';
 
 export type DigitHop =
   | { readonly kind: 'hop'; readonly slot: number }
@@ -113,15 +126,21 @@ export const digitHop = (
     return { kind: 'ignored' };
   }
   const slot = digitSlot(digit);
-  switch (target(slot)) {
-    case 'unclaimed':
-      return { kind: 'refused' };
-    case 'carried':
-      return { kind: 'ignored' };
-    case 'placed':
-      return { kind: 'hop', slot };
-  }
+  return target(slot) === 'unclaimed'
+    ? { kind: 'refused' }
+    : { kind: 'hop', slot };
 };
+
+/// `$052D42`, at every scene rebuild: where the object at `index` in the Carried Stack is
+/// parked, in VOID. Index `i` below 10 is at X 33237, Z 99100, Y 300 × `i`; from 10 the loop
+/// wraps (`$052D94`–`$052DA2`), and index 10 + `k` is at Z 164636 (`$2831C`), Y 300 × `k`. An
+/// object left in the BRIEFCASE keeps the placement of the index 10 + `k` it held when the case
+/// was dropped (docs/research/damocles-arrival-routes.md#a-carried-transporters-digit-1017).
+export const parkedPosition = (index: number): Vector3 => ({
+  x: 0x81_d5,
+  y: 0x1_2c * (index % 10),
+  z: index < 10 ? 0x1_83_1c : 0x2_83_1c
+});
 
 /// `$0591FA` writes the player's Y as the destination's resident Y plus `$3F`.
 export const ARRIVAL_EYE_OFFSET = 0x3f;

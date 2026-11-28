@@ -16,6 +16,11 @@ the parts a port depends on against the running Working Authority:
 - ``drop`` (#1007): put a TRANSPORTER on the Carried Stack as a take leaves it,
   walk clear of every cube, then drop it where the player stands, which puts the
   player inside its cube, and record whether the ring handler fires.
+- ``digit --carry SLOT`` (#1017): after the entry, put `SLOT` on the Carried Stack at
+  ``--carry-index`` and park the whole stack as `$052D42` does, then press SLOT's digit
+  in the arrival cube. ``--exits`` then tries ways out of where that leaves the player:
+  Drop and HELP, then ``--exit-digit`` in the cube, or leaving it, every digit outside
+  it, and backing in again.
 
 A hop is counted only from a tracing breakpoint on the common hop `$0591FA`,
 armed before the first step, never inferred from a Body or cell change. Every
@@ -26,13 +31,18 @@ stop.
 
 Nothing is poked except the joystick soft-copy byte, and for ``drop`` the carried
 TRANSPORTER's handling byte, Association B and Carried Stack entry, written as an
-ANTIGRAV take writes them; keys are real key events.
+ANTIGRAV take writes them; for ``digit --carry`` the same, plus each carried slot's
+parked X, Y, Z, Association B and Association A byte 1 as `$052D42` writes them;
+keys are real key events.
 
 Usage (from the repository root):
 
   python3 research/damocles-st/scripts/transporter-probe.py ring \
       --snapshot research/damocles-st/snapshots/rehosted/mentor-transporter.sav
   python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 \
+      --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+  python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 --carry 68 \
+      --carry-index 2 --exits --side keep --no-aim \
       --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
 """
 
@@ -66,8 +76,13 @@ LATCH = 0x7884  # the transporter the ring handler last fired for, cleared on le
 VIEW_YAW = 0x7AC2  # the yaw word $05913A reads for the direction
 SCAN_DROP = 0x50  # Down: the keyboard dispatcher's drop
 CARRIED_COUNT, CARRIED_STACK = 0x61CC, 0x61CE
+BRIEFCASE_STORE = 0x61CA  # how many objects a dropped BRIEFCASE holds, at stack index 10 up
 HANDLING, ASSOCIATION_B = 0x6FAA, 0x73A8
 CARRIED_FORM = 0x78010010  # Association B of a carried object at stack index 0
+RESIDENT_X, RESIDENT_Y, RESIDENT_Z, ASSOCIATION_A = 0x63A8, 0x67A8, 0x6BA8, 0x6FA8
+FRAMES = 0x7AE8  # steps once a rendered frame ($0599A0)
+SCAN_HELP = 0x62  # opens the F1 SAVE / F2 LOAD / F10 QUIT menu
+SCAN_SPACE = 0x39
 SCAN_DIGIT = {1: 0x02, 2: 0x03, 3: 0x04, 4: 0x05, 5: 0x06, 6: 0x07, 7: 0x08,
               8: 0x09, 9: 0x0A, 0: 0x0B}
 
@@ -82,25 +97,36 @@ class Machine(route.Machine):
         windows = [route.WINDOWS[0], ("panel", PANEL_NAME, 2)]
         if self.strings is None or keep or full:
             windows += list(route.WINDOWS[1:])
-        paths = {label: self.run_directory / f"{prefix}-{label}.bin" for label, _, _ in windows}
-        for path in paths.values():
-            path.unlink(missing_ok=True)
-        commands = ["hatari-stop", "hatari-debug setopt hex"]
-        commands += [f"hatari-debug savebin {paths[label]} ${base:x} ${length:x}"
-                     for label, base, length in windows]
-        if shot:
-            commands.append(f"hatari-debug screenshot {self.run_directory}/{prefix}.png")
-        commands.append("hatari-cont")
-        _fifo_send(self.handle, commands)
         blobs = dict(self.strings or {})
-        for (label, _, length), path in zip(windows, paths.values()):
-            for _ in range(100):
-                if path.is_file() and path.stat().st_size == length:
+        # The remote debugger now and then drops a burst of FIFO lines; send the stop again.
+        # Each attempt dumps to its own paths and counts only if it wrote every window, so a
+        # sample never mixes windows from two stops.
+        for attempt in range(3):
+            paths = {label: self.run_directory / f"{prefix}-{attempt}-{label}.bin"
+                     for label, _, _ in windows}
+            for path in paths.values():
+                path.unlink(missing_ok=True)
+            commands = ["hatari-stop", "hatari-debug setopt hex"]
+            commands += [f"hatari-debug savebin {paths[label]} ${base:x} ${length:x}"
+                         for label, base, length in windows]
+            if shot:
+                commands.append(f"hatari-debug screenshot {self.run_directory}/{prefix}.png")
+            commands.append("hatari-cont")
+            _fifo_send(self.handle, commands)
+            read = {}
+            for (label, _, length), path in zip(windows, paths.values()):
+                for _ in range(100):
+                    if path.is_file() and path.stat().st_size == length:
+                        break
+                    time.sleep(0.03)
+                else:
                     break
-                time.sleep(0.03)
+                read[label] = path.read_bytes()
             else:
-                raise LabError(f"sample {index} read nothing for window {label}")
-            blobs[label] = path.read_bytes()
+                blobs.update(read)
+                break
+        else:
+            raise LabError(f"sample {index} read nothing for window {label}")
         if self.strings is None:
             self.strings = {label: blobs[label] for label in ("strings", "pool")}
         state = route.decode(blobs, self.watch)
@@ -112,6 +138,7 @@ class Machine(route.Machine):
         state["cellReadout"] = [int.from_bytes(low[a - 0x6000:a - 0x5FFE], "big", signed=True)
                                 for a in (READOUT_X, READOUT_Z)]
         state["hops"] = self.hops()
+        state["frames"] = route._u16(low, 0x6000, FRAMES)
         count = route._u16(low, 0x6000, CARRIED_COUNT)
         state["carried"] = list(low[CARRIED_STACK - 0x6000:CARRIED_STACK - 0x6000 + count])
         return state
@@ -124,16 +151,49 @@ class Machine(route.Machine):
         ])
         time.sleep(0.2)
 
-    def carry(self, slot: int) -> list[int]:
+    def carry(self, slot: int, index: int = 0, park: bool = False) -> list[int]:
         """Push `slot` on the Carried Stack as a take does: the head, its carried bit set and
-        its Association B the carried form. The scene pass renumbers the stack index."""
-        stack = [slot] + self.sample()["carried"]
+        its Association B the carried form. The scene pass renumbers the stack index.
+
+        `index` puts it lower in the stack instead, and `park` then writes every entry's
+        parked placement as `$052D42` does, so nothing waits on a rebuild. An `index` of 10
+        or more puts it in the BRIEFCASE store instead: at that array index beyond the count,
+        `$61CA` counting the store, parked as the pass last left it before the drop."""
+        stack = self.sample()["carried"]
+        # Ten carried and ten stored are the most there can be; a carried index past the end
+        # of the stack would land lower than asked, and the result would misreport it.
+        if not 0 <= index < 20:
+            raise LabError(f"--carry-index {index} is outside 0-19")
+        if index < 10 and index > len(stack):
+            raise LabError(f"--carry-index {index} is past the {len(stack)}-entry Carried Stack")
+        if index >= 10:
+            self.poke(ASSOCIATION_B + slot * 4, CARRIED_FORM.to_bytes(4, "big"))
+            self.poke(HANDLING + slot * 4, bytes([0xA0]))
+            self.poke(CARRIED_STACK + index, bytes([slot]))
+            self.poke(BRIEFCASE_STORE, (index - 9).to_bytes(2, "big"))
+            self.park(slot, index)
+            return stack + [None] * (index - len(stack)) + [slot]
+        stack.insert(index, slot)
         # Association B and the carried bit first, so no pass sees a listed slot left resident.
         self.poke(ASSOCIATION_B + slot * 4, CARRIED_FORM.to_bytes(4, "big"))
         self.poke(HANDLING + slot * 4, bytes([0xA0]))
         self.poke(CARRIED_STACK, bytes(stack))
         self.poke(CARRIED_COUNT, len(stack).to_bytes(2, "big"))
+        if park:
+            for position, entry in enumerate(stack):
+                self.park(entry, position)
         return stack
+
+    def park(self, slot: int, index: int) -> None:
+        """`$052D42`'s writes for the carried entry at `index`, its wrap at ten included."""
+        row, z = (index, 0x1831C) if index < 10 else (index - 10, 0x2831C)
+        form = 0x78010000 | row << 8 | (0x10 if index < 10 else 0x20)
+        offset = slot * 4
+        self.poke(RESIDENT_X + offset, (0x81D5).to_bytes(4, "big"))
+        self.poke(RESIDENT_Y + offset, (0x12C * row).to_bytes(4, "big"))
+        self.poke(RESIDENT_Z + offset, z.to_bytes(4, "big"))
+        self.poke(ASSOCIATION_B + offset, form.to_bytes(4, "big"))
+        self.poke(ASSOCIATION_A + offset + 1, bytes([0x31]))
 
     def arm_hop_trace(self) -> None:
         self.watch_program_counters((HOP,))
@@ -188,8 +248,8 @@ def retarget(snapshot: Path, run_directory: Path, tos: Path, program: Path) -> t
 
 
 def brief(state: dict) -> dict:
-    keys = ("hops", "bodySelector", "cell", "cellReadout", "transporterMode", "latch",
-            "panelName", "floor", "x", "y", "z", "yaw", "viewYaw", "onFoot")
+    keys = ("hops", "frames", "bodySelector", "cell", "cellReadout", "transporterMode",
+            "latch", "panelName", "floor", "x", "y", "z", "yaw", "viewYaw", "onFoot")
     row = {key: state.get(key) for key in keys}
     row["message"] = (state.get("message") or {}).get("text")
     return row
@@ -349,6 +409,50 @@ def drop_transporter(machine: Machine, slot: int, clear: int, seconds: float) ->
     }
 
 
+def carried_slot(state: dict, slot: int) -> dict:
+    return brief(state) | {"carried": state["carried"], "slot": state["residents"][str(slot)]}
+
+
+def exits(machine: Machine, slot: int, seconds: float, digit: int | None, standoff: int,
+          pulse: float) -> dict:
+    """Every way out tried from where the digit left the player, each sampled after.
+
+    Standing, Drop and HELP first, still in the cube the digit left them in. Then
+    `digit` pressed there; or, with none, walk forwards out of that cube, sweep every
+    digit outside it, and back into it along the same line.
+    """
+    out: dict = {"standing": hold(machine, seconds)}
+    before = machine.sample(keep=True)
+    machine.press(SCAN_DROP)
+    time.sleep(1.5)
+    after = machine.sample(keep=True, shot=True)
+    out["drop"] = {"before": carried_slot(before, slot), "after": carried_slot(after, slot),
+                   "accepted": len(after["carried"]) < len(before["carried"])}
+    machine.press(SCAN_HELP)
+    time.sleep(1.5)
+    menu = machine.sample(keep=True, shot=True)
+    machine.press(SCAN_SPACE)
+    time.sleep(1.5)
+    out["help"] = {"menu": brief(menu), "afterSpace": brief(machine.sample(keep=True, shot=True))}
+    if digit is not None:
+        out["digit"] = press_digit(machine, digit)
+        out["afterDigit"] = hold(machine, seconds)
+        return out
+    out["leave"] = leave(machine, "forward")
+    out["outside"] = carried_slot(machine.sample(keep=True, shot=True), slot)
+    out["digits"] = []
+    for key in range(10):
+        start = machine.sample()
+        machine.press(SCAN_DIGIT[key])
+        time.sleep(0.6)
+        end = machine.sample()
+        out["digits"].append({"digit": key, "hopped": end["hops"] > start["hops"], "after": brief(end)})
+    out["reenter"] = enter(machine, None, standoff, backwards=True, aim=False, turn=False,
+                           pulse=pulse)
+    out["afterReenter"] = hold(machine, seconds)
+    return out
+
+
 def hold(machine: Machine, seconds: float) -> list[dict]:
     rows = []
     started = time.monotonic()
@@ -419,8 +523,15 @@ def run(args) -> dict:
                                     pulse=args.pulse)
             result["standing"] = hold(machine, args.hold)
             if args.case == "digit":
+                if args.carry is not None:
+                    result["carry"] = {"slot": args.carry, "index": args.carry_index,
+                                       "stack": machine.carry(args.carry, args.carry_index, park=True)}
+                    result["carry"]["read"] = carried_slot(machine.sample(keep=True), args.carry)
                 result["digit"] = press_digit(machine, args.digit)
                 result["afterDigit"] = hold(machine, args.hold)
+                if args.exits:
+                    result["exits"] = exits(machine, args.carry or 64 + args.digit, args.hold,
+                                            args.exit_digit, args.standoff, args.pulse)
             if args.case == "outside":
                 result["leave"] = leave(machine, args.leave)
                 result["digit"] = press_digit(machine, args.digit)
@@ -449,6 +560,14 @@ def main() -> None:
     parser.add_argument("case", choices=("ring", "digit", "outside", "drop"))
     parser.add_argument("--slot", type=int, default=66, choices=range(64, 74),
                         help="drop: the TRANSPORTER to carry and drop")
+    parser.add_argument("--carry", type=int, default=None, choices=range(64, 74),
+                        help="digit: carry this TRANSPORTER, parked, before pressing the digit")
+    parser.add_argument("--carry-index", type=int, default=0,
+                        help="digit: the Carried Stack index --carry goes in at")
+    parser.add_argument("--exits", action="store_true",
+                        help="digit: after the hop, try Drop, HELP, then a way out")
+    parser.add_argument("--exit-digit", type=int, default=None, choices=range(10),
+                        help="--exits: press this digit in the cube; without it, leave and walk back in")
     parser.add_argument("--clear", type=int, default=400,
                         help="drop: back away until this far from every cube")
     parser.add_argument("--snapshot", type=Path, required=True)
@@ -471,7 +590,7 @@ def main() -> None:
     args = parser.parse_args()
     result = run(args)
     print(json.dumps({key: result[key] for key in result
-                      if key in ("entry", "leave", "digit", "reenter", "drop")},
+                      if key in ("entry", "carry", "leave", "digit", "reenter", "drop")},
                      indent=1, default=str))
     print("run:", result["runDirectory"])
 
