@@ -662,8 +662,14 @@ describe('a dropped Transporter (#1007)', () => {
 });
 
 /// Stand in slot 69's cube with `saved`'s Carried Stack, and press slot 66's digit, 2.
-const intoVoid = (saved: DamoclesSaveSnapshot): DamoclesSession => {
-  const session = near69(0, SOUTH, {}, saved);
+/// Two takeable objects that are not Transporters, to stand ahead of slot 66.
+const AHEAD = ['object-slot-8', 'object-slot-14'];
+
+const intoVoid = (
+  saved: DamoclesSaveSnapshot,
+  using = content
+): DamoclesSession => {
+  const session = near69(0, SOUTH, {}, saved, using);
   session.advance(1 / 50);
   expect(session.inTransporter).toBe(true);
   expect(session.transporterKey(2)).toEqual({ kind: 'hopped' });
@@ -699,18 +705,7 @@ describe('a carried Transporter’s digit (#1017)', () => {
 
   test('its height follows the stack index, and a digit there hops out', () => {
     // Two takeable objects ahead of it put it at index 2.
-    const ahead = catalogue.instances
-      .filter(
-        item =>
-          item.handling?.takeable === true &&
-          item.handling.carried !== true &&
-          item.location !== undefined &&
-          item.placementClass !== undefined
-      )
-      .slice(0, 2)
-      .map(item => item.id);
-    expect(ahead).toHaveLength(2);
-    const session = intoVoid(carrying66(atSlot69Floor(), ahead));
+    const session = intoVoid(carrying66(atSlot69Floor(), AHEAD));
     // Live at index 2: Y 600 + $3F.
     expect(session.snapshot.pose.position).toEqual({
       x: 33_237,
@@ -838,22 +833,9 @@ const room = (session: DamoclesSession) =>
     item => item.id === session.snapshot.structure?.instanceId
   )!;
 
-/// Two takeable objects that are not Transporters, to stand ahead of slot 66.
-const ahead = () =>
-  catalogue.instances
-    .filter(
-      item =>
-        item.handling?.takeable === true &&
-        item.handling.carried !== true &&
-        item.location !== undefined &&
-        item.placementClass !== undefined
-    )
-    .slice(0, 2)
-    .map(item => item.id);
-
 describe('VOID’s rooms (#1022)', () => {
   test('a carried Transporter lands on its index’s Floor of the INVENTORY room', () => {
-    const session = intoVoid(carrying66(atSlot69Floor(), ahead()));
+    const session = intoVoid(carrying66(atSlot69Floor(), AHEAD));
     for (let frame = 0; frame < 10; frame += 1) {
       session.advance(1 / 50);
     }
@@ -877,8 +859,8 @@ describe('VOID’s rooms (#1022)', () => {
   });
 
   test('each carried object is drawn on its own Floor and nowhere else', () => {
-    const [first, second] = ahead();
-    const session = intoVoid(carrying66(atSlot69Floor(), ahead()));
+    const [first, second] = AHEAD;
+    const session = intoVoid(carrying66(atSlot69Floor(), AHEAD));
     for (let frame = 0; frame < 10; frame += 1) {
       session.advance(1 / 50);
     }
@@ -924,6 +906,40 @@ describe('VOID’s rooms (#1022)', () => {
     }
     expect(at(session)).toEqual({ body: 'body-30', cell: '0-2', floor: 0 });
     expect(session.snapshot.structure?.instanceId).toBe('void-31-surface-20');
+  });
+
+  test('while the room streams in, the walk is held, and a Save made then lands on its Floor', async () => {
+    const { content: streaming, models } = delayed('structure-010d0c');
+    const session = intoVoid(carrying66(atSlot69Floor(), AHEAD), streaming);
+    expect(session.snapshot.structure).toBeNull();
+    const landed = session.snapshot.pose.position;
+
+    // The Save holds no structure. Restored with every Model, it binds Floor 2 of the room.
+    const resume = session.captureResume();
+    expect(resume.structure).toBeNull();
+    const restored = new DamoclesSession(content, resume);
+    expect(at(restored)).toEqual({ body: 'body-30', cell: '0-1', floor: 2 });
+    expect(restored.inTransporter).toBe(true);
+
+    // Walking while the room is not in hand goes nowhere.
+    session.intent = { ...IDLE, walk: 1 };
+    for (let frame = 0; frame < 100; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(session.snapshot.pose.position).toEqual(landed);
+
+    // Once it binds, the walk goes on, and the room's wall stops it.
+    await models.land();
+    await Bun.sleep(0);
+    for (let frame = 0; frame < 400; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session)).toEqual({ body: 'body-30', cell: '0-1', floor: 2 });
+    // Region 0's clamp, Z 11 local from the room's south wall in cell 0-1.
+    expect(session.snapshot.pose.position.z).toBeCloseTo(
+      65_536 + 32_768 + 11,
+      -1
+    );
   });
 
   test('the room’s walls stop the walk where the live run stopped', () => {

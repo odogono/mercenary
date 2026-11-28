@@ -1064,7 +1064,7 @@ export class DamoclesSession implements TitleSession<
     // The latch is outside the Save: a restore inside a cube stands in it, and does not fire it.
     this.settleTransporter();
     if (landing !== undefined && this.standingIn === 0) {
-      const residence = this.residenceFor(transporterInstance(landing));
+      const residence = this.landingResidence(transporterInstance(landing));
       this.transporterArrival = {
         body: this.pose.body,
         cell: cellOf(this.pose.position, this.surface.grid),
@@ -3118,7 +3118,7 @@ export class DamoclesSession implements TitleSession<
       const aboard = this.occupied !== null;
       const frozen = this.death !== null;
       const moved =
-        aboard || frozen
+        aboard || frozen || this.hopBinding()
           ? this.pose
           : inFrame(
               walk(this.pose, this.intent, step, this.rules),
@@ -5139,6 +5139,24 @@ export class DamoclesSession implements TitleSession<
     );
   }
 
+  /// Where a hop to `id` lands: its parked place in VOID while it is carried or left in the
+  /// BRIEFCASE, else its Object Residence (#1022).
+  private landingResidence(id: string): Residence | undefined {
+    return this.parkedResidence(id) ?? this.residenceFor(id);
+  }
+
+  /// Whether a hop's destination is still binding in the cell it landed in: its Floor or its
+  /// structure's Models are on their way. The walk is held until it binds, as the original's
+  /// one-frame hop never leaves the player outside the room's walls (#1022).
+  private hopBinding(): boolean {
+    const pending = this.transporterArrival;
+    return (
+      pending !== null &&
+      (this.arrivalFloor !== null ||
+        (pending.parent !== null && this.boundPlacement?.id !== pending.parent))
+    );
+  }
+
   /// `$059126`, once a frame: the first frame the player is in a cube fires it, and the latch
   /// `$7884` holds the entry slot until a frame finds them outside every cube. A hop leaves the
   /// latch holding the slot they entered, so the destination does not fire. While a hop's
@@ -5151,12 +5169,9 @@ export class DamoclesSession implements TitleSession<
     const pending = this.transporterArrival;
     if (pending !== null) {
       const cell = cellOf(this.pose.position, this.surface.grid);
-      const waiting =
-        this.arrivalFloor !== null ||
-        (pending.parent !== null && this.boundPlacement?.id !== pending.parent);
       if (
         inside === 0 &&
-        waiting &&
+        this.hopBinding() &&
         this.pose.body === pending.body &&
         cell.x === pending.cell.x &&
         cell.z === pending.cell.z
@@ -5279,8 +5294,7 @@ export class DamoclesSession implements TitleSession<
         readonly surface: ErisSurface;
       }
     | undefined {
-    const id = transporterInstance(slot);
-    const residence = this.parkedResidence(id) ?? this.residenceFor(id);
+    const residence = this.landingResidence(transporterInstance(slot));
     if (residence?.kind !== 'surface' && residence?.kind !== 'structure') {
       return undefined;
     }
@@ -5363,7 +5377,7 @@ export class DamoclesSession implements TitleSession<
   /// hop did instead of refusing it. Undefined where the Pose stands at no structure landing.
   private pendingLanding(pose: Pose): number | undefined {
     for (let slot = FIRST_TRANSPORTER; slot <= LAST_TRANSPORTER; slot += 1) {
-      const residence = this.residenceFor(transporterInstance(slot));
+      const residence = this.landingResidence(transporterInstance(slot));
       if (residence?.kind !== 'structure' || residence.body !== pose.body) {
         continue;
       }
