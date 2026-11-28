@@ -635,7 +635,7 @@ A structure region whose flags mark it as a lift, where a player on foot changes
 _Avoid_: Elevator, Lift Journey, lift object, lift attachment
 
 **Transporter**:
-A Damocles resident object that carries a player who walks into it to the next available Transporter round the Transporter Ring, the direction set by which side they enter from; a player on foot standing in one may instead name any Transporter by its digit. It carries them to wherever that Transporter now lies, not to a fixed place.
+A Damocles resident object that carries a player who walks into it to the next available Transporter round the Transporter Ring, the direction set by which side they enter from; a player on foot standing in one may instead name any Transporter by its digit. It carries them to wherever that Transporter now lies, not to a fixed place; a carried Transporter lies in VOID, so its digit takes the player there, into its own cube.
 _Avoid_: Teleporter, portal, transporter pad
 
 **Transporter Ring**:
