@@ -277,10 +277,23 @@ describe('walking into a Transporter', () => {
     expect(session.snapshot.locationName).toBe('VOID');
   });
 
-  test('a destroyed Body is not checked: the hop lands there (#1013)', () => {
-    const session = near69(100, SOUTH, { destroyedBodies: ['body-8'] });
+  // `$04C9D4`–`$04C9EE`: the marker clears the Association B of every resident on the Body, so
+  // neither handler needs a destroyed-Body test of its own (#1013).
+  test('a destroyed Body’s Transporter is passed with string 18', () => {
+    const session = near69(100, SOUTH);
+    expect(session.destroyBody('body-8')).toBe(true);
     walkIn(session, 1);
-    expect(at(session).body).toBe('body-8');
+    expect(session.snapshot.message?.id).toBe('system-string-18');
+    expect(at(session)).toEqual({ body: 'body-17', cell: '4-2', floor: 4 });
+  });
+
+  test('a destroyed Body’s Transporter refuses its digit with string 20', () => {
+    const session = near69(0, SOUTH);
+    session.destroyBody('body-8');
+    expect(session.transporterKey(6).kind).toBe('refused');
+    session.advance(1 / 50);
+    expect(session.snapshot.message?.id).toBe('system-string-20');
+    expect(at(session).body).toBe('body-11');
   });
 
   test('a restore inside a cube stands in it without firing', () => {

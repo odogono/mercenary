@@ -523,6 +523,33 @@ therefore unavailable**, and the ring passes it with string 18. Nothing else the
 player carries is read: neither handler looks at the Carried Stack, so carrying
 the EAGLE (as ST Format 20 step 4 does) makes no difference.
 
+##### A destroyed Body's transporters (#1013)
+
+Neither handler tests whether the destination Body is destroyed, and neither
+needs to. The destruction marker `$04C98E` walks slots 255 down to 0 and, for
+every slot whose Association B byte 0 equals the Body's selector, clears
+Association B to `$00000000` and `$6FA9` to 0 (`$04C9D4`–`$04C9EE`). **A
+transporter on a destroyed Body is therefore unclaimed**: the ring passes it
+with string 18, and its digit raises string 20. No hop reaches a destroyed
+Body, so what a landing there would do does not arise.
+
+A carried transporter's byte 0 is `$78`, which no selector (`$00`–`$74`)
+equals, so it survives its Body's destruction and stays carried. That rests on
+the listing; no run carried a transporter through a destruction.
+
+Every destruction reaches this loop. The NOVABOMB (`$04D486`, `$04D498`), the
+AUTHORS COMPUTER (`$04D502`) and stacked EXPLOSIVEs (`$04CAEC`) enter through
+the dispatcher `$04C8D2`, which falls into the marker. The unravelling
+(`$04BF14`), BOOK page 3 (`$04D884`) and zero on the Impact Clock (`$051F58`,
+`$051F60`) call the marker directly. The marker's only early exit, `$04C99E`,
+is for a Body already destroyed. See
+[the endgame note](damocles-endgame.md) for each path.
+
+Live, the four Detonators destroyed GAEA (selector `$20`) from `dion-2-3`:
+transporters 64 and 70 went from `$20100017` and `$20040188` to `$00000000`,
+65 and 69 were already `$00000000`, the other six were unchanged, and every
+carried object kept `$7801ii10`.
+
 #### A digit key names the destination (#1005)
 
 While the player is on foot and `$7882` is non-zero, `$0555E4` sends every
@@ -784,6 +811,8 @@ that a body cannot be stood on**, and each of the seven is an open gap.
 | Entry box, latch, direction, availability, digit keys, arrival | `$059126`–`$059264`, `$0538F6`–`$053956`, `$0555E4`, `$04DBF2`–`$04DC18` and model `$038820` in the pinned first-world image |
 | Live arrival, latch, panel VOID, Cell Readout and digit `4` to Vesta | `restricted/damocles-1005/transporter-digit-20261127T161248Z-0c0e9a06`; `transporter-probe.py digit` |
 | Live leave with the latch cleared, digit `0` outside a cube, backwards re-entry Gaea 70 → Eris 69 | `restricted/damocles-1005/transporter-outside-20261127T161401Z-2ea4f482`; `transporter-probe.py outside` |
+| A destroyed Body's transporters are unclaimed; carried ones survive | `$04C98E`–`$04CA20`, hashed under `$04C8D2`–`$04CA20` in [the endgame note](damocles-endgame.md); `restricted/damocles-1013/marker-listing.txt` |
+| Live GAEA destruction clearing transporters 64 and 70 | `restricted/damocles-1013/endgame-switches-20261128T070657Z-669aa9e7`, samples 038 and 039; `endgame-probe.py switches` from a retargeted `dion-2-3.sav` |
 | Twenty-seven arrival poses on twenty-three bodies | Twenty-seven Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
 | Eight bodies reached by steered craft flight   | Captured in play by the project owner, 2026-09-19; not instrumented, so no per-body flight log exists |
 | A body can carry more than one 16×16 window    | `gaea-transporter` against `docs/research/damocles-gaea-ur-city-workspace.md` |
