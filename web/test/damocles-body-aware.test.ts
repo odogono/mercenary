@@ -23,7 +23,9 @@ import { erisSurfaceFrom, residentSlot } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import {
   admittedStructures,
+  reachedNodes,
   residentReachability,
+  transporterStand,
   walkToResident,
   type Reachability,
   type Structure
@@ -462,23 +464,29 @@ const SELECTED = new Set([
 ]);
 const groundStarts = (structure: Structure) =>
   structure.starts.filter(node => node.floor === 0);
+const everyLanding = (structure: Structure) => [...structure.landings.keys()];
 
 /// #1002: which placed residents a player can select in the port, now that upper Floors are drawn
 /// and every interior-associated resident is placed. The graph walks the session's own rules
 /// (test/damocles-reachability.ts); the walked cases below corroborate it in a live session.
 ///
-/// The count stands the player on the surface only: at the Floor 0 arrival Poses and by Atlas
-/// Travel. Six of the seven arrival Poses on upper Floors stand at Transporters, which the port
-/// does not implement, so what they add is pinned separately. Every route was walked once while this was
-/// written; the suite walks the cases the ledger names, since walking them all takes minutes.
+/// The count stands the player on the surface only, at the Floor 0 arrival Poses and by Atlas
+/// Travel, and follows the Transporters from there (#1015). Every route was walked once while
+/// this was written; the suite walks the cases the ledger names, since walking them all takes
+/// minutes.
 describe('placed resident reachability', () => {
   let surface: Reachability;
-  let everyPose: Reachability;
+  /// The count without Transporters, as #1002 recorded it.
+  let unhopped: Reachability;
   let admitted: Awaited<ReturnType<typeof admittedStructures>>;
   beforeAll(async () => {
     admitted = await admittedStructures(content);
-    surface = residentReachability(catalogue, admitted, true);
-    everyPose = residentReachability(catalogue, admitted);
+    surface = residentReachability(catalogue, admitted, { groundOnly: true });
+    unhopped = residentReachability(catalogue, admitted, {
+      digits: false,
+      groundOnly: true,
+      ring: false
+    });
   });
 
   const outcome = (reachability: Reachability, slot: number): string => {
@@ -499,15 +507,13 @@ describe('placed resident reachability', () => {
     return result;
   };
 
-  test('from the surface every placed resident is selectable, 22 of them only with one door key', () => {
+  test('from the surface every placed resident is selectable, 11 of them only with one door key', () => {
     expect(surface.reach.size).toBe(195);
     const { noKey, ...keyed } = rows(surface);
-    expect(noKey).toHaveLength(173);
+    expect(noKey).toHaveLength(184);
     expect(keyed).toEqual({
-      'keyed 31': [64, 84, 197],
       'keyed 32': [47],
       'keyed 33': [102, 109, 111, 148, 220],
-      'keyed 34': [68, 108, 153, 184, 202, 215, 225, 230],
       'keyed 37': [159, 160, 161, 162],
       'keyed 38': [181]
     });
@@ -519,17 +525,64 @@ describe('placed resident reachability', () => {
     expect(admitted.declined.size).toBe(0);
   });
 
-  test('the upper-Floor arrival Poses add only Vesta Parliament without key E', () => {
-    // vesta-transporter stands inside VESTA PARLIAMENT on an upper Floor, past its keyed door.
-    const { noKey, ...keyed } = rows(everyPose);
-    expect(noKey).toHaveLength(181);
-    expect(keyed).toEqual({
-      'keyed 31': [64, 84, 197],
-      'keyed 32': [47],
-      'keyed 33': [102, 109, 111, 148, 220],
-      'keyed 37': [159, 160, 161, 162],
-      'keyed 38': [181]
+  test('Transporters take the player past the doors of keys 31 and 34', () => {
+    // Without them the count is #1002's: 173 with no key. A hop to slot 64 lands inside Gaea Ur
+    // City past key 31's door, and one to slot 68 on Vesta Parliament's Floor 10, whose lift
+    // reaches the Floors below past key 34's.
+    const { noKey, ...keyed } = rows(unhopped);
+    expect(noKey).toHaveLength(173);
+    expect(keyed['keyed 31']).toEqual([64, 84, 197]);
+    expect(keyed['keyed 34']).toEqual([68, 108, 153, 184, 202, 215, 225, 230]);
+    expect(rows(surface).noKey!.filter(slot => !noKey!.includes(slot))).toEqual(
+      [...keyed['keyed 31']!, ...keyed['keyed 34']!].sort((a, b) => a - b)
+    );
+  });
+
+  test('every hop lands standing in its Transporter, and the graph agrees it stands there', () => {
+    expect(admitted.transporters).toEqual({
+      placed: [64, 65, 66, 67, 68, 69, 70, 71, 72, 73],
+      surface: [72, 73]
     });
+    const landed = admitted.structures.flatMap(structure =>
+      [...structure.landings].map(([slot, node]) => {
+        const transporter = structure.transporters.find(
+          item => item.slot === slot
+        )!;
+        expect(transporterStand(structure, node, transporter)).toEqual({
+          stand: true,
+          walkIn: true
+        });
+        return slot;
+      })
+    );
+    expect(landed.sort((a, b) => a - b)).toEqual([
+      64, 65, 66, 67, 68, 69, 70, 71
+    ]);
+  });
+
+  test('ring steps alone reach every Transporter, so they count what digit hops do', () => {
+    const ring = { digits: false, groundOnly: true };
+    expect(
+      [...reachedNodes(admitted, new Set(), ring).hopped].sort((a, b) => a - b)
+    ).toEqual([...admitted.transporters.placed]);
+    expect(rows(residentReachability(catalogue, admitted, ring))).toEqual(
+      rows(surface)
+    );
+    expect(
+      rows(
+        residentReachability(catalogue, admitted, {
+          groundOnly: true,
+          ring: false
+        })
+      )
+    ).toEqual(rows(surface));
+  });
+
+  test('the upper-Floor arrival Poses add nothing the Transporters do not', () => {
+    // Six of the seven stand at Transporters 66 to 71, where a hop lands.
+    expect(rows(residentReachability(catalogue, admitted))).toEqual(
+      rows(surface)
+    );
   });
 
   test('Authors House needs no key: an unkeyed side door opens on approach', () => {
@@ -541,7 +594,7 @@ describe('placed resident reachability', () => {
   });
 
   /// The six pickup-trigger residents, the three special items, the three door keys #362 named,
-  /// and one resident behind each key.
+  /// and one resident behind each key, which for keys 31 and 34 a hop reaches instead.
   const WALKED = [
     183, 181, 151, 95, 101, 94, 108, 157, 158, 30, 33, 34, 47, 64, 109, 159, 215
   ];
@@ -555,7 +608,8 @@ describe('placed resident reachability', () => {
         admitted.structures,
         id,
         reach.kind === 'keyed' ? reach.keys : [],
-        groundStarts
+        groundStarts,
+        everyLanding
       );
       expect(inRange(session, id)).toBe(true);
       if (SELECTED.has(slot)) {
@@ -569,9 +623,26 @@ describe('placed resident reachability', () => {
     60_000
   );
 
+  test('a walked hop from BACCHUS by digit 4 lands in Vesta Parliament, and its lift reaches object slot 215 without key 34', () => {
+    expect(admitted.transporters.surface[0]).toBe(72);
+    const id = 'object-slot-215';
+    const session = walkToResident(
+      content,
+      admitted.structures,
+      id,
+      [],
+      () => [],
+      structure => (structure.landings.has(68) ? [68] : [])
+    );
+    expect(inRange(session, id)).toBe(true);
+    expect(session.snapshot.structure?.instanceId).toBe('vesta-surface-64');
+    expect(session.snapshot.structure?.floor).toBe(0);
+  }, 60_000);
+
   test('every structure an upper-Floor Pose stands in is reached by a walked lift ride', () => {
-    // The surface count reaches upper Floors only by lift; walk one upper-Floor resident of each
-    // structure an arrival Pose stands above the ground in.
+    // Without Transporters the surface count reaches upper Floors only by lift; walk one
+    // upper-Floor resident of each structure an arrival Pose stands above the ground in, from
+    // the ground, since a hop may land on its Floor without a ride.
     const walked: string[] = [];
     for (const structure of admitted.structures) {
       if (structure.starts.every(node => node.floor === 0)) {
@@ -585,7 +656,7 @@ describe('placed resident reachability', () => {
           residence?.kind === 'structure' &&
           residence.parent === structure.ground.id &&
           residence.level !== 0 &&
-          surface.reach.get(item.id)?.kind === 'noKey'
+          unhopped.reach.get(item.id)?.kind === 'noKey'
         );
       });
       if (resident === undefined) {

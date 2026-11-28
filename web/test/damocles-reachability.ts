@@ -18,9 +18,14 @@
 ///   the region there is taken afresh with every door shut.
 /// - **Keys are a fixed point.** Start with nothing carried, carry every door key that becomes
 ///   reachable, and walk again until nothing changes.
-///
-/// Transporters are not counted yet, though the session hops through them (#998): counting their
-/// ring steps and digit hops as edges is #1015.
+/// - **Transporters link where they stand** (#1015), as the Catalogue first places them: one
+///   carried and dropped elsewhere is not followed. Standing in any Transporter's cube, a digit
+///   hops to every placed one; walking into one steps a place either way round the Transporter
+///   Ring. A hop lands where a live session's hop stands the player, which becomes a start of
+///   the structure there. A surface Transporter stands in a cell surface travel reaches; one in
+///   a structure is stood in, and walked into, where a standable point of a reached region
+///   exposing it lies in its cube. Aboard the ring passes every Transporter in a structure, so
+///   it reaches nothing a player on foot cannot, and is not walked.
 
 import type { Catalogue } from '../src/catalogue/data.ts';
 import {
@@ -31,6 +36,15 @@ import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
+import {
+  ARRIVAL_EYE_OFFSET,
+  FIRST_TRANSPORTER,
+  LAST_TRANSPORTER,
+  insideTransporterCube,
+  ringHop,
+  transporterInstance,
+  type CubeBounds
+} from '../src/damocles/transporter.ts';
 import {
   floorPlacement,
   floorsOf,
@@ -74,10 +88,30 @@ export interface Structure {
   readonly eye: number;
   readonly floors: ReadonlyMap<number, ErisPlacement>;
   readonly ground: ErisPlacement;
+  /// Where a hop to each Transporter placed here stands the player, by slot.
+  readonly landings: Map<number, Node>;
   readonly negate: boolean;
+  /// A fresh session standing in a surface Transporter's cube, which a hop starts from.
+  readonly source: () => DamoclesSession;
   /// Where an arrival Pose or Atlas Travel stands the player, before any walking.
   readonly starts: Node[];
   readonly storey: number;
+  /// The Transporters placed in it, each with its position from the ground placement's.
+  readonly transporters: readonly PlacedTransporter[];
+}
+
+interface PlacedTransporter {
+  readonly bounds: CubeBounds;
+  /// The regions of its Floor that insert it, where alone the session draws it.
+  readonly exposedIn: ReadonlySet<number>;
+  readonly floor: number;
+  readonly id: string;
+  readonly position: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly slot: number;
 }
 
 /// The door key a gated region waits on, or null where its door opens on approach.
@@ -106,10 +140,12 @@ const clampRegions = (
 type Point2 = readonly [number, number];
 
 /// How a node was first entered: a walk across an edge, from a point just inside the box left to a
-/// point just inside the box entered, or a lift ride from the car's centre.
+/// point just inside the box entered, a lift ride from the car's centre, or a hop to a
+/// Transporter's slot, which only starts a route.
 export type Step =
   | { readonly after: Point2; readonly before: Point2; readonly kind: 'walk' }
-  | { readonly at: Point2; readonly floor: number; readonly kind: 'ride' };
+  | { readonly at: Point2; readonly floor: number; readonly kind: 'ride' }
+  | { readonly kind: 'hop'; readonly slot: number };
 
 /// The central half of the structure's cell, in its local X and Z: the only part of the cell
 /// where a region is selected and the eye clamped. Past it the region is cleared and the step
@@ -266,18 +302,23 @@ export interface Reached {
   readonly step: Step | null;
 }
 
-/// Every node of `structure` a player can stand in while carrying `keys`, breadth first.
+/// Every node of `structure` a player can stand in while carrying `keys`, breadth first, from
+/// `starts` and from where a hop to each of `hops`, Transporter slots placed here, lands.
 export const reachableNodes = (
   structure: Structure,
   keys: ReadonlySet<number>,
-  starts: readonly Node[] = structure.starts
+  starts: readonly Node[] = structure.starts,
+  hops: readonly number[] = []
 ): ReadonlyMap<string, Reached> => {
   const seen = new Map<string, Reached>();
-  const queue: Reached[] = starts.map(node => ({
-    from: null,
-    node,
-    step: null
-  }));
+  const queue: Reached[] = [
+    ...starts.map(node => ({ from: null, node, step: null })),
+    ...hops.map(slot => ({
+      from: null,
+      node: structure.landings.get(slot)!,
+      step: { kind: 'hop' as const, slot }
+    }))
+  ];
   while (queue.length > 0) {
     const reached = queue.shift()!;
     const { node } = reached;
@@ -336,13 +377,12 @@ export const reachableNodes = (
   return seen;
 };
 
-/// Where in `node` a player stands closest to the resident at `residence`, if close enough to
-/// select it: the nearest point of the region's inset box within the central half.
-export const selectablePoint = (
+/// The points of `node` a player can stand at, inclusive per local axis: its region's box inset by
+/// the clamp's clearance, within the central half. Null outside every region or where none is.
+const standableBox = (
   structure: Structure,
-  node: Node,
-  residence: { readonly position: { x: number; y: number; z: number } }
-): Point2 | null => {
+  node: Node
+): readonly (readonly [number, number])[] | null => {
   if (node.region === OUTSIDE) {
     return null;
   }
@@ -350,23 +390,98 @@ export const selectablePoint = (
     node.region
   ]!;
   const clearance = clearanceFor(region.flags);
-  const box = workspaceBounds(region).map(([min, max], axis) => [
-    Math.max(min + clearance, structure.central[axis]![0]),
-    Math.min(max - clearance, structure.central[axis]![1]) - 1
-  ]);
-  if (box.some(([min, max]) => min! > max!)) {
-    return null;
-  }
-  // The session places a structure resident at its parent's position plus its own, unturned.
+  const box = workspaceBounds(region).map(
+    ([min, max], axis) =>
+      [
+        Math.max(min + clearance, structure.central[axis]![0]),
+        Math.min(max - clearance, structure.central[axis]![1]) - 1
+      ] as const
+  );
+  return box.some(([min, max]) => min > max) ? null : box;
+};
+
+/// A structure resident's X and Z in the structure's local frame. The session places it at its
+/// parent's position plus its own, unturned.
+const localOf = (
+  structure: Structure,
+  { x, z }: { readonly x: number; readonly z: number }
+): Point2 => {
   const { heading } = structure.ground;
-  const { x, y, z } = residence.position;
-  const resident = [
+  return [
     x * Math.cos(heading) - z * Math.sin(heading),
     (x * Math.sin(heading) + z * Math.cos(heading)) *
       (structure.negate ? -1 : 1)
   ];
+};
+
+/// A local X and Z offset from the ground placement, in world axes.
+const worldOffset = (structure: Structure, [x, z]: Point2): Point2 => {
+  const { heading } = structure.ground;
+  const local = z * (structure.negate ? -1 : 1);
+  return [
+    x * Math.cos(heading) + local * Math.sin(heading),
+    -x * Math.sin(heading) + local * Math.cos(heading)
+  ];
+};
+
+/// Whether a player standing in `node` can stand in `transporter`'s cube, and whether they can
+/// also stand outside it there and so walk into it. The cube is in world axes and the region box
+/// in local ones, so the point tried is the box's nearest to the Transporter.
+export const transporterStand = (
+  structure: Structure,
+  node: Node,
+  transporter: PlacedTransporter
+): { readonly stand: boolean; readonly walkIn: boolean } => {
+  const box = standableBox(structure, node);
+  if (
+    box === null ||
+    node.floor !== transporter.floor ||
+    !transporter.exposedIn.has(node.region)
+  ) {
+    return { stand: false, walkIn: false };
+  }
+  const placement = structure.floors.get(node.floor)!;
+  const eyeY = node.floor * structure.storey + structure.eye;
+  const inCube = (point: Point2): boolean => {
+    const [dx, dz] = worldOffset(structure, point);
+    return insideTransporterCube(
+      {
+        x: structure.ground.position.x + dx,
+        y: eyeY,
+        z: structure.ground.position.z + dz
+      },
+      {
+        x: placement.position.x + transporter.position.x,
+        y: placement.position.y + transporter.position.y,
+        z: placement.position.z + transporter.position.z
+      },
+      transporter.bounds
+    );
+  };
+  const at = localOf(structure, transporter.position);
+  const nearest = box.map(([min, max], axis) =>
+    Math.min(Math.max(at[axis]!, min), max)
+  ) as unknown as Point2;
+  const stand = inCube(nearest);
+  const corners = box[0]!.flatMap(x => box[1]!.map(z => [x, z] as const));
+  return { stand, walkIn: stand && corners.some(corner => !inCube(corner)) };
+};
+
+/// Where in `node` a player stands closest to the resident at `residence`, if close enough to
+/// select it: the nearest point of the region's inset box within the central half.
+export const selectablePoint = (
+  structure: Structure,
+  node: Node,
+  residence: { readonly position: { x: number; y: number; z: number } }
+): Point2 | null => {
+  const box = standableBox(structure, node);
+  if (box === null) {
+    return null;
+  }
+  const { y } = residence.position;
+  const resident = localOf(structure, residence.position);
   const point = box.map(([min, max], axis) =>
-    Math.min(Math.max(resident[axis]!, min!), max!)
+    Math.min(Math.max(resident[axis]!, min), max)
   ) as unknown as Point2;
   const rise =
     structure.ground.position.y +
@@ -431,9 +546,15 @@ export const admittedStructures = async (
   /// Parents Atlas Travel would not stand the player at, and why.
   readonly declined: ReadonlyMap<string, string>;
   readonly structures: readonly Structure[];
+  /// The Transporter slots placed anywhere, and those placed on a surface.
+  readonly transporters: {
+    readonly placed: readonly number[];
+    readonly surface: readonly number[];
+  };
 }> => {
   const structures = new Map<string, Structure>();
   const declined = new Map<string, string>();
+  const source = surfaceTransporter(content);
   const structureOf = (body: string, ground: ErisPlacement, cell: string) => {
     const key = `${body}/${ground.id}`;
     let structure = structures.get(key);
@@ -453,33 +574,42 @@ export const admittedStructures = async (
         eye: content.doc.eye.heightUnits,
         floors,
         ground,
+        landings: new Map(),
         negate: content.doc.orientation.modelZ === 'negate',
+        source,
         starts: [],
-        storey: content.models.peek(ground.modelId)?.storeyHeight ?? 0
+        storey: content.models.peek(ground.modelId)?.storeyHeight ?? 0,
+        transporters: transportersIn(content, ground.id, floors)
       };
       structures.set(key, structure);
     }
     return structure;
   };
+  /// Record where `session` stands: a start by an arrival Pose or Atlas Travel, or where a hop to
+  /// slot `arrival` lands.
   const visit = (
     session: DamoclesSession,
     cell: string,
-    pose: string | null,
-    enter: () => DamoclesSession
+    enter: () => DamoclesSession,
+    arrival: 'atlas' | 'pose' | number
   ): void => {
+    const landing = typeof arrival === 'number' ? arrival : undefined;
     const bound = session.snapshot.structure;
     if (bound === null) {
+      if (landing !== undefined) {
+        throw new Error(`${cell} binds no structure`);
+      }
       return;
     }
-    // A Pose on an upper Floor publishes that Floor's placement as the surface's, so the
-    // ground placement is read from the same Pose stood back on Floor 0.
+    // Atlas Travel arrives at ground level (ADR 0050).
+    if (arrival === 'atlas' && bound.floor !== 0) {
+      throw new Error(`${cell} stands on Floor ${bound.floor}`);
+    }
+    // On an upper Floor the session publishes that Floor's placement as the surface's, so the
+    // ground placement is read from the same arrival stood back on Floor 0.
     let grounded = session;
     if (bound.floor !== 0) {
-      if (pose === null) {
-        throw new Error(`${cell} stands on Floor ${bound.floor}`);
-      }
-      grounded = new DamoclesSession(content);
-      grounded.switchToPose(pose);
+      grounded = enter();
       if (grounded.changeFloor(0).kind !== 'moved') {
         throw new Error(
           `${cell} cannot stand on Floor 0 of ${bound.instanceId}`
@@ -506,7 +636,9 @@ export const admittedStructures = async (
       );
     }
     const node = { floor: bound.floor, region };
-    if (!structure.enter.has(nodeKey(node))) {
+    if (landing !== undefined) {
+      structure.landings.set(landing, node);
+    } else if (!structure.enter.has(nodeKey(node))) {
       structure.starts.push(node);
       structure.enter.set(nodeKey(node), enter);
     }
@@ -519,11 +651,16 @@ export const admittedStructures = async (
     if (arrival.switchToPose(pose.id).kind !== 'switched') {
       continue;
     }
-    visit(arrival, `pose ${pose.id}`, pose.id, () => {
-      const session = new DamoclesSession(content);
-      session.switchToPose(pose.id);
-      return session;
-    });
+    visit(
+      arrival,
+      `pose ${pose.id}`,
+      () => {
+        const session = new DamoclesSession(content);
+        session.switchToPose(pose.id);
+        return session;
+      },
+      'pose'
+    );
   }
   // Atlas Travel to the centre of every resident's parent's cell, standing in for the flight there.
   const parents = new Set(
@@ -571,13 +708,144 @@ export const admittedStructures = async (
       continue;
     }
     const pin = target;
-    visit(session, `${parent} cell`, null, () => {
-      const entered = new DamoclesSession(content);
-      entered.travelToAtlas(pin);
-      return entered;
-    });
+    visit(
+      session,
+      `${parent} cell`,
+      () => {
+        const entered = new DamoclesSession(content);
+        entered.travelToAtlas(pin);
+        return entered;
+      },
+      'atlas'
+    );
   }
-  return { declined, structures: [...structures.values()] };
+  // A live hop to every Transporter placed in a structure, from the surface one's cube.
+  for (const slot of placedTransporters(content)) {
+    const hop = (): DamoclesSession => {
+      const session = source();
+      if (session.transporterKey(slot - FIRST_TRANSPORTER).kind !== 'hopped') {
+        throw new Error(`the hop to Transporter ${slot} was refused`);
+      }
+      return session;
+    };
+    if (
+      catalogueResidence(content.catalogue, transporterInstance(slot))?.kind ===
+      'structure'
+    ) {
+      visit(hop(), `Transporter ${slot}`, hop, slot);
+    }
+  }
+  const placed = placedTransporters(content);
+  return {
+    declined,
+    structures: [...structures.values()],
+    transporters: {
+      placed,
+      surface: placed.filter(
+        slot =>
+          catalogueResidence(content.catalogue, transporterInstance(slot))
+            ?.kind === 'surface'
+      )
+    }
+  };
+};
+
+/// The Transporter slots the Catalogue places, on a surface or in a structure.
+export const placedTransporters = (content: DamoclesContent): number[] => {
+  const placed: number[] = [];
+  for (let slot = FIRST_TRANSPORTER; slot <= LAST_TRANSPORTER; slot += 1) {
+    const kind = catalogueResidence(
+      content.catalogue,
+      transporterInstance(slot)
+    )?.kind;
+    if (kind === 'surface' || kind === 'structure') {
+      placed.push(slot);
+    }
+  }
+  return placed;
+};
+
+/// The cube a Transporter's own Model publishes, as the session reads it.
+const cubeOf = (content: DamoclesContent, id: string): CubeBounds => {
+  const model = content.catalogue.instances.find(item => item.id === id)?.model;
+  const bounds =
+    model === undefined
+      ? undefined
+      : content.models.peek(model)?.variants[0]?.mesh.viewGroups?.[0]?.bounds;
+  if (bounds === undefined) {
+    throw new Error(`${id} has no cube`);
+  }
+  return bounds;
+};
+
+/// The Transporters placed in the structure whose ground placement is `parent`, on `floors`.
+const transportersIn = (
+  content: DamoclesContent,
+  parent: string,
+  floors: ReadonlyMap<number, ErisPlacement>
+): PlacedTransporter[] =>
+  placedTransporters(content).flatMap(slot => {
+    const id = transporterInstance(slot);
+    const residence = catalogueResidence(content.catalogue, id);
+    if (residence?.kind !== 'structure' || residence.parent !== parent) {
+      return [];
+    }
+    const regions =
+      floors.get(residence.level)?.selection?.structure.regions ?? [];
+    const exposedIn = new Set(
+      regions.flatMap((_, region) =>
+        insertionsInRegion(content.catalogue, id, residence, region + 1) > 0
+          ? [region]
+          : []
+      )
+    );
+    return [
+      {
+        bounds: cubeOf(content, id),
+        exposedIn,
+        floor: residence.level,
+        id,
+        position: residence.position,
+        slot
+      }
+    ];
+  });
+
+/// The first Transporter on a surface, as a factory of fresh sessions standing in its cube: its
+/// Body's first on-foot arrival Pose, moved to the eye's height above the Transporter, as a hop
+/// stands it. Surface travel is assumed, so a player can stand there.
+const surfaceTransporter = (
+  content: DamoclesContent
+): (() => DamoclesSession) => {
+  for (const slot of placedTransporters(content)) {
+    const id = transporterInstance(slot);
+    const residence = catalogueResidence(content.catalogue, id);
+    const pose = content.poses.poses.find(
+      item => item.onFoot && item.body === residence?.body
+    );
+    if (residence?.kind !== 'surface' || pose === undefined) {
+      continue;
+    }
+    const arrival = new DamoclesSession(content);
+    if (arrival.switchToPose(pose.id).kind !== 'switched') {
+      continue;
+    }
+    // A surface residence is in the frame the arrival Pose stands in, as a hop's landing is.
+    const { position } = residence;
+    const saved = arrival.captureResume();
+    const make = (): DamoclesSession =>
+      new DamoclesSession(content, {
+        ...saved,
+        pose: {
+          ...saved.pose,
+          position: { ...position, y: position.y + ARRIVAL_EYE_OFFSET }
+        }
+      });
+    if (make().inTransporter) {
+      return make;
+    }
+  }
+  throw new Error('no surface Transporter can be stood in');
 };
 
 export type Reach =
@@ -597,13 +865,96 @@ export interface Reachability {
   readonly wanted: readonly number[];
 }
 
-/// Every placed structure resident's reach, keys carried to a fixed point. With `groundOnly`,
-/// only starts on Floor 0 are walked from, so every upper Floor is reached by lift.
+/// Which edges a count follows.
+export interface ReachOptions {
+  /// Hop by digit from any cube stood in to every placed Transporter.
+  readonly digits?: boolean;
+  /// With `groundOnly`, only starts on Floor 0 are walked from, so an upper Floor is reached by
+  /// lift or hop.
+  readonly groundOnly?: boolean;
+  /// Walk into a Transporter, stepping one place either way round the ring.
+  readonly ring?: boolean;
+}
+
+/// The nodes of each structure a player can stand in carrying `keys`, and the Transporters they
+/// hop to: hops land at new starts, which may expose more Transporters, until none is added.
+export const reachedNodes = (
+  { structures, transporters }: Awaited<ReturnType<typeof admittedStructures>>,
+  keys: ReadonlySet<number>,
+  { digits = true, groundOnly = false, ring = true }: ReachOptions = {}
+): {
+  readonly hopped: ReadonlySet<number>;
+  readonly nodes: ReadonlyMap<Structure, readonly Node[]>;
+} => {
+  const hopped = new Set<number>();
+  for (;;) {
+    const nodes = new Map(
+      structures.map(structure => [
+        structure,
+        [
+          ...reachableNodes(
+            structure,
+            keys,
+            groundOnly
+              ? structure.starts.filter(node => node.floor === 0)
+              : structure.starts,
+            [...hopped].filter(slot => structure.landings.has(slot))
+          ).values()
+        ].map(item => item.node)
+      ])
+    );
+    // A surface Transporter is walked into by the surface travel the graph assumes; one in a
+    // structure where a reached node can stand in its cube and outside it. A hop stands the
+    // player in the cube it lands in.
+    const walkedIn = new Set(transporters.surface);
+    for (const [structure, reached] of nodes) {
+      for (const transporter of structure.transporters) {
+        if (
+          reached.some(
+            node => transporterStand(structure, node, transporter).walkIn
+          )
+        ) {
+          walkedIn.add(transporter.slot);
+        }
+      }
+    }
+    const targets = new Set<number>();
+    if (digits && walkedIn.size + hopped.size > 0) {
+      for (const slot of transporters.placed) {
+        targets.add(slot);
+      }
+    }
+    if (ring) {
+      // Every placed Transporter is available on foot, so the step goes to the next placed one.
+      const placed = new Set(transporters.placed);
+      for (const slot of walkedIn) {
+        for (const up of [false, true]) {
+          const hop = ringHop(slot, up, next =>
+            placed.has(next) ? 'available' : 'unavailable'
+          );
+          if (hop.kind === 'hop') {
+            targets.add(hop.slot);
+          }
+        }
+      }
+    }
+    const added = [...targets].filter(slot => !hopped.has(slot));
+    if (added.length === 0) {
+      return { hopped, nodes };
+    }
+    for (const slot of added) {
+      hopped.add(slot);
+    }
+  }
+};
+
+/// Every placed structure resident's reach, keys carried to a fixed point.
 export const residentReachability = (
   catalogue: Catalogue,
-  { declined, structures }: Awaited<ReturnType<typeof admittedStructures>>,
-  groundOnly = false
+  admitted: Awaited<ReturnType<typeof admittedStructures>>,
+  options: ReachOptions = {}
 ): Reachability => {
+  const { declined, structures } = admitted;
   const residents = catalogue.instances.filter(
     item => item.placement !== null && item.association !== null
   );
@@ -627,20 +978,7 @@ export const residentReachability = (
   }
   const reachedWith = (keys: ReadonlySet<number>): Set<string> => {
     const reached = new Set<string>();
-    const nodes = new Map(
-      structures.map(structure => [
-        structure,
-        [
-          ...reachableNodes(
-            structure,
-            keys,
-            groundOnly
-              ? structure.starts.filter(node => node.floor === 0)
-              : structure.starts
-          ).values()
-        ].map(item => item.node)
-      ])
-    );
+    const { nodes } = reachedNodes(admitted, keys, options);
     for (const item of residents) {
       const residence = catalogueResidence(catalogue, item.id);
       if (residence?.kind !== 'structure') {
@@ -750,7 +1088,11 @@ export const walkRoute = (
   finish?: Point2
 ): DamoclesSession => {
   const start = route[0]!;
-  const session = structure.enter.get(nodeKey(start.node))!();
+  // A route a hop starts begins standing in the surface Transporter's cube.
+  const session =
+    start.step?.kind === 'hop'
+      ? structure.source()
+      : structure.enter.get(nodeKey(start.node))!();
   // The keys are taken from afar, as the console's `get` does: where each was reached is the
   // graph's claim, and a walk to it is its own route.
   for (const slot of keys) {
@@ -811,6 +1153,12 @@ export const walkRoute = (
     if (step.kind === 'walk') {
       walkTo(step.before);
       walkTo(step.after, here => sameNode(here, node));
+    } else if (step.kind === 'hop') {
+      if (
+        session.transporterKey(step.slot - FIRST_TRANSPORTER).kind !== 'hopped'
+      ) {
+        throw new Error(`step ${index}: Transporter ${step.slot} refused`);
+      }
     } else {
       walkTo(step.at);
       if (session.rideLift(step.floor).kind !== 'admitted') {
@@ -842,13 +1190,14 @@ export const walkRoute = (
 };
 
 /// Walk to object `id` by the graph's route carrying `keys`, from `starts` (every start by
-/// default), and stand where it is selectable.
+/// default) and from where a hop to each of `hops` lands, and stand where it is selectable.
 export const walkToResident = (
   content: DamoclesContent,
   structures: readonly Structure[],
   id: string,
   keys: readonly number[] = [],
-  starts?: (structure: Structure) => readonly Node[]
+  starts?: (structure: Structure) => readonly Node[],
+  hops?: (structure: Structure) => readonly number[]
 ): DamoclesSession => {
   const residence = catalogueResidence(content.catalogue, id);
   if (residence?.kind !== 'structure') {
@@ -861,7 +1210,8 @@ export const walkToResident = (
     const reached = reachableNodes(
       structure,
       new Set(keys),
-      starts?.(structure) ?? structure.starts
+      starts?.(structure) ?? structure.starts,
+      hops?.(structure) ?? []
     );
     for (const item of reached.values()) {
       const point =
