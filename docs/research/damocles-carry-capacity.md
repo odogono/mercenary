@@ -97,7 +97,7 @@ Slots 157 and 158 are referenced at **exactly one address each in the whole 1 Mi
 - removing one while the other is still carried leaves the override in place;
 - removing both restores the refusal immediately, because the handler reads the live handling byte rather than the Carried Stack.
 
-The class it unlocks is handling byte `$20`: **all twenty-one craft instances, including every TRANSPORTER and the V.I.P. LIMO in slot 5**. With an ANTIGRAV carried, a craft selected in range is taken onto the Carried Stack like any other object — its handling bit 7 is set, its Association B becomes the carried form, and it stops being drawn. The probe reproduces that. What a carried craft then does — whether it can be dropped, boarded, or flown, and what the paired vehicle-key relation means while it is carried — is **not recovered here and must not be assumed**; this note establishes the take, not a vehicle behaviour.
+The class it unlocks is handling byte `$20`: **all twenty-one craft instances, including every TRANSPORTER and the V.I.P. LIMO in slot 5**. With an ANTIGRAV carried, a craft selected in range is taken onto the Carried Stack like any other object — its handling bit 7 is set, its Association B becomes the carried form, and it stops being drawn. The probe reproduces that. What a carried craft then does when boarded or flown, and what the paired vehicle-key relation means while it is carried, is **not recovered here and must not be assumed**. How it is dropped is recovered: see [Dropping a carried craft](#dropping-a-carried-craft).
 
 ## The handling-class census
 
@@ -129,6 +129,32 @@ if d2 * 4 < d0 → refuse, system string index 9
 So the **demand** is bits 2–3 of the dropped object and the **supply** is bits 0–1 of the support, which is what the payload's `requiredSupportRank` and `suppliedSupportRank` name. An ordinary key (`$04`, `$05`) demands rank 1 and supplies rank 0 or 1; a table (`$0F`) supplies 3. That is why a key can be put on a table and not on another key.
 
 `$0545AC` bypasses the entire comparison when **resident slot 39 — `DOOR KEY A`** — has its carried bit set. Like the ANTIGRAV addresses, `$7046` appears once in the whole image. `$054622` similarly lets a carried **slot 0** skip the ground-contact requirement `$7ACA` on the direct-placement path. Neither has a recovered writer for its carried bit other than an ordinary take, and slot 39's placement is not recovered, so both are reachable-in-principle rather than observed in play.
+
+## Dropping a carried craft
+
+Recovered for [#1007](https://github.com/odogono/mercenary/issues/1007). **The drop handler has no craft branch.** Across `$054520`–`$054744` and every routine it calls (`$04DC40`, `$0543BE`, `$0543FA`, `$054848`, `$058EC8`, `$05A30E`, `$05A928`), the dropped object's handling byte is read only at `$0545B2`, for the rank demand in bits 2–3. Bit 5, the craft class, is never tested. A carried craft therefore takes the same two paths as any other object:
+
+- **Direct placement** puts it where the player stands, exactly as [the drop note](damocles-limo-key-drops.md#direct-placement-and-support-placement-are-different-paths) gives: the player's X and Z, Y 63 below the player, and the player's Body, Level, structure group, cell and Insertion Group. A dropped TRANSPORTER is then an ordinary surface or interior resident.
+- **Support placement is always refused.** Handling `$20` demands rank 0, and the comparison refuses a zero demand outright with system string index 9 before it reads the support. A craft dropped while a selection is within range is refused, wherever it is. Carrying `DOOR KEY A` skips the comparison, as it does for every object.
+
+The checkpoints confirm all three outcomes with TRANSPORTER slot 66 and INTERSTELLARSHIP slot 7:
+
+| Case | What it sets up | Exit | Count | What the dropped craft holds afterwards |
+|---|---|---|---:|---|
+| `drop-transporter-direct` | Slot 66 carried, no selection | accepted | 1 → 0 | The player's X and Z, Y 0 for a player at 63; Association B `$2C000087`, the player's Body `$2C`, Insertion Group 0, Level 0 and cell `$87`; carried bit clear (`$A0` → `$20`) |
+| `drop-craft-direct` | Slot 7 carried, no selection | accepted | 1 → 0 | Carried bit clear (`$A0` → `$20`) |
+| `drop-transporter-support` | Slot 66 carried, TABLE slot 114 selected in range | message `$09` | 1 → 1 | Unchanged, still carried |
+| `drop-transporter-support-door-key` | The same, with `DOOR KEY A` carried | rank passed | 2 → 2 | Unchanged at the checkpoint |
+
+The pose's player stands in a region with bit 14 set, so this direct drop took Insertion Group 0. An interior drop's group comes from the same instruction as any other object's.
+
+Whether a dropped TRANSPORTER is then available to the Transporter Ring follows from [the arrival-routes note](damocles-arrival-routes.md): on foot, only Body byte `$00` or `$78` makes a slot unavailable, and a dropped craft holds the player’s Body. Aboard a craft the ring also passes one dropped inside a structure. Dropping one does not carry the player off: the drop sets the Transporter latch, so the cube they are left standing in does not fire while they stand there (observed live). That it fires once they leave and walk in again is inferred from the latch handler, as for an arrival cube ([Entry fires once](damocles-arrival-routes.md#entry-fires-once-the-latch-7884)); the run did not walk out.
+
+| Run | `result.json` hash |
+|---|---|
+| `transporter-drop-20261127T224334Z-f912456d` (`transporter-probe.py drop`, `eris-transporter-11-8`) | `f732c61a28e4e2d838d458d14af976ed33690f8aed68fc1c870c8667c8427366` |
+
+The probe was `57862cf766bdb4134ffb9e4a8d80050a803edd4adbe826343b906cd35badc24e`, and the rehosted memstate `33a9dc24aca3c66a8023bd3fe01c1ba97fad61f5f81531f139dbbefa027fa2e1`.
 
 ## Take and drop paths that are not the input handler
 
@@ -243,7 +269,7 @@ For a Gameplay Session that saves and restores this state, the recovered rules g
 
 - **The restore path at `$055190`.** It rebuilds a Carried Stack and a BCD balance from a 64-entry identifier namespace, assigns fresh resident slots, and self-modifies two handling-byte operands. Its caller was not found, and identifiers 27 and 40 are not resolved to objects. Until it is identified, the patched operand at `$054230` cannot be given a meaning, and **the original's own persistence format for the Carried Stack is not recovered**.
 - **What the gauge draws above twenty segments.** The over-capacity take is reproduced; the drawing that follows is not.
-- **Whether a carried craft can be dropped, boarded or flown**, and what happens to its paired vehicle key while it is carried.
+- **Whether a carried craft can be boarded or flown**, and what happens to its paired vehicle key while it is carried. Its drop is recovered in [Dropping a carried craft](#dropping-a-carried-craft).
 - **Ordinary reachability of all three special items.** BRIEFCASE, both ANTIGRAVs and DOOR KEY A have selectors and no recovered parent placement ([the ledger](damocles-gamma-system-location-ledger.md)), so nothing here is an ordinary-route observation of picking one up. The behaviour is recovered; the route is not.
 - **Bit 6 of the handling byte**, which nothing in the census sets and nothing in the handlers reads.
 
@@ -287,6 +313,9 @@ Runs under `research/damocles-st/work/`. Hatari 2.6.1 (binary `05723606c75a1f064
 | Run | `result.json` hash |
 |---|---|
 | `carry-capacity-20260917T183852Z-2b845a95` | `a65904786982b602bbdf7559471569bdbef8d30201dc9151179950d30532356e` |
+| `carry-capacity-20261127T221058Z-3b31bd33` (#1007: `drop-direct` and the four craft drops) | `043848502367308e55098d724d2fecfde496c63a468b0961bec3a71aa0150675` |
+
+The #1007 run used `snapshots/rehosted/eris-spaceport-onfoot.sav` with its stored TOS and disk paths rewritten to the checkout's current location, because Hatari refuses a memstate whose TOS path no longer exists. Its RAM window is unchanged (`ramSha256` `1366881c62ab9e80a5fe8b1dcbb5dfa2ccc0142e4a921cd029f9dfc8f6b16465` before and after), and the probe's code-window fingerprints passed in every capture. The probe was `0e0df02d9a3ff376f17d4d7e7b306f8cf8d9cdccced0d90c09f90a723b9508ab`. The evidence is kept under `restricted/damocles-carry-capacity-1007/`.
 
 ### Claim boundary
 

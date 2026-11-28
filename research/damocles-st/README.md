@@ -392,7 +392,8 @@ through the command FIFO after the machine is up, and the debugger's own `quit` 
 not return from a breakpoint script, so a case is finished when its last capture is
 complete. Cases cover default and expanded capacity, the equality that enforces it,
 every handling class, both ANTIGRAV overrides, the BRIEFCASE's expansion, overflow
-store and exact round trip, the shared refusal words and the drop's rank comparison.
+store and exact round trip, the shared refusal words, the drop's rank comparison, and a
+carried craft's drop (#1007).
 
 **These are instruction checkpoints, not ordinary routes.** The probe writes state the
 walk and the scene pass would otherwise produce, and none of the three special items
@@ -695,6 +696,12 @@ python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 \
 # the same entry, then leave the arrival cube until the latch clears, press 0, and back in
 python3 research/damocles-st/scripts/transporter-probe.py outside --digit 0 \
     --side keep --no-aim --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+```
+
+```sh
+# carry TRANSPORTER slot 66 as a take leaves it, back clear of every cube, and drop it (#1007)
+python3 research/damocles-st/scripts/transporter-probe.py drop --slot 66 --hold 8 \
+    --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
 ```
 
 Walks in short stick pulses so the player usually stops where a hop leaves them,

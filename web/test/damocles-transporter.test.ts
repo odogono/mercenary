@@ -130,10 +130,11 @@ const atSlot69Floor = (): DamoclesSaveSnapshot => {
 const near69 = (
   dz: number,
   heading: number,
-  change: Partial<DamoclesSaveSnapshot> = {}
-): DamoclesSession => {
-  const saved = atSlot69Floor();
-  return new DamoclesSession(content, {
+  change: Partial<DamoclesSaveSnapshot> = {},
+  saved = atSlot69Floor(),
+  using = content
+): DamoclesSession =>
+  new DamoclesSession(using, {
     ...saved,
     ...change,
     pose: {
@@ -142,7 +143,6 @@ const near69 = (
       position: { x: SLOT_69.x, y: SLOT_69.y + 63, z: SLOT_69.z + dz }
     }
   });
-};
 
 /// Walk (`walk` 1 forwards, −1 backwards) until the Body changes or two seconds pass, then stop.
 const walkIn = (session: DamoclesSession, walk: number): void => {
@@ -341,9 +341,10 @@ type AssembledModels = Catalogue & {
   readonly models: readonly { id: string }[];
 };
 
-/// A store that holds every Model but Metis's structure, whose fetch waits until released: a
+/// A store that holds every Model but one, Metis's structure unless told otherwise, whose fetch waits until released: a
 /// destination still streaming in, as the browser sees it after a hop.
 class DelayedModels extends ModelStore {
+  withheld = METIS_STRUCTURE;
   private readonly released = Promise.withResolvers<void>();
   private readonly gate = this.released.promise;
 
@@ -356,9 +357,9 @@ class DelayedModels extends ModelStore {
 
   override async prefetch(ids: Iterable<string>): Promise<readonly Error[]> {
     const wanted = [...ids];
-    if (wanted.includes(METIS_STRUCTURE)) {
+    if (wanted.includes(this.withheld)) {
       await this.gate;
-      this.deliver(METIS_STRUCTURE);
+      this.deliver(this.withheld);
     }
     return super.prefetch(wanted.filter(id => this.peek(id) === undefined));
   }
@@ -371,12 +372,15 @@ class DelayedModels extends ModelStore {
 
 const METIS_STRUCTURE = 'structure-01d35e';
 
-const delayed = (): { content: DamoclesContent; models: DelayedModels } => {
+const delayed = (
+  withheld = METIS_STRUCTURE
+): { content: DamoclesContent; models: DelayedModels } => {
   const models = new DelayedModels(catalogue, path =>
     Promise.reject(new Error(`${path} is withheld`))
   );
+  models.withheld = withheld;
   for (const model of (catalogue as AssembledModels).models) {
-    if (model.id !== METIS_STRUCTURE) {
+    if (model.id !== withheld) {
       models.deliver(model.id);
     }
   }
@@ -419,5 +423,190 @@ describe('a hop whose destination is still streaming in', () => {
     }
     expect(at(session)).toEqual({ body: 'body-15', cell: '0-6', floor: 9 });
     expect(session.snapshot.locationName).toBe('VOID');
+  });
+});
+
+/// Carry Transporter slot 66 into `saved`, as an ANTIGRAV take leaves it.
+const carrying66 = (saved: DamoclesSaveSnapshot): DamoclesSaveSnapshot => ({
+  ...saved,
+  carried: ['object-slot-66', ...saved.carried],
+  residence: [
+    ...saved.residence.filter(item => item.instance !== 'object-slot-66'),
+    {
+      instance: 'object-slot-66',
+      residence: {
+        kind: 'carried',
+        placementClass: catalogue.instances.find(
+          item => item.id === 'object-slot-66'
+        )!.placementClass!
+      }
+    }
+  ]
+});
+
+/// Walk forwards until a message shows or two seconds pass, then stop where the hop left it.
+const walkUntilMessage = (session: DamoclesSession): void => {
+  session.intent = { ...IDLE, walk: 1 };
+  for (
+    let frame = 0;
+    frame < 100 && session.snapshot.message === null;
+    frame += 1
+  ) {
+    session.advance(1 / 50);
+  }
+  session.intent = IDLE;
+};
+
+describe('a dropped Transporter (#1007)', () => {
+  // What its digit does while carried is #1017's to decide.
+  test('carried, it is passed by the ring', () => {
+    const saved = carrying66(atSlot69Floor());
+    // Slots 68 and 67 gone and 66 carried: walking north steps down past all three to 65.
+    const ring = near69(
+      -100,
+      NORTH,
+      { removedResidents: ['object-slot-67', 'object-slot-68'] },
+      saved
+    );
+    walkUntilMessage(ring);
+    expect(ring.snapshot.message?.id).toBe('system-string-18');
+    // Passed exactly as if it were gone: both land at slot 65, on Eris too.
+    const gone = near69(-100, NORTH, {
+      removedResidents: ['object-slot-66', 'object-slot-67', 'object-slot-68']
+    });
+    walkUntilMessage(gone);
+    expect(ring.snapshot.pose.position).toEqual(gone.snapshot.pose.position);
+    expect(at(ring)).toEqual(at(gone));
+    expect(ring.snapshot.pose.position.z).not.toBe(SLOT_69.z);
+  });
+
+  test('dropped round the player, it does not fire until they leave and walk in again', () => {
+    const session = near69(300, NORTH, {}, carrying66(atSlot69Floor()));
+    session.advance(1 / 50);
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    // Standing in the dropped cube, not hopped: the Drop set the latch.
+    expect(at(session)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+    expect(session.inTransporter).toBe(true);
+    expect(session.snapshot.locationName).toBe('VOID');
+    expect(transporterCues(session)).toBe(0);
+
+    // Out of the cube, then back in: now it fires.
+    session.intent = { ...IDLE, walk: 1 };
+    for (let frame = 0; frame < 25; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(session.inTransporter).toBe(false);
+    walkIn(session, -1);
+    expect(transporterCues(session)).toBe(1);
+  });
+
+  test('dropped while its Model is still streaming in, it does not fire once the Model lands', async () => {
+    const model = catalogue.instances.find(
+      item => item.id === 'object-slot-66'
+    )!.model!;
+    const { content: streaming, models } = delayed(model);
+    const session = near69(
+      300,
+      NORTH,
+      {},
+      carrying66(atSlot69Floor()),
+      streaming
+    );
+    session.advance(1 / 50);
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    for (let frame = 0; frame < 10; frame += 1) {
+      session.advance(1 / 50);
+    }
+    await models.land();
+    await Bun.sleep(0);
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+    expect(session.inTransporter).toBe(true);
+    expect(transporterCues(session)).toBe(0);
+  });
+
+  test('dropped on a Floor, it lies there and both its digit and the ring reach it', () => {
+    const carrying = near69(300, SOUTH, {}, carrying66(atSlot69Floor()));
+    carrying.advance(1 / 50);
+    expect(carrying.inTransporter).toBe(false);
+    const dropped = carrying.snapshot.pose.position;
+    expect(carrying.drop()).toEqual({ kind: 'dropped' });
+    const residence = carrying.snapshot.residence.find(
+      item => item.instance === 'object-slot-66'
+    )?.residence;
+    expect(residence?.kind).toBe('structure');
+    const saved = carrying.captureResume();
+    // A hop stands the player at the resident's Y plus $3F: back where they dropped it.
+    const arrival = dropped;
+
+    const digit = near69(0, SOUTH, {}, saved);
+    expect(digit.transporterKey(2).kind).toBe('hopped');
+    expect(at(digit)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+    expect(digit.snapshot.pose.position).toEqual(arrival);
+    expect(digit.inTransporter).toBe(true);
+
+    const ring = near69(
+      -100,
+      NORTH,
+      { removedResidents: ['object-slot-67', 'object-slot-68'] },
+      saved
+    );
+    walkUntilMessage(ring);
+    expect(ring.snapshot.message?.id).toBe('system-string-18');
+    expect(ring.snapshot.pose.position).toEqual(arrival);
+    expect(at(ring)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+  });
+
+  test('dropped on the surface, both its digit and the ring reach it there', () => {
+    const saved = carrying66(atSlot69Floor());
+    const outside = new DamoclesSession(content, {
+      ...saved,
+      pose: {
+        body: 'body-11',
+        heading: 0,
+        pitch: 0,
+        position: { x: 0, y: content.doc.eye.heightUnits, z: 0 }
+      },
+      structure: null
+    });
+    expect(outside.drop()).toEqual({ kind: 'dropped' });
+    expect(
+      outside.snapshot.residence.find(
+        item => item.instance === 'object-slot-66'
+      )?.residence
+    ).toEqual(
+      expect.objectContaining({
+        body: 'body-11',
+        kind: 'surface',
+        position: { x: 0, y: 0, z: 0 }
+      })
+    );
+
+    const dropped = outside.captureResume();
+    const digit = near69(0, SOUTH, {}, dropped);
+    expect(digit.transporterKey(2).kind).toBe('hopped');
+    expect(digit.snapshot.pose.body).toBe('body-11');
+    expect(digit.snapshot.structure).toBeNull();
+    expect(digit.snapshot.pose.position).toEqual({ x: 0, y: 63, z: 0 });
+
+    const ring = near69(
+      -100,
+      NORTH,
+      {
+        removedResidents: ['object-slot-67', 'object-slot-68'],
+        structure: atSlot69Floor().structure
+      },
+      dropped
+    );
+    walkUntilMessage(ring);
+    expect(ring.snapshot.message?.id).toBe('system-string-18');
+    expect(ring.snapshot.pose.body).toBe('body-11');
+    expect(ring.snapshot.structure).toBeNull();
+    expect(ring.snapshot.pose.position).toEqual({ x: 0, y: 63, z: 0 });
   });
 });

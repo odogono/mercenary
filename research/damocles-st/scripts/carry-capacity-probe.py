@@ -78,6 +78,8 @@ FILLER = (30, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 43, 44, 45, 46, 47, 48, 49
 
 BRIEFCASE, ANTIGRAV_A, ANTIGRAV_B, DOOR_KEY = 108, 157, 158, 39
 ORDINARY, CRAFT, SILENT, TABLE = 160, 7, 156, 114
+# A Transporter (#1007): handling `$20` like every craft, so it demands rank 0.
+TRANSPORTER = 66
 
 
 def carried(count: int, head: int | None = None, extra: tuple[int, ...] = ()) -> list[int]:
@@ -163,6 +165,15 @@ def cases() -> list[dict]:
     drop("drop-rank-refused", stack=carried(1), select=183, rangeWord=0)
     drop("drop-rank-met", stack=carried(1), select=TABLE, rangeWord=0)
     drop("drop-rank-bypassed", stack=[30, DOOR_KEY], select=183, rangeWord=0)
+
+    # A carried craft (#1007). Nothing in the drop handler reads handling bit 5,
+    # so a Transporter takes the direct path; beside a support its zero demand
+    # refuses unless DOOR KEY A skips the rank comparison.
+    drop("drop-transporter-direct", stack=[TRANSPORTER])
+    drop("drop-craft-direct", stack=[CRAFT])
+    drop("drop-transporter-support", stack=[TRANSPORTER], select=TABLE, rangeWord=0)
+    drop("drop-transporter-support-door-key", stack=[TRANSPORTER, DOOR_KEY], select=TABLE,
+         rangeWord=0)
     return rows
 
 
@@ -209,7 +220,7 @@ def step_commands(step: dict, run: Path) -> list[str]:
 # an object sets bit 7 of this byte; the probe sets the same bit for the entries
 # it places directly, so a restored stack is indistinguishable from a taken one.
 _HANDLING = {
-    7: 0x20, 39: 0x05, 108: 0x04, 114: 0x0F, 156: 0x10, 157: 0x04, 158: 0x04,
+    7: 0x20, 39: 0x05, 66: 0x20, 108: 0x04, 114: 0x0F, 156: 0x10, 157: 0x04, 158: 0x04,
     160: 0x05, 183: 0x04, 201: 0x0F, 202: 0x0F, 203: 0x0F,
     30: 0x05, 31: 0x05, 32: 0x05, 33: 0x05, 34: 0x05, 35: 0x05, 36: 0x05, 37: 0x05,
     38: 0x05, 40: 0x05, 41: 0x05, 43: 0x05, 44: 0x04, 45: 0x04, 46: 0x04, 47: 0x04,
@@ -255,10 +266,18 @@ def read_state(path: Path) -> dict:
     state["handling"] = {
         str(slot): ram[ASSOC_A + slot * 4 + 2]
         for slot in sorted({0, BRIEFCASE, ANTIGRAV_A, ANTIGRAV_B, DOOR_KEY,
-                            ORDINARY, CRAFT, SILENT, TABLE, 183} | set(FILLER))
+                            ORDINARY, CRAFT, SILENT, TABLE, 183, TRANSPORTER} | set(FILLER))
     }
-    for slot in (ORDINARY, CRAFT, SILENT, BRIEFCASE):
+    for slot in (ORDINARY, CRAFT, SILENT, BRIEFCASE, TRANSPORTER):
         state[f"association-{slot}"] = int.from_bytes(ram[ASSOC_B + slot * 4:][:4], "big")
+    # Where a dropped craft lands: the resident X, Y and Z longs and Association A.
+    for slot in (CRAFT, TRANSPORTER):
+        state[f"position-{slot}"] = [
+            int.from_bytes(ram[base + slot * 4:][:4], "big", signed=True)
+            for base in (0x63A8, 0x67A8, 0x6BA8)]
+        state[f"associationA-{slot}"] = int.from_bytes(ram[ASSOC_A + slot * 4:][:4], "big")
+    state["player"] = [int.from_bytes(ram[a:a + 4], "big", signed=True)
+                       for a in (0x7AB2, 0x7AB6, 0x7ABA)]
     # The system-string helper stores the table word over the low half of the
     # table address it built, so a presented message names its own index.
     state["stringIndex"] = next(
