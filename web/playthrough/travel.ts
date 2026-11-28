@@ -2,11 +2,12 @@ import { expect, type Page } from '@playwright/test';
 
 import { flyTo, takeOff, type FlightOptions } from './flight.ts';
 import { entrance, liftCar } from './planner.ts';
-import { attribute, pressUntil } from './session.ts';
+import { at, attribute, pressUntil } from './session.ts';
 import {
   SteeringError,
   floorRegions,
   local,
+  steer,
   structureOrigin,
   walkTo,
   type Point
@@ -137,4 +138,66 @@ export const reboard = async (
     async () => (await attribute(page, 'occupancy')) === parked.craft,
     `board ${parked.craft}`
   );
+};
+
+/// Walk into a Transporter lying at `slot`, structure-local in `parent`, from one side of it.
+/// Walking south, from the north, steps up the ring; walking north, from the south, steps down
+/// (docs/research/damocles-arrival-routes.md). Resolves on the Body the hop lands on.
+export const walkIntoTransporter = async (
+  page: Page,
+  parent: string,
+  slot: Point,
+  from: 'north' | 'south'
+): Promise<void> => {
+  await walkTo(
+    page,
+    parent,
+    { x: slot.x, z: slot.z + (from === 'north' ? 120 : -120) },
+    `${from} of the transporter`,
+    25
+  );
+  await steer(
+    page,
+    [
+      {
+        name: 'into the transporter',
+        radius: 5,
+        to: local(await structureOrigin(page, parent), slot)
+      }
+    ],
+    { mode: 'walk', untilBodyChanges: true }
+  );
+};
+
+/// Standing in a Transporter's cube, press the digit that names slot 64 + `digit` and wait for
+/// the hop to land on `body`.
+export const hopByDigit = async (
+  page: Page,
+  digit: number,
+  body: string
+): Promise<void> => {
+  await page.keyboard.press(`Digit${digit}`);
+  await expect
+    .poll(async () => attribute(page, 'body'), {
+      message: `digit ${digit} in the cube did not reach ${body}`,
+      timeout: 5000
+    })
+    .toBe(body);
+};
+
+/// Step out of a Transporter's cube, forwards or else back, so the panel names the Body again
+/// rather than VOID.
+export const stepOutOfCube = async (
+  page: Page,
+  areas: ReadonlyMap<string, string>
+): Promise<void> => {
+  for (const key of ['ArrowUp', 'ArrowDown']) {
+    if ((await at(page, areas)).body !== 'VOID') {
+      return;
+    }
+    await page.keyboard.down(key);
+    await page.waitForTimeout(700);
+    await page.keyboard.up(key);
+    await page.waitForTimeout(200);
+  }
 };
