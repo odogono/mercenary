@@ -877,6 +877,9 @@ export class DamoclesSession implements TitleSession<
   private standingIn = 0;
   /// `$7884`: the slot the player entered, held until a frame finds them in no cube.
   private transporterLatch = 0;
+  /// A Transporter just dropped whose Model is not in hand yet, so its cube cannot be tested:
+  /// the latch the Drop set holds until it is (#1007).
+  private droppedTransporter = 0;
   /// Where a hop has just left the player, while its destination may not be drawn yet.
   private transporterArrival: {
     readonly body: string;
@@ -4689,6 +4692,9 @@ export class DamoclesSession implements TitleSession<
     // `$054662` writes -1 over `$7882` and the latch `$7884`, so a Transporter dropped round the
     // player does not fire: it holds until a frame finds them outside every cube (#1007).
     this.transporterLatch = -1;
+    const slot = this.slotOf(head);
+    this.droppedTransporter =
+      slot >= FIRST_TRANSPORTER && slot <= LAST_TRANSPORTER ? slot : 0;
     // `$05468E`: dropping the open object closes it and scrolls the logo back.
     if (this.slotOf(head) === this.headCommands.open?.slot) {
       this.headCommands = closeDocument(this.headCommands);
@@ -5081,6 +5087,22 @@ export class DamoclesSession implements TitleSession<
       }
       this.transporterArrival = null;
     }
+    // A Transporter dropped round the player is not tested until its Model lands: the frames
+    // between would find no cube and clear the latch the Drop set.
+    const dropped = this.droppedTransporter;
+    if (dropped !== 0) {
+      const id = transporterInstance(dropped);
+      const residence = this.residenceFor(id);
+      if (
+        inside === 0 &&
+        residence !== undefined &&
+        residence.kind !== 'carried' &&
+        this.transporterBounds(id) === undefined
+      ) {
+        return;
+      }
+      this.droppedTransporter = 0;
+    }
     if (inside === 0) {
       this.transporterLatch = 0;
       return;
@@ -5122,6 +5144,7 @@ export class DamoclesSession implements TitleSession<
   /// it fires only once they leave it and walk in again. The latch is not in the Save.
   private settleTransporter(): void {
     this.transporterArrival = null;
+    this.droppedTransporter = 0;
     this.standingIn = this.death === null ? this.transporterAt() : 0;
     this.transporterLatch = this.standingIn;
   }
