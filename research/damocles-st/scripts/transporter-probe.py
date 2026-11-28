@@ -54,6 +54,7 @@ import importlib.util
 import json
 import os
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -715,6 +716,10 @@ def main() -> None:
                       if key in ("entry", "carry", "leave", "digit", "reenter", "drop", "look")},
                      indent=1, default=str))
     print("run:", result["runDirectory"])
+    if "error" in result:
+        # The partial evidence stays in result.json; the caller still sees the run failed.
+        print("error:", result["error"], file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
