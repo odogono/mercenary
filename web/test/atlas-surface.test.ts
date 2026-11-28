@@ -141,9 +141,10 @@ describe('the Atlas Body surface', () => {
         expect(gap.reason).toBeTruthy();
       }
     }
-    // 41 of the 62 records carry a coastline; the other 21 share the coastline-less stub.
+    // 41 of the 63 records carry a coastline; the other 22, VOID's included (#1022), share the
+    // coastline-less stub.
     expect(islands).toBe(41);
-    expect(gaps).toBe(21);
+    expect(gaps).toBe(22);
   });
 
   test('is a pure function of the payload', async () => {

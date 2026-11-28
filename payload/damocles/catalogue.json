@@ -2888,17 +2888,40 @@
       "name": "DAMOCLES"
     },
     {
-      "bodySurface": null,
+      "bodySurface": {
+        "baseColour": "#eeeeee",
+        "extentCells": [
+          4096,
+          4096
+        ],
+        "rotationRate": 67108,
+        "sky": {
+          "day": {
+            "colour": "#eeeeee",
+            "sourceColour": 1911
+          },
+          "night": {
+            "colour": "#eeeeee",
+            "sourceColour": 1911
+          }
+        },
+        "sourceColour": 1911,
+        "wrapsX": true,
+        "wrapsZ": true
+      },
       "id": "body-30",
-      "models": [],
+      "models": [
+        "structure-010d0c",
+        "structure-010e8a"
+      ],
       "name": "VOID"
     }
   ],
   "coverage": {
     "census": {
-      "decoded": 1436,
+      "decoded": 1438,
       "partial": 330,
-      "unique": 1766,
+      "unique": 1768,
       "unresolved": 0
     },
     "classifications": {
@@ -2907,7 +2930,7 @@
       "attachments": 0,
       "conditionalForms": 48,
       "empty": 15,
-      "geometry": 1566,
+      "geometry": 1568,
       "liveText": 1,
       "null": 1,
       "omittedSelector": 0,
@@ -3103,6 +3126,10 @@
         "path": "Lucan Image-Replayed $Abdc: Body Selector $7Aa8=$0040, Current Cell $7B5C=$00; 0 Surface Assemblies And 0 Workspace-Local Ground Records. Structure And Building-Detail Pointer Tables Match First-World; Object Unique Addresses Are Unchanged. live workspace"
       },
       {
+        "finding": "VOID image-replayed $ABDC: body selector $7AA8=$0078, current cell $7B5C=$00; 2 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
+        "path": "Void Image-Replayed $Abdc: Body Selector $7Aa8=$0078, Current Cell $7B5C=$00; 2 Surface Assemblies And 0 Workspace-Local Ground Records. Structure And Building-Detail Pointer Tables Match First-World; Object Unique Addresses Are Unchanged. live workspace"
+      },
+      {
         "finding": "DION image-replayed $ABDC (DION NORTH): body selector $7AA8=$0010, current cell $7B5C=$00; 25 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
         "path": "Dion Image-Replayed $Abdc (Dion North): Body Selector $7Aa8=$0010, Current Cell $7B5C=$00; 25 Surface Assemblies And 0 Workspace-Local Ground Records. Structure And Building-Detail Pointer Tables Match First-World; Object Unique Addresses Are Unchanged. live workspace"
       },
@@ -3174,6 +3201,7 @@
       "LUCAN image-replayed $ABDC: body selector $7AA8=$0040, current cell $7B5C=$00; 0 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "LUCAN image-replayed $ABDC: body selector $7AA8=$0040, current cell $7B5C=$00; 0 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "LUCAN image-replayed $ABDC: body selector $7AA8=$0040, current cell $7B5C=$00; 0 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
+      "VOID image-replayed $ABDC: body selector $7AA8=$0078, current cell $7B5C=$00; 2 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "DION image-replayed $ABDC (DION NORTH): body selector $7AA8=$0010, current cell $7B5C=$00; 25 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "DION image-replayed $ABDC (DION EAST): body selector $7AA8=$0010, current cell $7B5C=$00; 25 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "LACHESIS image-replayed $ABDC: body selector $7AA8=$001C, current cell $7B5C=$00; 5 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
@@ -3200,6 +3228,7 @@
         "body-26",
         "body-27",
         "body-3",
+        "body-30",
         "body-4",
         "body-5",
         "body-6",
@@ -3208,7 +3237,7 @@
         "body-9"
       ],
       "evidence": "One entry an island record that binds a structure group, captured or not: $04EB60 builds the run grid from the group's own authored stream, so every group decodes. `attested` counts those a capture also stood in and checked against its live $0083DC. A Settlement with no run holds no road, which is a reading rather than a gap.",
-      "networks": 42,
+      "networks": 43,
       "settlementsWithRoads": 39
     },
     "tables": [
@@ -3228,14 +3257,14 @@
       {
         "address": 59648,
         "aliases": 183,
-        "decoded": 48,
+        "decoded": 50,
         "empty": 12,
         "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file. Entries after index 279 are Floor forms: an upper Floor's record decoded in the frame of the instance that binds it, not table slots.",
         "kind": "structure",
         "nullRecords": 0,
         "partial": 265,
-        "slots": 327,
-        "unique": 313,
+        "slots": 329,
+        "unique": 315,
         "unresolved": 0
       },
       {
@@ -3256,7 +3285,7 @@
         "aliases": 0,
         "decoded": 1175,
         "empty": 1,
-        "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ICARUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ACHERON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ATROPOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CLOTHO workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CRONUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CYCLOPES workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live SOLON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THEON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live METIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LOGOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THALIA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live BACCHUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live TOLOSA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PERSEUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live MENTOR workspace-local ground records, not first-world $1E400 slots. The last entries are image-derived road cells: the ground record the loader would draw there, replayed from the group's authored stream. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LACHESIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots.",
+        "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ICARUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ACHERON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ATROPOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CLOTHO workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CRONUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CYCLOPES workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live SOLON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THEON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live METIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LOGOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THALIA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live BACCHUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live TOLOSA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PERSEUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live MENTOR workspace-local ground records, not first-world $1E400 slots. The last entries are image-derived road cells: the ground record the loader would draw there, replayed from the group's authored stream. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live VOID workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LACHESIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots.",
         "kind": "ground",
         "nullRecords": 0,
         "partial": 5,
@@ -69939,6 +69968,56 @@
       "association": null,
       "boarding": null,
       "handling": null,
+      "id": "void-31-surface-10",
+      "keyBase": null,
+      "location": {
+        "body": "body-30",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-void-0633ec",
+        "place": null,
+        "position": [
+          0.5,
+          0,
+          1.5
+        ]
+      },
+      "model": "structure-010d0c",
+      "name": "VOID surface cell 0,1",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed VOID $ABDC workspace placement at cell $10; not a census of every island on this body.",
+      "sourceAddress": 44060
+    },
+    {
+      "association": null,
+      "boarding": null,
+      "handling": null,
+      "id": "void-31-surface-20",
+      "keyBase": null,
+      "location": {
+        "body": "body-30",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-void-0633ec",
+        "place": null,
+        "position": [
+          0.5,
+          0,
+          2.5
+        ]
+      },
+      "model": "structure-010e8a",
+      "name": "VOID surface cell 0,2",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed VOID $ABDC workspace placement at cell $20; not a census of every island on this body.",
+      "sourceAddress": 44124
+    },
+    {
+      "association": null,
+      "boarding": null,
+      "handling": null,
       "id": "dion-dion-north-surface-04",
       "keyBase": null,
       "location": {
@@ -91430,6 +91509,73 @@
       ],
       "structureGroup": 0,
       "workspace": null
+    },
+    {
+      "areaName": null,
+      "body": "body-30",
+      "boxes": [
+        {
+          "kind": "extent",
+          "sourceAddress": 406532,
+          "x": [
+            -32768,
+            32767
+          ],
+          "z": [
+            -32768,
+            32767
+          ]
+        },
+        {
+          "kind": "core",
+          "sourceAddress": 406524,
+          "x": [
+            -32768,
+            32767
+          ],
+          "z": [
+            -32768,
+            32767
+          ]
+        }
+      ],
+      "coastline": {
+        "edges": [],
+        "sourceAddress": 406540,
+        "vertices": []
+      },
+      "extent": {
+        "coversSurface": true,
+        "wrapsX": false,
+        "wrapsZ": false,
+        "x": [
+          0,
+          4096
+        ],
+        "z": [
+          0,
+          4096
+        ]
+      },
+      "id": "island-void-0633ec",
+      "landColour": "#eeeeee",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154497
+      },
+      "origin": [
+        0,
+        0
+      ],
+      "reason": "Coastline-less record: it shares the stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on this body -- land, no sea, no coast.",
+      "sourceAddress": 406508,
+      "sourceLandColour": 1911,
+      "sourceOrigin": [
+        0,
+        0
+      ],
+      "structureGroup": 49,
+      "workspace": 154472
     }
   ],
   "modelIndex": [
@@ -153233,6 +153379,56 @@
       "status": "partial"
     },
     {
+      "id": "structure-010bb4-at-3x3-detail-1",
+      "insertionGroups": [
+        {
+          "group": 1,
+          "pairs": [
+            {
+              "insertionKey": 3,
+              "regionSelector": 2
+            },
+            {
+              "insertionKey": 3,
+              "regionSelector": 3
+            }
+          ]
+        }
+      ],
+      "kind": "structure",
+      "name": "Structure 33 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        285
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-010d32-at-3x4-detail-1",
+      "insertionGroups": [
+        {
+          "group": 1,
+          "pairs": [
+            {
+              "insertionKey": 3,
+              "regionSelector": 2
+            },
+            {
+              "insertionKey": 3,
+              "regionSelector": 3
+            }
+          ]
+        }
+      ],
+      "kind": "structure",
+      "name": "Structure 35 \u00b7 Floor frame 3\u00d74",
+      "recordClass": "geometry",
+      "slots": [
+        286
+      ],
+      "status": "decoded"
+    },
+    {
       "id": "structure-01137c-at-2x2-detail-67",
       "insertionGroups": [
         {
@@ -153673,7 +153869,7 @@
       "name": "Structure 39 \u00b7 Floor frame 2\u00d72",
       "recordClass": "geometry",
       "slots": [
-        285
+        287
       ],
       "status": "decoded"
     },
@@ -153957,7 +154153,7 @@
       "name": "Structure 16 \u00b7 Floor frame -4\u00d7-4",
       "recordClass": "geometry",
       "slots": [
-        286
+        288
       ],
       "status": "decoded"
     },
@@ -154024,7 +154220,7 @@
       "name": "Structure 61 \u00b7 Floor frame 3\u00d72",
       "recordClass": "geometry",
       "slots": [
-        287
+        289
       ],
       "status": "decoded"
     },
@@ -154035,7 +154231,7 @@
       "name": "Structure 0 \u00b7 Floor frame 3\u00d72",
       "recordClass": "empty",
       "slots": [
-        288
+        290
       ],
       "status": "partial"
     },
@@ -154102,7 +154298,7 @@
       "name": "Structure 63 \u00b7 Floor frame 3\u00d72",
       "recordClass": "geometry",
       "slots": [
-        289
+        291
       ],
       "status": "decoded"
     },
@@ -154621,7 +154817,7 @@
       "name": "Structure 97 \u00b7 Floor frame 3\u00d73",
       "recordClass": "geometry",
       "slots": [
-        290
+        292
       ],
       "status": "decoded"
     },
@@ -154905,7 +155101,7 @@
       "name": "Structure 16 \u00b7 Floor frame 4\u00d74",
       "recordClass": "geometry",
       "slots": [
-        291
+        293
       ],
       "status": "decoded"
     },
@@ -154980,7 +155176,7 @@
       "name": "Structure 55 \u00b7 Floor frame 2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        292
+        294
       ],
       "status": "decoded"
     },
@@ -155055,7 +155251,7 @@
       "name": "Structure 13 \u00b7 Floor frame 2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        293
+        295
       ],
       "status": "decoded"
     },
@@ -155339,7 +155535,7 @@
       "name": "Structure 16 \u00b7 Floor frame 2\u00d72",
       "recordClass": "geometry",
       "slots": [
-        294
+        296
       ],
       "status": "decoded"
     },
@@ -155414,7 +155610,7 @@
       "name": "Structure 55 \u00b7 Floor frame 3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        295
+        297
       ],
       "status": "decoded"
     },
@@ -155489,7 +155685,7 @@
       "name": "Structure 13 \u00b7 Floor frame 3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        296
+        298
       ],
       "status": "decoded"
     },
@@ -155564,7 +155760,7 @@
       "name": "Structure 55 \u00b7 Floor frame 2\u00d73",
       "recordClass": "geometry",
       "slots": [
-        297
+        299
       ],
       "status": "decoded"
     },
@@ -155639,7 +155835,7 @@
       "name": "Structure 13 \u00b7 Floor frame 2\u00d73",
       "recordClass": "geometry",
       "slots": [
-        298
+        300
       ],
       "status": "decoded"
     },
@@ -155714,7 +155910,7 @@
       "name": "Structure 58 \u00b7 Floor frame 3\u00d73",
       "recordClass": "geometry",
       "slots": [
-        299
+        301
       ],
       "status": "decoded"
     },
@@ -155725,7 +155921,7 @@
       "name": "Structure 0 \u00b7 Floor frame 3\u00d73",
       "recordClass": "empty",
       "slots": [
-        300
+        302
       ],
       "status": "partial"
     },
@@ -155736,7 +155932,7 @@
       "name": "Structure 0 \u00b7 Floor frame -4\u00d7-4",
       "recordClass": "empty",
       "slots": [
-        301
+        303
       ],
       "status": "partial"
     },
@@ -157144,7 +157340,7 @@
       "name": "Structure 123 \u00b7 Floor frame -3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        302
+        304
       ],
       "status": "decoded"
     },
@@ -157277,7 +157473,7 @@
       "name": "Structure 142 \u00b7 Floor frame 3\u00d73",
       "recordClass": "geometry",
       "slots": [
-        303
+        305
       ],
       "status": "decoded"
     },
@@ -157399,7 +157595,7 @@
       "name": "Structure 66 \u00b7 Floor frame -2\u00d72",
       "recordClass": "geometry",
       "slots": [
-        304
+        306
       ],
       "status": "decoded"
     },
@@ -157675,7 +157871,7 @@
       "name": "Structure 67 \u00b7 Floor frame -2\u00d72",
       "recordClass": "geometry",
       "slots": [
-        305
+        307
       ],
       "status": "decoded"
     },
@@ -157750,7 +157946,7 @@
       "name": "Structure 58 \u00b7 Floor frame 2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        306
+        308
       ],
       "status": "decoded"
     },
@@ -158034,7 +158230,7 @@
       "name": "Structure 16 \u00b7 Floor frame 3\u00d73",
       "recordClass": "geometry",
       "slots": [
-        307
+        309
       ],
       "status": "decoded"
     },
@@ -158318,7 +158514,7 @@
       "name": "Structure 16 \u00b7 Floor frame -3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        308
+        310
       ],
       "status": "decoded"
     },
@@ -158849,7 +159045,7 @@
       "name": "Structure 140 \u00b7 Floor frame -1\u00d7-1",
       "recordClass": "geometry",
       "slots": [
-        309
+        311
       ],
       "status": "decoded"
     },
@@ -158919,7 +159115,7 @@
       "name": "Structure 85 \u00b7 Floor frame -1\u00d71",
       "recordClass": "geometry",
       "slots": [
-        310
+        312
       ],
       "status": "decoded"
     },
@@ -159203,7 +159399,7 @@
       "name": "Structure 88 \u00b7 Floor frame 1\u00d7-1",
       "recordClass": "geometry",
       "slots": [
-        311
+        313
       ],
       "status": "decoded"
     },
@@ -159722,7 +159918,7 @@
       "name": "Structure 97 \u00b7 Floor frame -3\u00d73",
       "recordClass": "geometry",
       "slots": [
-        312
+        314
       ],
       "status": "decoded"
     },
@@ -159768,7 +159964,7 @@
       "name": "Structure 29 \u00b7 Floor frame -2\u00d72",
       "recordClass": "geometry",
       "slots": [
-        313
+        315
       ],
       "status": "decoded"
     },
@@ -159901,7 +160097,7 @@
       "name": "Structure 142 \u00b7 Floor frame -4\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        314
+        316
       ],
       "status": "decoded"
     },
@@ -159968,7 +160164,7 @@
       "name": "Structure 61 \u00b7 Floor frame 2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        315
+        317
       ],
       "status": "decoded"
     },
@@ -160035,7 +160231,7 @@
       "name": "Structure 63 \u00b7 Floor frame 2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        316
+        318
       ],
       "status": "decoded"
     },
@@ -160168,7 +160364,7 @@
       "name": "Structure 142 \u00b7 Floor frame -3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        317
+        319
       ],
       "status": "decoded"
     },
@@ -160214,7 +160410,7 @@
       "name": "Structure 29 \u00b7 Floor frame -3\u00d73",
       "recordClass": "geometry",
       "slots": [
-        318
+        320
       ],
       "status": "decoded"
     },
@@ -160289,7 +160485,7 @@
       "name": "Structure 58 \u00b7 Floor frame -2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        319
+        321
       ],
       "status": "decoded"
     },
@@ -160820,7 +161016,7 @@
       "name": "Structure 140 \u00b7 Floor frame 1\u00d71",
       "recordClass": "geometry",
       "slots": [
-        320
+        322
       ],
       "status": "decoded"
     },
@@ -160895,7 +161091,7 @@
       "name": "Structure 52 \u00b7 Floor frame -2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        321
+        323
       ],
       "status": "decoded"
     },
@@ -160941,7 +161137,7 @@
       "name": "Structure 29 \u00b7 Floor frame -2\u00d7-2",
       "recordClass": "geometry",
       "slots": [
-        322
+        324
       ],
       "status": "decoded"
     },
@@ -161460,7 +161656,7 @@
       "name": "Structure 97 \u00b7 Floor frame -3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        323
+        325
       ],
       "status": "decoded"
     },
@@ -161979,7 +162175,7 @@
       "name": "Structure 97 \u00b7 Floor frame 3\u00d7-3",
       "recordClass": "geometry",
       "slots": [
-        324
+        326
       ],
       "status": "decoded"
     },
@@ -162101,7 +162297,7 @@
       "name": "Structure 66 \u00b7 Floor frame -1\u00d7-1",
       "recordClass": "geometry",
       "slots": [
-        325
+        327
       ],
       "status": "decoded"
     },
@@ -162377,7 +162573,7 @@
       "name": "Structure 67 \u00b7 Floor frame -1\u00d7-1",
       "recordClass": "geometry",
       "slots": [
-        326
+        328
       ],
       "status": "decoded"
     }
@@ -192953,6 +193149,321 @@
     },
     {
       "attestation": "image",
+      "body": "body-30",
+      "cells": [],
+      "classTableAddress": 124416,
+      "corners": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "evidence": [
+        {
+          "claim": "Structure group run-length extent stream expanded by $04EB60-$04EC2C into the $01E000 run grid, then classified by $04EC30-$04EC92 into the $01E600 table's orientation byte and one of the six road-piece selectors at $01E640, and the placement loop at $04ECAA-$04ED12 replayed over it for each cell's Drawn Record. No capture stands in this workspace, so there is no live $0083DC to check against; the replay reproduces $01E000, $0083DC and $01E400 on every capture that does bind a group.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-non-eris-workspaces.md"
+        }
+      ],
+      "id": "roads-void-31",
+      "island": "island-void-0633ec",
+      "origin": [
+        0,
+        0
+      ],
+      "pieces": [
+        {
+          "index": 0,
+          "name": "none",
+          "recordAddress": 124816
+        },
+        {
+          "index": 1,
+          "name": "end",
+          "recordAddress": 124822
+        },
+        {
+          "index": 2,
+          "name": "corner",
+          "recordAddress": 126548
+        },
+        {
+          "index": 3,
+          "name": "straight",
+          "recordAddress": 127412
+        },
+        {
+          "index": 4,
+          "name": "tee",
+          "recordAddress": 128312
+        },
+        {
+          "index": 5,
+          "name": "crossroads",
+          "recordAddress": 129646
+        }
+      ],
+      "reason": "VOID road network: 0 of 256 cells carry a run and 0 runs make up the network. Cell positions are workspace-local; origin places the 16x16 on the body surface.",
+      "roadColour": "#eeeeee",
+      "runs": [],
+      "sourceAddress": 122880,
+      "sourceRoadColour": 1911,
+      "structureGroup": 49
+    },
+    {
+      "attestation": "image",
       "body": "body-4",
       "cells": [
         {
@@ -196313,6 +196824,8 @@
         "structure-00fc7e-at-3x3-detail-41",
         "structure-0107a6-at-m2xm2-detail-86",
         "structure-010908-at-m2xm2-detail-86",
+        "structure-010bb4-at-3x3-detail-1",
+        "structure-010d32-at-3x4-detail-1",
         "structure-01137c-at-2x2-detail-67",
         "structure-00fc7e-at-m4xm4-detail-41",
         "structure-01324e-at-3x2-detail-58",
@@ -196356,7 +196869,7 @@
         "structure-013ae0-at-m1xm1-detail-59",
         "structure-013e2e-at-m1xm1-detail-59"
       ],
-      "entryCount": 327,
+      "entryCount": 329,
       "extent": {
         "bankEnd": 122619,
         "entryCount": 280,
@@ -197871,7 +198384,7 @@
         "midas-the-midas-project-ground-020540-00"
       ],
       "entryCount": 1344,
-      "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ICARUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ACHERON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ATROPOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CLOTHO workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CRONUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CYCLOPES workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live SOLON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THEON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live METIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LOGOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THALIA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live BACCHUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live TOLOSA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PERSEUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live MENTOR workspace-local ground records, not first-world $1E400 slots. The last entries are image-derived road cells: the ground record the loader would draw there, replayed from the group's authored stream. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LACHESIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots.",
+      "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ICARUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ACHERON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ATROPOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CLOTHO workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CRONUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CYCLOPES workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live SOLON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THEON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live METIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LOGOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THALIA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live BACCHUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live TOLOSA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PERSEUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live MENTOR workspace-local ground records, not first-world $1E400 slots. The last entries are image-derived road cells: the ground record the loader would draw there, replayed from the group's authored stream. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live VOID workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LACHESIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots.",
       "kind": "ground"
     }
   ],

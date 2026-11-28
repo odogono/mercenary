@@ -163,9 +163,10 @@ test('every retained structure selector offers its regions', async () => {
         data.models.find(m => m.id === model.structureSelection?.detailModel)
       ).length > 0
   );
-  // 256 table records and 47 Floor forms (#531).
-  expect(withSelector).toHaveLength(303);
-  expect(offered).toHaveLength(303);
+  // 265 table records and 49 Floor forms (#531, #1022). Five bind an intentionally empty
+  // detail behind one empty region, so there is nothing to offer.
+  expect(withSelector).toHaveLength(314);
+  expect(offered).toHaveLength(309);
 });
 
 test('the spaceport region 1 form reproduces the reviewed interior order', async () => {

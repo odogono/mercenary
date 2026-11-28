@@ -169,9 +169,10 @@ describe('a Body’s footprints', () => {
     const all = bodies.flatMap(
       index => readBodyFootprints(data, modelsOf(data), index).drawn
     );
-    expect(all).toHaveLength(638);
+    // VOID's INVENTORY and BRIEFCASE rooms included (#1022).
+    expect(all).toHaveLength(640);
     expect(all.filter(footprint => footprint.source === 'plan')).toHaveLength(
-      635
+      637
     );
     expect(
       all.filter(footprint => footprint.source === 'exterior')
@@ -180,7 +181,7 @@ describe('a Body’s footprints', () => {
     const onBodies = bodies.filter(
       index => readBodyFootprints(data, modelsOf(data), index).drawn.length > 0
     );
-    expect(onBodies).toHaveLength(20);
+    expect(onBodies).toHaveLength(21);
     // Every recovered structure Instance is drawn as modelled: nothing on the surface carries a
     // $8001 record with an angle byte, so the turn above is arithmetic the data does not yet
     // exercise rather than a turn that is being missed.

@@ -2855,9 +2855,10 @@ def decode_location_table(data: bytes, group: int) -> dict:
 ISLAND_TABLE_POINTER = 0x4BD1E
 ISLAND_TERMINATOR = 0x8000
 ISLAND_RECORD_BYTES = 10
-# Body slots $00-$1D. Slot 30 is the VOID sentinel, which is space rather than a
-# surface; its table entry is excluded from the census for that reason.
-SURFACE_BODIES = 30
+# Body slots $00-$1E. Slot 30 is VOID, which space never ranges to or lands on, but
+# its island table entry is an ordinary record: one island whose structure group
+# $31 builds the INVENTORY and BRIEFCASE rooms carried objects stand in (#1022).
+SURFACE_BODIES = 31
 # $058F64 masks the body position to twelve bits on both axes, so a body surface
 # is a 4096 x 4096 Surface Cell torus rather than a bounded plane.
 SURFACE_CELLS = 0x1000
@@ -3588,12 +3589,19 @@ def bind_floor_structures(models: list[dict], by_address: dict, tables: list,
                 gaps = [gap for gap in gaps
                         if gap != 'Authored surface attachments/openings are not yet decoded.'
                         ] + selection.pop('wallTextGaps')
-                selection['detailModel'] = instance['detailModel']
-                selection['detailVariant'] = instance['detailVariant']
-                detail = next(variant['mesh'] for variant in by_address[instance['detailModel']]['variants']
-                              if variant['id'] == instance['detailVariant'])
-                drawn = (assemble_mesh(mesh, turn_detail_mesh(data, detail, scale, 0), (1, 1))
-                         if 'articulation' in detail else assemble_mesh(mesh, detail, scale))
+                # An intentionally empty detail binds nothing: the Floor draws its
+                # structure alone (#1022).
+                detail_model = instance.get('detailModel')
+                if detail_model is None:
+                    detail = None
+                    drawn = mesh
+                else:
+                    selection['detailModel'] = detail_model
+                    selection['detailVariant'] = instance['detailVariant']
+                    detail = next(variant['mesh'] for variant in by_address[detail_model]['variants']
+                                  if variant['id'] == instance['detailVariant'])
+                    drawn = (assemble_mesh(mesh, turn_detail_mesh(data, detail, scale, 0), (1, 1))
+                             if 'articulation' in detail else assemble_mesh(mesh, detail, scale))
                 source = by_address[floor_id]
                 derived = {
                     'id': identity, 'kind': 'structure',
@@ -3603,13 +3611,14 @@ def bind_floor_structures(models: list[dict], by_address: dict, tables: list,
                     'reason': ' '.join(gaps + [
                         f"The Floor form of {floor_id}: its record decoded at the "
                         f"{scale[0]}\u00d7{scale[1]} scale of the instance that binds it, with "
-                        f"that instance's Building detail {instance['detailModel']}, as the "
-                        'lift draws it.'
+                        + (f"that instance's Building detail {detail_model}"
+                           if detail_model else "no Building detail, as that instance's is empty")
+                        + ', as the lift draws it.'
                     ]),
                     'variants': [{'id': 'assembly',
                                   'name': f'Floor as drawn · palette {own_palette}',
                                   'mesh': drawn}],
-                    'relatedModels': [floor_id, instance['detailModel']],
+                    'relatedModels': [floor_id] + ([detail_model] if detail_model else []),
                     'linkedInstances': [],
                     'evidence': [{
                         'claim': ('Only the cell bind writes the structure scale ($054D98/$054DA8, '
@@ -3666,7 +3675,7 @@ def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) ->
             if 'paletteIndex' not in floor or target is None:
                 continue
             selection = target.get('structureSelection')
-            detail = [] if selection is None else [
+            detail = [] if selection is None or 'detailModel' not in selection else [
                 variant['mesh'] for variant in by_id.get(selection['detailModel'], {}).get('variants', [])
                 if variant['id'] == selection['detailVariant']
             ]
@@ -4405,7 +4414,9 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
     if selector == 0 or selector % 4:
         raise ValueError('live workspace body selector is invalid')
     body = selector // 4
-    if body >= 30:
+    # VOID, body 30, is reached only by an image-replayed island: no capture
+    # stands in it as a world (#1022).
+    if body > 30 or (body == 30 and image_island is None):
         raise ValueError('live workspace body selector is out of range')
     label = workspace[0x81dc + body * 8:0x81e4 + body * 8].decode('ascii').strip() or bodies[body]['name']
     slug = label.lower()
@@ -5134,8 +5145,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     })
     bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()} for i in range(31)]
     for index, body in enumerate(bodies):
-        # VOID is the space-as-place sentinel rather than a body surface, so it
-        # carries no surface and none of its table entry is published.
+        # VOID's surface is published like any Body's: its island record holds the
+        # rooms carried objects stand in (#1022).
         body['bodySurface'] = None if index >= SURFACE_BODIES else {
             'baseColour': st_rgb(body_base_colour(data, index)),
             'sourceColour': body_base_colour(data, index),
@@ -6098,6 +6109,15 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             continue
         detail = by_address[tables[2]['entries'][slot]] if slot < len(tables[2]['entries']) else None
         variant_id = f'palette-{palette_index}'
+        if detail is not None and detail.get('intentionalEmpty'):
+            # An intentionally empty detail has no geometry and no visibility groups
+            # to bind, which is complete rather than missing: the selector keeps its
+            # regions, wall text and Floor Labels, and names no detail (#1022).
+            model['reason'] += (
+                ' Its linked detail is intentionally empty, so the structure selector'
+                ' binds no detail model and its regions draw no detail groups.'
+            )
+            continue
         if detail is None or 'detailSelection' not in detail or not any(v['id'] == variant_id for v in detail['variants']):
             del model['structureSelection']
             if selection.get('floorLabels'):
@@ -6111,19 +6131,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     f' Its literal wall text {named} rides on region queues that are not'
                     ' retained, so none is published.'
                 )
-            if detail is not None and detail.get('intentionalEmpty'):
-                model['reason'] += (
-                    ' That empty detail carries no visibility groups either, so this'
-                    ' record keeps no structure selector and its region queues are'
-                    ' not retained.'
-                )
-            else:
-                model.pop('intentionalEmpty', None)
-                model['status'] = 'partial' if model['variants'] else 'unresolved'
-                model['reason'] += (
-                    ' Linked detail selection unavailable, so view-conditioned'
-                    ' visibility is not simulated for this record.'
-                )
+            model.pop('intentionalEmpty', None)
+            model['status'] = 'partial' if model['variants'] else 'unresolved'
+            model['reason'] += (
+                ' Linked detail selection unavailable, so view-conditioned'
+                ' visibility is not simulated for this record.'
+            )
         else:
             selection['detailModel'] = detail['id']
             selection['detailVariant'] = variant_id
@@ -6415,7 +6428,7 @@ def body_models(result: dict) -> dict[str, list[str]]:
     for ids in closure.values():
         for model_id in list(ids):
             selection = models[model_id].get('structureSelection')
-            if selection is not None:
+            if selection is not None and 'detailModel' in selection:
                 ids.add(selection['detailModel'])
     return {body: sorted(ids) for body, ids in closure.items()}
 

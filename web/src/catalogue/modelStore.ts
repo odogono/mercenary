@@ -51,7 +51,7 @@ export class ModelStore extends DocumentStore<Model> implements ModelLookup {
       parseModelFile(await this.read(path), this.catalogue)
     );
     const selection = model.structureSelection;
-    if (selection !== undefined) {
+    if (selection?.detailModel !== undefined) {
       const detail = await this.get(selection.detailModel);
       await atDocument(path, () => checkDetailBinding(model, detail));
     }

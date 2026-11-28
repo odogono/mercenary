@@ -32,13 +32,15 @@ describe('the recovered Damocles Settlement road networks', () => {
       island => island.structureGroup !== 0
     );
     expect(catalogue.roadNetworks).toHaveLength(binding.length);
-    expect(catalogue.roadNetworks).toHaveLength(42);
+    // VOID's group $31 included: it has no extent runs, so its network has no road (#1022).
+    expect(catalogue.roadNetworks).toHaveLength(43);
     expect(
       catalogue.roadNetworks.filter(n => n.attestation === 'capture')
     ).toHaveLength(22);
     expect(withRoads).toHaveLength(39);
-    // Three Settlements hold no run at all: a Settlement is not obliged to have roads
-    // any more than it is obliged to have an island. An empty network is a reading.
+    // Three Settlements hold no run at all, nor does VOID's group (#1022): a Settlement is not
+    // obliged to have roads any more than it is obliged to have an island. An empty network
+    // is a reading.
     expect(
       catalogue.roadNetworks
         .filter(network => network.cells.length === 0)
@@ -47,7 +49,8 @@ describe('the recovered Damocles Settlement road networks', () => {
     ).toEqual([
       'roads-gaea-0e',
       'roads-midas-the-midas-project',
-      'roads-solon'
+      'roads-solon',
+      'roads-void-31'
     ]);
     // The record family is not Eris-only: twenty Bodies beyond Eris have one.
     expect(new Set(withRoads.map(network => network.body)).size).toBe(21);
