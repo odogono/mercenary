@@ -25,8 +25,7 @@ import {
 } from './travel.ts';
 
 /// Playthrough Chapter 3: from NOVA TRIGGER 4 on Metis to selling the gold on Gaea, after ST
-/// Format 20 steps 5 and 6. The sale is the last step until the session has a Trading Post
-/// economy (#1024).
+/// Format 20 steps 5 and 6. The Sale is the last step until the session has Trading Posts (#1024).
 
 const EAGLE = 'object-slot-3';
 const GAEA = 'body-8';
@@ -36,9 +35,9 @@ const HANTZENS = 'gaea-ur-city-surface-17';
 const TRADE_COMMISSION = 'gaea-chaldea-metropolis-surface-88';
 /// BANK OF GAEA HQ at Chaldea 06-06, whose basement holds GOLD slot 155.
 const BANK = 'gaea-chaldea-metropolis-surface-66';
-/// The trading building at Chaldea 04-06.
+/// The Trading Post at Chaldea 04-06.
 const CHALDEA_04_06 = 'gaea-chaldea-metropolis-surface-64';
-/// Its region 9, index 8: the room a sale needs, `$7AFC` = 9
+/// Its trading room, region 9 (index 8), where a Drop is a Sale: `$7AFC` = 9
 /// (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back").
 const TRADING_ROOM = { x: 2690, z: -1395 };
 
@@ -148,7 +147,13 @@ test('Chapter 3: Metis to selling the gold on Gaea', async ({
         await boardFromCarried(page, BANK);
         const parked = await flyToEntrance(page, CHALDEA_04_06);
         await takeTheEagle(page, parked);
-        await walkTo(page, CHALDEA_04_06, TRADING_ROOM, 'in region 9', 60);
+        await walkTo(
+          page,
+          CHALDEA_04_06,
+          TRADING_ROOM,
+          'in the trading room',
+          60
+        );
         await expectAt(page, areas, STEP.sell.target);
         // The frame publishes the region's index: region 9 is index 8.
         expect(await attribute(page, 'region')).toBe('8');
@@ -162,7 +167,7 @@ test('Chapter 3: Metis to selling the gold on Gaea', async ({
         );
         await expect
           .poll(async () => (await field(page, 'cash').textContent()) ?? '', {
-            message: `dropping the GOLD in region 9 left the balance at ${before.trim()}: no sale (#1024)`,
+            message: `dropping the GOLD in the trading room left the balance at ${before.trim()}: no Sale (#1024)`,
             timeout: 5000
           })
           .not.toBe(before);

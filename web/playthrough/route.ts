@@ -145,7 +145,7 @@ const UR_CITY = 'UR CITY';
 const CHALDEA = 'CHALDEA METROPOLIS';
 
 /// Chapter 3: from NOVA TRIGGER 4 on Metis to selling the gold on Gaea, after ST Format 20 steps 5
-/// and 6. It stops at the sale until the session has a Trading Post economy (#1024); the NOVABOMB
+/// and 6. It stops at the Sale until the session has Trading Posts (#1024); the NOVABOMB
 /// and ICARUS are the next chapter's, from a start that has bought the HI-FI.
 export const CHAPTER_3 = {
   gold: {
@@ -160,7 +160,7 @@ export const CHAPTER_3 = {
     cite: { section: 'step 6', solution: 'stf20' },
     id: '3.3',
     proves:
-      'dropping the GOLD in the Trading Post’s region 9 at Chaldea 04.06 credits its price to the balance (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back")',
+      'dropping the GOLD in the trading room of the Trading Post at Chaldea 04.06 is a Sale, which credits its Price to the balance (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back")',
     says: 'Fly to 04.06 and sell the gold bar.',
     target: { body: GAEA, cell: '04-06', island: CHALDEA }
   },

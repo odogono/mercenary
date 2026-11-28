@@ -90,7 +90,7 @@ It assumes: on foot in NIXON INTR COURT’s back room at Metis 05-06, beside Tra
 
 ### Gaps
 
-- **3.3, missing feature.** dropping the GOLD in region 9 left the balance at 000,009,000.00: no sale (#1024). The step had to prove that dropping the GOLD in the Trading Post’s region 9 at Chaldea 04.06 credits its price to the balance (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back").
+- **3.3, missing feature.** dropping the GOLD in the trading room left the balance at 000,009,000.00: no Sale (#1024). The step had to prove that dropping the GOLD in the trading room of the Trading Post at Chaldea 04.06 is a Sale, which credits its Price to the balance (docs/research/damocles-object-drops.md, "Trading Post credit and buy-back").
 
 Run time is wall-clock time from the chapter’s start to the end of each step. The panel
 clock is the Damocles Panel’s own clock at that moment, the time left before impact.
