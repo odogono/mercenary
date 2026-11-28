@@ -201,7 +201,8 @@ def scene_of(ram: bytes, selector: int) -> dict:
         return {'kind': 'sceneIndex', 'sceneIndex': selector // 2 + 0x1D}
     if selector < 0xA0:                           # $54CE4
         root = group_root(ram)
-        table = root + u16(ram, root - 2)
+        # `adda.w -2(a2), a2` sign-extends: the pairs sit below the root (#1026).
+        table = root + struct.unpack_from('>h', ram, root - 2)[0]
         index = selector - 0x20
         return {'kind': 'sceneTable', 'table': table, 'index': index,
                 'byte7963': ram[table + index], 'byte7961': ram[table + index + 1]}

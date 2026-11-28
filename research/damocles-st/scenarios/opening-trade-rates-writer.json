@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "opening-trade-rates-writer",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, press Space and break on the first write to $7960 while the title-to-world unpack runs. Every fresh-start capture holds $000F0005 in $7960-$7963, the Buy Rate 15 and Sell Rate 5 that no Trading Post's cell installs, and no instruction in $040000-$05FFFE addresses those words outside the cell bind, so this names what leaves them there (#1026).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 100
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "registers",
+        "ram"
+      ],
+      "prefix": "pressed"
+    },
+    {
+      "type": "watch",
+      "name": "opening-trade-rates",
+      "address": "0x7960",
+      "seconds": 60
+    }
+  ]
+}

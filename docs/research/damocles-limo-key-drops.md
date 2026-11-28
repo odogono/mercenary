@@ -165,7 +165,8 @@ on-foot Eris routes do not reach it.
 
 The monetary take check `$04E158` is conditional on the selected resident matching `$795C`,
 not on the key's handling bits. The special drop branch for structure `$52`, region 9 credits
-through `$04E13C` and records the dropped slot in `$795D`. Structure `$52` is
+through `$04E13C` and records the dropped slot in `$795D`, the low byte of the same word
+([Trading Post prices](damocles-trading-post-prices.md)). Structure `$52` is
 `structure-015eea`, placed on Eris at cells `$3C`, `$3D`, `$3E`, `$3F` and `$E8` (Trading Post).
 Native region 9 is payload region index 8: flags `$8000`, local X 2420–2960,
 Z 1020–1770. Its flags permit the trade branch. The `$C000` exterior region at payload index 9

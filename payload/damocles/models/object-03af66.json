@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 4480,
     "conditions": [
       "colourCycle $53432",
       "vector-text frame script $CE6A (697 frames)"

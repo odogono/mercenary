@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 500000,
     "conditions": [
       "articulation angle ($7888)"
     ],

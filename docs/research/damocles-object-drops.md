@@ -384,14 +384,17 @@ the residence and draw-queue consequences of an accepted placement.
 
 ## Trading Post credit and buy-back
 
-The sale path is drop-side (`$054562`–`$05457A`): structure `$52`, region 9, and
-`$795C` clear. It calls the BCD add at `$04E13C` and records the sold slot in `$795D`
-**before** the support and placement checks run, so a drop that is later refused has
-already credited. The buy-back is take-side (`$05424A`–`$054260`): taking the slot
-recorded in `$795C` while in region 9 debits through `$04E158` and clears the marker.
-Only one object can be in the sold state at a time. `$04E05A` recomputes the
-displayed price from the head carried object's model header whenever region 9 is
-entered (`$05A3B0`) or the panel changes.
+The Sale is drop-side (`$054562`–`$05457A`): structure `$52`, region 9, and the word
+`$795C` clear. It calls the BCD add at `$04E13C` and records the sold slot in `$795D`,
+the low byte of that word, **before** the support and placement checks run, so a drop
+that is later refused has already credited. The Purchase is take-side
+(`$05424A`–`$054260`): taking the slot recorded in `$795C` while in region 9 debits
+through `$04E158` and clears the marker. A Trading Post has one Offered Object at a
+time, and the cell bind marks the post's own stock as well as anything sold there.
+`$04E05A` recomputes the quote whenever region 9 is entered (`$05A3B0`) or the panel
+changes: the object's Base Price from its model header, times the post's Buy Rate or
+Sell Rate. [Trading Post prices](damocles-trading-post-prices.md) recovers the rates,
+the stock and the trading-room exit, and supersedes the summary here.
 
 ## Ordinary-route observations recorded here
 

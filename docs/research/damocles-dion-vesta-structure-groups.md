@@ -90,7 +90,7 @@ decoder's own clear.
 | --- | --- |
 | `$00` | no scene; `$7AFA` cleared and the default pointers `$CD9C`/`$CD9E` installed |
 | `$02`–`$1E` | `$7AFA = (b0 & $FE) / 2 + $1D` |
-| `$20`–`$9E` | index `b0 − $20` into the table at `root + word(root − 2)` = `$0339C0`, two bytes to `$7963` and `$7961` |
+| `$20`–`$9E` | index `b0 − $20` into the table at `root + word(root − 2)` = `$0239C0` (the word is added sign-extended, so the table sits below the root), two bytes to `$7963` and `$7961`: a Trading Post's [Sell Rate and Buy Rate](damocles-trading-post-prices.md) |
 | `$A0`+ | index `(b0 − $A0) × 2` into the longword table at `$CD74`, to `$CCC4` and `$CD6C` |
 
 The word is **not** an instance transform. Dion cells `$E9` and `$41` both select

@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 5000000,
     "conditions": [
       "vector-text frame script $CDCE (12 frames)"
     ],

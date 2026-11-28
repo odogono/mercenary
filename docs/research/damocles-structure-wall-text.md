@@ -110,7 +110,8 @@ unreadable in font 4, and as those digits once READING GLASSES are in the Carrie
   which is the Trading Post. `$04E0BC`–`$04E130` formats six BCD bytes there as
   `000,000,000-00`, blanking leading zeros. The captures disagree: 32 read
   `000,000,000-00` and `damocles.key-west` reads `        616-50`. The value is live
-  state, so the record is withheld.
+  state, so the record is withheld. It is the Trading Post's current quote: a Base
+  Price times the post's rate ([Trading Post prices](damocles-trading-post-prices.md)).
 - **`$8D` → `$CD37` and `$8E` → `$CD39`.** These are the door key letters `$059FC4` writes
   at `$CD35 − slot/2` for the Entrance Attachments in slots `$3FC` and `$3F8`. The letter
   is the low nybble plus the `$7AFB` key base of the cell the Instance stands in, plus

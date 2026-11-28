@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 10000,
     "conditions": [
       "flashTimer gated by $7082"
     ],

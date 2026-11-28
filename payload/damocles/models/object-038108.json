@@ -1,5 +1,6 @@
 {
   "model": {
+    "basePrice": 4599,
     "conditions": [
       "viewerPosition"
     ],
