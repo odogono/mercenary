@@ -95,24 +95,36 @@ The ordered objects the player carries, most recently acquired first; its head i
 _Avoid_: Ordered inventory, carry order, inventory list
 
 **Trading Post**:
-A Damocles structure whose ground floor is the trading structure, under whichever model draws it, and whose trading room is the one region where a Sale or a Buy-back can happen.
+A Damocles structure whose ground floor is the trading structure, under whichever model draws it, and whose trading room is the one region where a Sale or a Purchase can happen; each Trading Post has its own Buy Rate, Sell Rate and Offered Object.
 _Avoid_: Shop, store, market
 
+**Base Price**:
+The credit value an object carries in its own right, the same for every object of its model and at every Trading Post.
+_Avoid_: Cost, value, worth, list price
+
 **Price**:
-The credit value of one object, read from its model; a Sale credits it and a Buy-back debits it.
+What one Trading Post quotes for one object: its Base Price multiplied by that post's Buy Rate or Sell Rate; a Sale credits it and a Purchase debits it.
 _Avoid_: Cost, value, worth
 
+**Buy Rate**:
+The multiplier a Trading Post applies to the Base Price of its Offered Object, named from the player's side.
+_Avoid_: Buy multiplier, markup, offer rate
+
+**Sell Rate**:
+The multiplier a Trading Post applies to the Base Price of an object the player sells there, named from the player's side.
+_Avoid_: Sell multiplier, discount, trade-in rate
+
 **Sale**:
-A Drop in a Trading Post's trading room while no object is the Sold Object, which credits the object's Price and makes it the Sold Object even when the Drop is then refused.
+A Drop in a Trading Post's trading room while the post has no Offered Object, which credits the object's Price at the Sell Rate and makes it the Offered Object even when the Drop is then refused; the object the post last offered sells at the Buy Rate instead, so returning a Purchase refunds it.
 _Avoid_: Sell action, trade, inventory sale
 
-**Sold Object**:
-The one object, game-wide, that has been sold and not yet bought back; while it exists every further Sale is refused, at any Trading Post.
-_Avoid_: Traded object, sold slot, offered object
+**Offered Object**:
+The one object a Trading Post has for sale: the object standing in its trading room, whether it began there as stock or the player sold it there; while a post has one, every further Sale there is refused.
+_Avoid_: Sold Object, traded object, sold slot, stock
 
-**Buy-back**:
-A Take of the Sold Object in a Trading Post's trading room, which debits its Price and is refused when the balance cannot cover it; it is the only way the player buys anything, so an object merely found in a Trading Post is taken free.
-_Avoid_: Purchase, buy, shop purchase
+**Purchase**:
+A Take of a Trading Post's Offered Object, which debits its Price and is refused when the balance cannot cover it; taking back an object the player sold there is a Purchase like any other.
+_Avoid_: Buy-back, buy, shop purchase
 
 **Session Snapshot**:
 One consistent presentation-facing description of a Gameplay Session at a single moment, complete enough to draw from and to compare against another, which every renderer consumes instead of reading the session's parts; it is not the restore-complete Save Snapshot.
