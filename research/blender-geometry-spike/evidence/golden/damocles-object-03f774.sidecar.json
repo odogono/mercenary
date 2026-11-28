@@ -34,7 +34,7 @@
         }
       ]
     },
-    "schemaVersion": 18,
+    "schemaVersion": 19,
     "source": {
       "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
       "run": "observe-first-world-20260818T101013Z-c5a32b7d"
@@ -44,7 +44,7 @@
   "source": {
     "document": "damocles/models/object-03f774.json",
     "path": "$",
-    "sha256": "c7e4fa39786c127ab936080343189feb054ee0b44c3a3fd356bdd52204ab3d25"
+    "sha256": "074be6b7f02dc2977a86cea6b3e1f15d06a769293adccc7fe89c9595d0298f14"
   },
   "title": "damocles",
   "version": 2

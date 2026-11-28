@@ -1000,7 +1000,7 @@ export interface Catalogue {
   readonly modelIndex: readonly ModelSummary[];
   readonly places: readonly Place[];
   readonly roadNetworks: readonly RoadNetwork[];
-  readonly schemaVersion: 18;
+  readonly schemaVersion: 19;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -2371,7 +2371,7 @@ const craft = (value: unknown): Craft => {
 
 export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 18) {
+  if (r['schemaVersion'] !== 19) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -2979,7 +2979,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     modelIndex,
     places,
     roadNetworks,
-    schemaVersion: 18,
+    schemaVersion: 19,
     source,
     tables,
     textFrameGlyphs: textFrameGlyphs(r['textFrameGlyphs'] ?? {})
@@ -3108,7 +3108,7 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
 /// Catalogue's own so a file left behind by another run is refused rather than drawn.
 export const parseModelFile = (value: unknown, document: Catalogue): Model => {
   const r = object(value);
-  if (r['schemaVersion'] !== 18) {
+  if (r['schemaVersion'] !== 19) {
     fail('unsupported model file schema version');
   }
   const src = object(r['source']);
