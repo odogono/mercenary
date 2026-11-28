@@ -196,9 +196,10 @@ describe('walking into a Transporter', () => {
     expect(north.snapshot.pose.position.y).toBe(3170 + 63);
   });
 
-  test('the location text names the cell the panel reads on the island the hop reached', () => {
-    // Gaea's Chaldea Metropolis is not the island Gaea's workspace is anchored at (Ur City), so
-    // the anchored cell reads something like -248--1016 here while the panel reads 08-08 (#1014).
+  test('the location text names the Island-Local Cell the Cell Readout shows after a hop', () => {
+    // Slot 70 stands in the Chaldea Metropolis Settlement, on a different Damocles Island from
+    // the Ur City Settlement that anchors Gaea's workspace. The cell counted from that anchor
+    // reads -248--1016 here, while the Cell Readout reads 08-08 (#1014).
     const south = near69(100, SOUTH);
     walkIn(south, 1);
     const snapshot = south.snapshot;

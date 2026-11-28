@@ -36,6 +36,7 @@ import {
   pagesNoItems,
   type HeadCommandState
 } from './headCommands.ts';
+import { cellReadoutDigits } from './panel.ts';
 import { admittedPoses, type ArrivalPoses } from './poses.ts';
 import {
   admissiblePlacementClass,
@@ -2443,16 +2444,13 @@ export const decodeDamoclesSave = (
 ///
 /// The cell is the Island-Local Cell the panel's Cell Readout prints, not the cell measured from
 /// the Body's anchored workspace: on a Body with more than one island the two disagree away from
-/// the anchored one (#1014). Each axis is the readout's two digits (`**` past 99); the panel
-/// shows a negative axis in red, so the text puts a minus sign before it instead.
+/// the anchored one (#1014). Each axis is the readout's own digits; the panel shows a negative
+/// axis in red, so the text puts a minus sign before it instead.
 export const damoclesWhere = (where: {
   readonly bodyName: string;
   readonly islandCell: { readonly x: number; readonly z: number };
 }): string =>
   `${where.bodyName} ${whereAxis(where.islandCell.x)}-${whereAxis(where.islandCell.z)}`;
 
-const whereAxis = (value: number): string => {
-  const magnitude = Math.abs(value);
-  const digits = magnitude > 99 ? '**' : String(magnitude).padStart(2, '0');
-  return value < 0 ? `-${digits}` : digits;
-};
+const whereAxis = (value: number): string =>
+  `${value < 0 ? '-' : ''}${cellReadoutDigits(value)}`;
