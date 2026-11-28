@@ -476,10 +476,17 @@ const everyLanding = (structure: Structure) => [...structure.landings.keys()];
 /// minutes.
 describe('placed resident reachability', () => {
   let surface: Reachability;
+  /// The count without Transporters, as #1002 recorded it.
+  let unhopped: Reachability;
   let admitted: Awaited<ReturnType<typeof admittedStructures>>;
   beforeAll(async () => {
     admitted = await admittedStructures(content);
     surface = residentReachability(catalogue, admitted, { groundOnly: true });
+    unhopped = residentReachability(catalogue, admitted, {
+      digits: false,
+      groundOnly: true,
+      ring: false
+    });
   });
 
   const outcome = (reachability: Reachability, slot: number): string => {
@@ -522,11 +529,6 @@ describe('placed resident reachability', () => {
     // Without them the count is #1002's: 173 with no key. A hop to slot 64 lands inside Gaea Ur
     // City past key 31's door, and one to slot 68 on Vesta Parliament's Floor 10, whose lift
     // reaches the Floors below past key 34's.
-    const unhopped = residentReachability(catalogue, admitted, {
-      digits: false,
-      groundOnly: true,
-      ring: false
-    });
     const { noKey, ...keyed } = rows(unhopped);
     expect(noKey).toHaveLength(173);
     expect(keyed['keyed 31']).toEqual([64, 84, 197]);
@@ -638,8 +640,9 @@ describe('placed resident reachability', () => {
   }, 60_000);
 
   test('every structure an upper-Floor Pose stands in is reached by a walked lift ride', () => {
-    // The surface count reaches upper Floors by lift, after a hop where one lands; walk one
-    // upper-Floor resident of each structure an arrival Pose stands above the ground in.
+    // Without Transporters the surface count reaches upper Floors only by lift; walk one
+    // upper-Floor resident of each structure an arrival Pose stands above the ground in, from
+    // the ground, since a hop may land on its Floor without a ride.
     const walked: string[] = [];
     for (const structure of admitted.structures) {
       if (structure.starts.every(node => node.floor === 0)) {
@@ -653,7 +656,7 @@ describe('placed resident reachability', () => {
           residence?.kind === 'structure' &&
           residence.parent === structure.ground.id &&
           residence.level !== 0 &&
-          surface.reach.get(item.id)?.kind === 'noKey'
+          unhopped.reach.get(item.id)?.kind === 'noKey'
         );
       });
       if (resident === undefined) {
@@ -664,8 +667,7 @@ describe('placed resident reachability', () => {
         admitted.structures,
         resident.id,
         [],
-        groundStarts,
-        everyLanding
+        groundStarts
       );
       expect(inRange(session, resident.id)).toBe(true);
       expect(session.snapshot.structure?.floor).not.toBe(0);

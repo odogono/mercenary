@@ -102,6 +102,8 @@ export interface Structure {
 
 interface PlacedTransporter {
   readonly bounds: CubeBounds;
+  /// The regions of its Floor that insert it, where alone the session draws it.
+  readonly exposedIn: ReadonlySet<number>;
   readonly floor: number;
   readonly id: string;
   readonly position: {
@@ -431,7 +433,11 @@ export const transporterStand = (
   transporter: PlacedTransporter
 ): { readonly stand: boolean; readonly walkIn: boolean } => {
   const box = standableBox(structure, node);
-  if (box === null || node.floor !== transporter.floor) {
+  if (
+    box === null ||
+    node.floor !== transporter.floor ||
+    !transporter.exposedIn.has(node.region)
+  ) {
     return { stand: false, walkIn: false };
   }
   const placement = structure.floors.get(node.floor)!;
@@ -573,25 +579,31 @@ export const admittedStructures = async (
         source,
         starts: [],
         storey: content.models.peek(ground.modelId)?.storeyHeight ?? 0,
-        transporters: transportersIn(content, ground.id)
+        transporters: transportersIn(content, ground.id, floors)
       };
       structures.set(key, structure);
     }
     return structure;
   };
-  /// Record where `session` stands: a start, or given `landing`, where a hop to that slot lands.
+  /// Record where `session` stands: a start by an arrival Pose or Atlas Travel, or where a hop to
+  /// slot `arrival` lands.
   const visit = (
     session: DamoclesSession,
     cell: string,
     enter: () => DamoclesSession,
-    landing?: number
+    arrival: 'atlas' | 'pose' | number
   ): void => {
+    const landing = typeof arrival === 'number' ? arrival : undefined;
     const bound = session.snapshot.structure;
     if (bound === null) {
       if (landing !== undefined) {
         throw new Error(`${cell} binds no structure`);
       }
       return;
+    }
+    // Atlas Travel arrives at ground level (ADR 0050).
+    if (arrival === 'atlas' && bound.floor !== 0) {
+      throw new Error(`${cell} stands on Floor ${bound.floor}`);
     }
     // On an upper Floor the session publishes that Floor's placement as the surface's, so the
     // ground placement is read from the same arrival stood back on Floor 0.
@@ -639,11 +651,16 @@ export const admittedStructures = async (
     if (arrival.switchToPose(pose.id).kind !== 'switched') {
       continue;
     }
-    visit(arrival, `pose ${pose.id}`, () => {
-      const session = new DamoclesSession(content);
-      session.switchToPose(pose.id);
-      return session;
-    });
+    visit(
+      arrival,
+      `pose ${pose.id}`,
+      () => {
+        const session = new DamoclesSession(content);
+        session.switchToPose(pose.id);
+        return session;
+      },
+      'pose'
+    );
   }
   // Atlas Travel to the centre of every resident's parent's cell, standing in for the flight there.
   const parents = new Set(
@@ -691,11 +708,16 @@ export const admittedStructures = async (
       continue;
     }
     const pin = target;
-    visit(session, `${parent} cell`, () => {
-      const entered = new DamoclesSession(content);
-      entered.travelToAtlas(pin);
-      return entered;
-    });
+    visit(
+      session,
+      `${parent} cell`,
+      () => {
+        const entered = new DamoclesSession(content);
+        entered.travelToAtlas(pin);
+        return entered;
+      },
+      'atlas'
+    );
   }
   // A live hop to every Transporter placed in a structure, from the surface one's cube.
   for (const slot of placedTransporters(content)) {
@@ -756,31 +778,42 @@ const cubeOf = (content: DamoclesContent, id: string): CubeBounds => {
   return bounds;
 };
 
-/// The Transporters placed in the structure whose ground placement is `parent`.
+/// The Transporters placed in the structure whose ground placement is `parent`, on `floors`.
 const transportersIn = (
   content: DamoclesContent,
-  parent: string
+  parent: string,
+  floors: ReadonlyMap<number, ErisPlacement>
 ): PlacedTransporter[] =>
   placedTransporters(content).flatMap(slot => {
     const id = transporterInstance(slot);
     const residence = catalogueResidence(content.catalogue, id);
-    return residence?.kind === 'structure' && residence.parent === parent
-      ? [
-          {
-            bounds: cubeOf(content, id),
-            floor: residence.level,
-            id,
-            position: residence.position,
-            slot
-          }
-        ]
-      : [];
+    if (residence?.kind !== 'structure' || residence.parent !== parent) {
+      return [];
+    }
+    const regions =
+      floors.get(residence.level)?.selection?.structure.regions ?? [];
+    const exposedIn = new Set(
+      regions.flatMap((_, region) =>
+        insertionsInRegion(content.catalogue, id, residence, region + 1) > 0
+          ? [region]
+          : []
+      )
+    );
+    return [
+      {
+        bounds: cubeOf(content, id),
+        exposedIn,
+        floor: residence.level,
+        id,
+        position: residence.position,
+        slot
+      }
+    ];
   });
 
 /// The first Transporter on a surface, as a factory of fresh sessions standing in its cube: its
 /// Body's first on-foot arrival Pose, moved to the eye's height above the Transporter, as a hop
-/// stands it. Surface
-/// travel is assumed, so a player can stand there.
+/// stands it. Surface travel is assumed, so a player can stand there.
 const surfaceTransporter = (
   content: DamoclesContent
 ): (() => DamoclesSession) => {
