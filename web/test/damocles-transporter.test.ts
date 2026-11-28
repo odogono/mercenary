@@ -23,6 +23,7 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import {
   digitHop,
   insideTransporterCube,
+  parkedPosition,
   ringHop,
   ringStep,
   ringStepsUp
@@ -88,12 +89,18 @@ describe('the ring rules', () => {
     }
   });
 
-  test('a digit names slot 64 + n, refuses an unclaimed slot and ignores a carried one', () => {
-    expect(digitHop(3, () => 'placed')).toEqual({ kind: 'hop', slot: 67 });
-    expect(digitHop(7, () => 'placed')).toEqual({ kind: 'hop', slot: 71 });
-    expect(digitHop(0, () => 'placed')).toEqual({ kind: 'hop', slot: 64 });
+  test('a digit names slot 64 + n and refuses only an unclaimed slot', () => {
+    expect(digitHop(3, () => 'claimed')).toEqual({ kind: 'hop', slot: 67 });
+    expect(digitHop(7, () => 'claimed')).toEqual({ kind: 'hop', slot: 71 });
+    expect(digitHop(0, () => 'claimed')).toEqual({ kind: 'hop', slot: 64 });
     expect(digitHop(9, () => 'unclaimed')).toEqual({ kind: 'refused' });
-    expect(digitHop(3, () => 'carried')).toEqual({ kind: 'ignored' });
+  });
+
+  test('a carried object is parked on VOID’s column by its stack index, wrapping at 10', () => {
+    expect(parkedPosition(0)).toEqual({ x: 33_237, y: 0, z: 99_100 });
+    expect(parkedPosition(2)).toEqual({ x: 33_237, y: 600, z: 99_100 });
+    expect(parkedPosition(10)).toEqual({ x: 33_237, y: 0, z: 164_636 });
+    expect(parkedPosition(13)).toEqual({ x: 33_237, y: 900, z: 164_636 });
   });
 
   test('the cube is (−50, 50] on X and Z and (0, 128] above the slot', () => {
@@ -462,23 +469,31 @@ describe('a hop whose destination is still streaming in', () => {
   });
 });
 
-/// Carry Transporter slot 66 into `saved`, as an ANTIGRAV take leaves it.
-const carrying66 = (saved: DamoclesSaveSnapshot): DamoclesSaveSnapshot => ({
+/// Carry `instances` into `saved` ahead of what it carries, as takes leave them.
+const carrying = (
+  saved: DamoclesSaveSnapshot,
+  instances: readonly string[]
+): DamoclesSaveSnapshot => ({
   ...saved,
-  carried: ['object-slot-66', ...saved.carried],
+  carried: [...instances, ...saved.carried],
   residence: [
-    ...saved.residence.filter(item => item.instance !== 'object-slot-66'),
-    {
-      instance: 'object-slot-66',
+    ...saved.residence.filter(item => !instances.includes(item.instance)),
+    ...instances.map(instance => ({
+      instance,
       residence: {
-        kind: 'carried',
-        placementClass: catalogue.instances.find(
-          item => item.id === 'object-slot-66'
-        )!.placementClass!
+        kind: 'carried' as const,
+        placementClass: catalogue.instances.find(item => item.id === instance)!
+          .placementClass!
       }
-    }
+    }))
   ]
 });
+
+/// Carry Transporter slot 66 into `saved`, as an ANTIGRAV take leaves it, behind `ahead`.
+const carrying66 = (
+  saved: DamoclesSaveSnapshot,
+  ahead: readonly string[] = []
+): DamoclesSaveSnapshot => carrying(saved, [...ahead, 'object-slot-66']);
 
 /// Walk forwards until a message shows or two seconds pass, then stop where the hop left it.
 const walkUntilMessage = (session: DamoclesSession): void => {
@@ -494,7 +509,6 @@ const walkUntilMessage = (session: DamoclesSession): void => {
 };
 
 describe('a dropped Transporter (#1007)', () => {
-  // What its digit does while carried is #1017's to decide.
   test('carried, it is passed by the ring', () => {
     const saved = carrying66(atSlot69Floor());
     // Slots 68 and 67 gone and 66 carried: walking north steps down past all three to 65.
@@ -644,5 +658,166 @@ describe('a dropped Transporter (#1007)', () => {
     expect(ring.snapshot.pose.body).toBe('body-11');
     expect(ring.snapshot.structure).toBeNull();
     expect(ring.snapshot.pose.position).toEqual({ x: 0, y: 63, z: 0 });
+  });
+});
+
+/// Stand in slot 69's cube with `saved`'s Carried Stack, and press slot 66's digit, 2.
+const intoVoid = (saved: DamoclesSaveSnapshot): DamoclesSession => {
+  const session = near69(0, SOUTH, {}, saved);
+  session.advance(1 / 50);
+  expect(session.inTransporter).toBe(true);
+  expect(session.transporterKey(2)).toEqual({ kind: 'hopped' });
+  session.advance(1 / 50);
+  return session;
+};
+
+describe('a carried Transporter’s digit (#1017)', () => {
+  test('hops into VOID, into its own cube on the carried column, and stays', () => {
+    const session = intoVoid(carrying66(atSlot69Floor()));
+    // Live: VOID, X 33237, Y 0 + $3F, Z 99100, Cell Readout 00-01, the panel naming VOID.
+    expect(session.snapshot.pose.body).toBe('body-30');
+    expect(session.snapshot.pose.position).toEqual({
+      x: 33_237,
+      y: 63,
+      z: 99_100
+    });
+    expect(session.snapshot.islandCell).toEqual({ x: 0, z: 1 });
+    expect(session.snapshot.locationName).toBe('VOID');
+    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.inTransporter).toBe(true);
+    expect(transporterCues(session)).toBe(1);
+    // The latch still holds slot 69, so the carried cube does not fire under the player.
+    for (let frame = 0; frame < 100; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(session.snapshot.pose.body).toBe('body-30');
+    expect(transporterCues(session)).toBe(0);
+    // Drop refuses on VOID, and the Transporter stays carried.
+    expect(session.drop()).toEqual({ kind: 'refused' });
+    expect(session.snapshot.carried[0]).toBe('object-slot-66');
+  });
+
+  test('its height follows the stack index, and a digit there hops out', () => {
+    // Two takeable objects ahead of it put it at index 2.
+    const ahead = catalogue.instances
+      .filter(
+        item =>
+          item.handling?.takeable === true &&
+          item.handling.carried !== true &&
+          item.location !== undefined &&
+          item.placementClass !== undefined
+      )
+      .slice(0, 2)
+      .map(item => item.id);
+    expect(ahead).toHaveLength(2);
+    const session = intoVoid(carrying66(atSlot69Floor(), ahead));
+    // Live at index 2: Y 600 + $3F.
+    expect(session.snapshot.pose.position).toEqual({
+      x: 33_237,
+      y: 663,
+      z: 99_100
+    });
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(session.snapshot.pose.position.y).toBe(663);
+    expect(session.inTransporter).toBe(true);
+    // Live, `1` in VOID's cube went to Eris slot 65.
+    expect(session.transporterKey(1)).toEqual({ kind: 'hopped' });
+    session.advance(1 / 50);
+    expect(at(session).body).toBe('body-11');
+  });
+
+  test('leaving its cube and backing in again runs the ring from the carried slot', () => {
+    const session = intoVoid(carrying66(atSlot69Floor()));
+    session.intent = { ...IDLE, walk: 1 };
+    for (let frame = 0; frame < 25; frame += 1) {
+      session.advance(1 / 50);
+    }
+    session.intent = IDLE;
+    session.advance(1 / 50);
+    expect(session.inTransporter).toBe(false);
+    expect(session.snapshot.locationName).toBe('VOID');
+    // Outside every cube no digit is the Transporter's.
+    expect(session.transporterKey(1)).toEqual({ kind: 'ignored' });
+    walkIn(session, -1);
+    // Facing south and backing in steps down from 66, to Eris slot 65.
+    expect(at(session).body).toBe('body-11');
+    const eris = near69(0, SOUTH);
+    eris.advance(1 / 50);
+    eris.transporterKey(1);
+    eris.advance(1 / 50);
+    expect(session.snapshot.pose.position).toEqual(eris.snapshot.pose.position);
+  });
+
+  test('one left in the BRIEFCASE hops to the column past the wrap', () => {
+    const saved = atSlot69Floor();
+    const session = intoVoid({
+      ...saved,
+      briefcaseStore: ['object-slot-66'],
+      residence: saved.residence.filter(
+        item => item.instance !== 'object-slot-66'
+      )
+    });
+    // Live, store index 0: Z 164636, Y 63, Cell Readout 00-02.
+    expect(session.snapshot.pose.body).toBe('body-30');
+    expect(session.snapshot.pose.position).toEqual({
+      x: 33_237,
+      y: 63,
+      z: 164_636
+    });
+    expect(session.snapshot.islandCell).toEqual({ x: 0, z: 2 });
+    expect(session.inTransporter).toBe(true);
+  });
+
+  test('a Save made in VOID restores into the carried cube without firing', () => {
+    const session = intoVoid(carrying66(atSlot69Floor()));
+    const identity = damoclesSaveIdentity(catalogue, 'test');
+    const decoded = decodeDamoclesSave(
+      encodeDamoclesSave({
+        identity,
+        savedAt: '2026-11-28T12:00:00.000Z',
+        schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+        snapshot: session.captureResume(),
+        where: 'VOID'
+      }),
+      identity,
+      { catalogue, poses: content.poses, strings: content.strings }
+    );
+    const restored = new DamoclesSession(content, decoded.snapshot);
+    expect(restored.snapshot.pose.body).toBe('body-30');
+    expect(restored.snapshot.pose.position).toEqual({
+      x: 33_237,
+      y: 63,
+      z: 99_100
+    });
+    for (let frame = 0; frame < 50; frame += 1) {
+      restored.advance(1 / 50);
+    }
+    expect(restored.inTransporter).toBe(true);
+    expect(restored.snapshot.pose.body).toBe('body-30');
+    expect(transporterCues(restored)).toBe(0);
+
+    // Nothing but a carried Transporter reaches VOID, so a VOID Save without one is refused.
+    const saved = session.captureResume();
+    expect(() =>
+      decodeDamoclesSave(
+        encodeDamoclesSave({
+          identity,
+          savedAt: '2026-11-28T12:00:00.000Z',
+          schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+          snapshot: {
+            ...saved,
+            carried: saved.carried.filter(id => id !== 'object-slot-66'),
+            residence: saved.residence.filter(
+              item => item.instance !== 'object-slot-66'
+            )
+          },
+          where: 'VOID'
+        }),
+        identity,
+        { catalogue, poses: content.poses, strings: content.strings }
+      )
+    ).toThrow('pose names a Body no admitted Pose or landing reaches');
   });
 });

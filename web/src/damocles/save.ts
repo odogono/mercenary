@@ -91,6 +91,7 @@ import {
   type StructureDamage,
   type TimedDetonator
 } from './timedDetonator.ts';
+import { VOID_BODY, reachesVoid } from './transporter.ts';
 import type { Pose } from './world.ts';
 
 /// Version 3 replaced Capital Spaceport fields with the bound structure workspace.
@@ -2151,10 +2152,12 @@ export const decodeDamoclesSave = (
     }
     // A Body is standable where an admitted Pose anchors it, or where a landing from space
     // reaches it, whose surface is anchored at the Body's own origin (ADR 0052).
+    // VOID is reached only by a carried Transporter's digit, which stays carried there (#1017).
     if (
       poses !== undefined &&
       !admittedPoses(poses).some(item => item.body === pose.body) &&
-      !landsOn(catalogue, pose.body)
+      !landsOn(catalogue, pose.body) &&
+      !(pose.body === VOID_BODY && reachesVoid([...carried, ...briefcaseStore]))
     ) {
       return fail('pose names a Body no admitted Pose or landing reaches');
     }

@@ -226,8 +226,10 @@ import {
   ARRIVAL_EYE_OFFSET,
   FIRST_TRANSPORTER,
   LAST_TRANSPORTER,
+  VOID_BODY,
   digitHop,
   insideTransporterCube,
+  parkedPosition,
   ringHop,
   ringStepsUp,
   transporterInstance,
@@ -432,11 +434,15 @@ const wrap = (coordinate: number) =>
     ? coordinate % SURFACE_CELLS
     : ((coordinate % SURFACE_CELLS) + SURFACE_CELLS) % SURFACE_CELLS;
 
-/// The VOID staging Body, `$78`, which Take and Drop already refuse on.
-const VOID_BODY = 'body-30';
 /// DAMOCLES, the comet, whose centre the impact clock moves.
 const COMET_BODY = 29;
 const ERIS_BODY = 'body-11';
+
+/// The Body whose rotation accumulator the session's turn is. VOID is no Body in the craft table
+/// and does not turn, so while the player stands in it (#1017) the turn is Eris's, carried on the
+/// clock every Body turns by, and leaving VOID carries it on to wherever they go.
+const turnBodyOf = (body: string): string =>
+  body === VOID_BODY ? ERIS_BODY : body;
 const DAMOCLES_BODY = `body-${COMET_BODY}`;
 /// The Bodies the dispatcher `$04C8D2` names, by selector: DIALIS `$00`, ICARUS `$04`, DION
 /// `$10` and GAEA `$20`.
@@ -700,14 +706,17 @@ const workspaceOriginFor = (
   )?.workspaceOrigin ?? undefined;
 
 /// The origin a Body's surface is anchored at: its admitted Pose's workspace origin, and on a
-/// Body a landing reaches without one, the Body's own origin (ADR 0052). No 16-cell window is
-/// recovered there, so the local cell is the Body Coordinate.
+/// Body a landing reaches without one, or VOID, which a carried Transporter's digit reaches
+/// (#1017), the Body's own origin (ADR 0052). No 16-cell window is recovered there, so the
+/// local cell is the Body Coordinate: VOID's carried column reads 00-01 and 00-02, as live.
 const surfaceOriginFor = (
   content: DamoclesContent,
   bodyId: string
 ): { readonly x: number; readonly z: number } | undefined =>
   workspaceOriginFor(content, bodyId) ??
-  (landsOn(content.catalogue, bodyId) ? { x: 0, z: 0 } : undefined);
+  (bodyId === VOID_BODY || landsOn(content.catalogue, bodyId)
+    ? { x: 0, z: 0 }
+    : undefined);
 
 /// A position on a Body as `$7AB2` holds it, masked to the surface's 28 bits (`$058F64`).
 const surfaceLong = (value: number): number => (value >>> 0) & 0x0f_ff_ff_ff;
@@ -1952,7 +1961,7 @@ export class DamoclesSession implements TitleSession<
 
   /// What the VBL handler adds to the current Body's rotation accumulator.
   private rotationRate(): number {
-    return this.rateOf(this.pose.body);
+    return this.rateOf(turnBodyOf(this.pose.body));
   }
 
   /// `$04D616` fills `$835C` with `$82DC` shifted right by the level, and the Catalogue holds it
@@ -2269,7 +2278,7 @@ export class DamoclesSession implements TitleSession<
   }
 
   private rebaseBodyTurns(): void {
-    const from = Number(this.pose.body.slice(5));
+    const from = Number(turnBodyOf(this.pose.body).slice(5));
     this.bodyTurnOrigins = this.content.catalogue.craft!.bodies.map(
       (_, index) => (index === from ? this.bodyTurn : this.turnOf(index))
     );
@@ -3880,11 +3889,15 @@ export class DamoclesSession implements TitleSession<
     }
   }
 
-  /// Body `index`'s rotation accumulator now: the current Body's carried along the clock every
-  /// Body turns by, or the first world's where the current turn is off it.
-  private turnOf(index: number): number {
+  /// Body number `body`'s rotation accumulator now: the current Body's carried along the clock
+  /// every Body turns by, or the first world's where the current turn is off it. VOID's is
+  /// Eris's (#1017).
+  private turnOf(body: number): number {
+    const index = Number(turnBodyOf(`body-${body}`).slice(5));
     const bodies = this.content.catalogue.craft!.bodies;
-    const from = Number(/^body-(\d+)$/.exec(this.pose.body)?.[1] ?? -1);
+    const from = Number(
+      /^body-(\d+)$/.exec(turnBodyOf(this.pose.body))?.[1] ?? -1
+    );
     const start = this.bodyTurnOrigins?.[from] ?? bodies[from]?.turn;
     const to = {
       rate: this.rateOf(`body-${index}`),
@@ -5027,17 +5040,25 @@ export class DamoclesSession implements TitleSession<
 
   /// The Transporter the player stands in, `$7882`: the one whose cube holds the eye, among
   /// those the frame would draw (#998). That is a surface Transporter on this Body, or one the
-  /// bound structure inserts in the player's region on their Floor. The cube is in world axes, so
-  /// neither the Transporter's heading nor the player's matters. Zero for none.
+  /// bound structure inserts in the player's region on their Floor, or in VOID a carried one at
+  /// its parked placement, whose cell is VOID's (#1017). The cube is in world axes, so neither
+  /// the Transporter's heading nor the player's matters. Zero for none.
   private transporterAt(): number {
     if (this.space !== null) {
       return 0;
     }
     for (let slot = FIRST_TRANSPORTER; slot <= LAST_TRANSPORTER; slot += 1) {
       const id = transporterInstance(slot);
+      const parked = this.parkedAt(id);
       const residence = this.residenceFor(id);
       const at =
-        residence === undefined ? null : this.worldPosition(id, residence);
+        parked !== undefined
+          ? this.pose.body === VOID_BODY
+            ? parked
+            : null
+          : residence === undefined
+            ? null
+            : this.worldPosition(id, residence);
       const bounds = this.transporterBounds(id);
       if (
         at !== null &&
@@ -5058,6 +5079,18 @@ export class DamoclesSession implements TitleSession<
       ? undefined
       : this.content.models.peek(model)?.variants[0]?.mesh.viewGroups?.[0]
           ?.bounds;
+  }
+
+  /// Where `$052D42` parks `id` in VOID while it is carried, by its index in the Carried Stack,
+  /// or for one left in the BRIEFCASE by the index 10 + `k` it held when the case was dropped.
+  /// Undefined for an object that is neither.
+  private parkedAt(id: string): Vector3 | undefined {
+    const carried = this.carried.indexOf(id);
+    if (carried !== -1) {
+      return parkedPosition(carried);
+    }
+    const stored = this.briefcaseStore.indexOf(id);
+    return stored === -1 ? undefined : parkedPosition(10 + stored);
   }
 
   /// `$059126`, once a frame: the first frame the player is in a cube fires it, and the latch
@@ -5157,9 +5190,9 @@ export class DamoclesSession implements TitleSession<
   }
 
   /// `$059184`: digit `n` names slot 64 + `n`. A slot with no residence raises string 20; any
-  /// other hops, whatever the ring would skip, the slot stood in included. The latch is neither
-  /// read nor set. A carried Transporter's digit does nothing in the port: the original hops to
-  /// its parked placement, which is unrecovered (#1007).
+  /// other hops, whatever the ring would skip, the slot stood in included, and a carried one or
+  /// one left in the BRIEFCASE to its parked placement in VOID (#1017). The latch is neither
+  /// read nor set.
   transporterKey(digit: number): {
     readonly kind: 'hopped' | 'ignored' | 'refused';
   } {
@@ -5167,12 +5200,11 @@ export class DamoclesSession implements TitleSession<
       return { kind: 'ignored' };
     }
     const hop = digitHop(digit, slot => {
-      const residence = this.residenceFor(transporterInstance(slot));
-      return residence === undefined
+      const id = transporterInstance(slot);
+      return this.parkedAt(id) === undefined &&
+        this.residenceFor(id) === undefined
         ? 'unclaimed'
-        : residence.kind === 'carried' || residence.kind === 'occupied'
-          ? 'carried'
-          : 'placed';
+        : 'claimed';
     });
     if (hop.kind === 'refused') {
       this.presentSystem('system-string-20');
@@ -5189,7 +5221,9 @@ export class DamoclesSession implements TitleSession<
   /// and Z are the slot's, Y its resident Y plus `$3F` (on a Floor, the Floor times the storey
   /// pitch plus `$3F`, as `$055B78` recomputes it), and the Floor its residence's. A structure
   /// parent's placement is read from the Catalogue, so this holds while its Models are not in
-  /// hand. Undefined for a slot that is not placed.
+  /// hand. A carried slot, or one left in the BRIEFCASE, lands at its parked placement in VOID,
+  /// on no Floor: the Floor word takes the stack index there, which nothing in VOID reads
+  /// (#1017). Undefined for a slot that is neither placed nor parked.
   private transporterLanding(slot: number):
     | {
         readonly body: string;
@@ -5199,6 +5233,20 @@ export class DamoclesSession implements TitleSession<
         readonly surface: ErisSurface;
       }
     | undefined {
+    const parked = this.parkedAt(transporterInstance(slot));
+    if (parked !== undefined) {
+      const surface =
+        this.surface.body.id === VOID_BODY
+          ? this.surface
+          : this.surfaceFor(VOID_BODY);
+      return {
+        body: VOID_BODY,
+        floor: 0,
+        parent: null,
+        position: { ...parked, y: parked.y + ARRIVAL_EYE_OFFSET },
+        surface
+      };
+    }
     const residence = this.residenceFor(transporterInstance(slot));
     if (residence?.kind !== 'surface' && residence?.kind !== 'structure') {
       return undefined;
