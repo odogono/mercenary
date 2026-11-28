@@ -94,6 +94,26 @@ _Avoid_: Association group, region group
 The ordered objects the player carries, most recently acquired first; its head is the object the panel names and the one a Drop removes. The player chooses that object by rotating the stack, so the next Drop is not a function of acquisition order.
 _Avoid_: Ordered inventory, carry order, inventory list
 
+**Trading Post**:
+A Damocles structure whose ground floor is the trading structure, under whichever model draws it, and whose trading room is the one region where a Sale or a Buy-back can happen.
+_Avoid_: Shop, store, market
+
+**Price**:
+The credit value of one object, read from its model; a Sale credits it and a Buy-back debits it.
+_Avoid_: Cost, value, worth
+
+**Sale**:
+A Drop in a Trading Post's trading room while no object is the Sold Object, which credits the object's Price and makes it the Sold Object even when the Drop is then refused.
+_Avoid_: Sell action, trade, inventory sale
+
+**Sold Object**:
+The one object, game-wide, that has been sold and not yet bought back; while it exists every further Sale is refused, at any Trading Post.
+_Avoid_: Traded object, sold slot, offered object
+
+**Buy-back**:
+A Take of the Sold Object in a Trading Post's trading room, which debits its Price and is refused when the balance cannot cover it; it is the only way the player buys anything, so an object merely found in a Trading Post is taken free.
+_Avoid_: Purchase, buy, shop purchase
+
 **Session Snapshot**:
 One consistent presentation-facing description of a Gameplay Session at a single moment, complete enough to draw from and to compare against another, which every renderer consumes instead of reading the session's parts; it is not the restore-complete Save Snapshot.
 _Avoid_: View model, game state, render state, Save Snapshot
